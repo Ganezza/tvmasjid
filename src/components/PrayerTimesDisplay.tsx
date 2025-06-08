@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
-import * as Adhan from "adhan";
+import { CalculationMethod, PrayerTimes, Coordinates, TimeAdjustment } from "adhan"; // Import komponen secara langsung
 import { toast } from "sonner";
 
 dayjs.extend(duration);
@@ -49,11 +49,11 @@ const PrayerTimesDisplay: React.FC = () => {
 
       console.log("Settings fetched:", { latitude, longitude, calculationMethod, isRamadanModeActive });
 
-      const coordinates = new Adhan.Coordinates(latitude, longitude);
-      const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod]();
+      const coordinates = new Coordinates(latitude, longitude); // Gunakan Coordinates langsung
+      const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod](); // Gunakan CalculationMethod langsung
       
       if (isRamadanModeActive) {
-        params.imsakParameter = new Adhan.TimeAdjustment(10);
+        params.imsakParameter = new TimeAdjustment(10); // Gunakan TimeAdjustment langsung
         console.log("Ramadan mode active. Imsak parameter set to 10 minutes before Fajr.");
       } else {
         params.imsakParameter = undefined;
@@ -62,7 +62,7 @@ const PrayerTimesDisplay: React.FC = () => {
 
       const today = new Date();
       console.log("Calculating prayer times for today:", today);
-      const times = new Adhan.PrayerTimes(coordinates, today, params);
+      const times = new PrayerTimes(coordinates, today, params); // Gunakan PrayerTimes langsung
 
       const newPrayerTimes: PrayerTime[] = [
         { name: "Subuh", time: dayjs(times.fajr).format("HH:mm") },
@@ -79,7 +79,7 @@ const PrayerTimesDisplay: React.FC = () => {
       console.log("Calculated prayer times:", newPrayerTimes);
       setPrayerTimes(newPrayerTimes);
       setIsLoading(false);
-    } catch (err: any) { // Catch any type of error
+    } catch (err: any) {
       console.error("Error in fetchAndCalculatePrayerTimes:", err);
       setError(`Terjadi kesalahan saat menghitung waktu sholat: ${err.message || "Kesalahan tidak diketahui"}.`);
       toast.error("Terjadi kesalahan saat menghitung waktu sholat.");
