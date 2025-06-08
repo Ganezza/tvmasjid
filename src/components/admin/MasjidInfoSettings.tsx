@@ -75,6 +75,8 @@ const MasjidInfoSettings: React.FC = () => {
         });
 
       if (error) {
+        // Log the full error object for better debugging
+        console.error("Error uploading logo:", error);
         throw error;
       }
 
@@ -87,11 +89,11 @@ const MasjidInfoSettings: React.FC = () => {
         setCurrentLogoUrl(publicUrlData.publicUrl);
         toast.success("Logo masjid berhasil diunggah!", { id: uploadToastId });
       } else {
-        throw new Error("Gagal mendapatkan URL publik logo.");
+        throw new Error("Gagal mendapatkan URL publik gambar.");
       }
     } catch (error: any) {
-      console.error("Error uploading logo:", error);
-      toast.error(`Gagal mengunggah logo: ${error.message}`, { id: uploadToastId });
+      console.error("Error uploading logo:", error); // Log the full error object again
+      toast.error(`Gagal mengunggah logo: ${error.message || JSON.stringify(error)}`, { id: uploadToastId });
     }
   };
 
