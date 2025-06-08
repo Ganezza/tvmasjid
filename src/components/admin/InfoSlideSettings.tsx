@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea"; // Keep Textarea import for now, might be removed if not used at all
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
@@ -15,7 +15,7 @@ import { Trash2, Edit } from "lucide-react";
 
 interface Slide {
   id: string;
-  type: "text" | "image";
+  type: "text" | "image"; // Keep both types for existing data, but form will only allow 'image'
   title?: string;
   content: string;
   display_order: number;
@@ -23,9 +23,9 @@ interface Slide {
 
 const slideFormSchema = z.object({
   id: z.string().optional(),
-  type: z.enum(["text", "image"], { message: "Tipe slide tidak valid." }),
+  type: z.literal("image"), // Only allow 'image' type
   title: z.string().max(100, "Judul terlalu panjang.").optional(),
-  content: z.string().min(1, "Konten tidak boleh kosong."),
+  content: z.string().url("Konten harus berupa URL gambar yang valid.").min(1, "URL gambar tidak boleh kosong."), // Enforce URL
   display_order: z.coerce.number().int().min(0, "Urutan tampilan harus non-negatif.").default(0),
 });
 
@@ -39,7 +39,7 @@ const InfoSlideSettings: React.FC = () => {
   const form = useForm<SlideFormValues>({
     resolver: zodResolver(slideFormSchema),
     defaultValues: {
-      type: "text",
+      type: "image", // Default to image
       title: "",
       content: "",
       display_order: 0,
@@ -47,7 +47,7 @@ const InfoSlideSettings: React.FC = () => {
   });
 
   const { handleSubmit, register, setValue, watch, reset, formState: { isSubmitting, errors } } = form;
-  const slideType = watch("type");
+  // const slideType = watch("type"); // No longer needed as type is fixed to 'image'
 
   const fetchSlides = useCallback(async () => {
     const { data, error } = await supabase
@@ -81,7 +81,7 @@ const InfoSlideSettings: React.FC = () => {
 
   const handleAddSlide = () => {
     setEditingSlide(null);
-    reset({ type: "text", title: "", content: "", display_order: 0 });
+    reset({ type: "image", title: "", content: "", display_order: 0 }); // Default to image
     setIsDialogOpen(true);
   };
 
@@ -89,7 +89,7 @@ const InfoSlideSettings: React.FC = () => {
     setEditingSlide(slide);
     reset({
       id: slide.id,
-      type: slide.type,
+      type: "image", // Force type to image for editing, assuming all new/edited will be images
       title: slide.title || "",
       content: slide.content,
       display_order: slide.display_order,
@@ -121,7 +121,7 @@ const InfoSlideSettings: React.FC = () => {
       const { error } = await supabase
         .from("info_slides")
         .update({
-          type: values.type,
+          type: "image", // Always save as image
           title: values.title || null,
           content: values.content,
           display_order: values.display_order,
@@ -141,7 +141,7 @@ const InfoSlideSettings: React.FC = () => {
       const { error } = await supabase
         .from("info_slides")
         .insert({
-          type: values.type,
+          type: "image", // Always save as image
           title: values.title || null,
           content: values.content,
           display_order: values.display_order,
@@ -161,17 +161,17 @@ const InfoSlideSettings: React.FC = () => {
   return (
     <Card className="bg-gray-800 text-white border-gray-700 col-span-full lg:col-span-2">
       <CardHeader>
-        <CardTitle className="text-2xl font-semibold text-blue-300">Pengaturan Slide Informasi</CardTitle>
+        <CardTitle className="text-2xl font-semibold text-blue-300">Pengaturan Slide Informasi (Gambar)</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-400 mb-4">Kelola slide informasi yang akan ditampilkan di layar utama.</p>
+        <p className="text-gray-400 mb-4">Kelola slide gambar yang akan ditampilkan di layar utama.</p>
         <Button onClick={handleAddSlide} className="w-full bg-green-600 hover:bg-green-700 text-white mb-4">
-          Tambah Slide Baru
+          Tambah Slide Gambar Baru
         </Button>
 
         <div className="space-y-3">
           {slides.length === 0 ? (
-            <p className="text-gray-400 text-center">Belum ada slide. Tambahkan yang pertama!</p>
+            <p className="text-gray-400 text-center">Belum ada slide gambar. Tambahkan yang pertama!</p>
           ) : (
             slides.map((slide) => (
               <div key={slide.id} className="flex items-center justify-between bg-gray-700 p-3 rounded-md shadow-sm">
@@ -196,25 +196,11 @@ const InfoSlideSettings: React.FC = () => {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="bg-gray-800 text-white border-gray-700">
             <DialogHeader>
-              <DialogTitle className="text-blue-300">{editingSlide ? "Edit Slide Informasi" : "Tambah Slide Baru"}</DialogTitle>
+              <DialogTitle className="text-blue-300">{editingSlide ? "Edit Slide Gambar" : "Tambah Slide Gambar Baru"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <Label htmlFor="type" className="text-gray-300">Tipe Slide</Label>
-                <Select
-                  onValueChange={(value: "text" | "image") => setValue("type", value)}
-                  defaultValue={form.getValues("type")}
-                >
-                  <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white mt-1">
-                    <SelectValue placeholder="Pilih Tipe" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-700 text-white border-gray-600">
-                    <SelectItem value="text">Teks</SelectItem>
-                    <SelectItem value="image">Gambar (URL)</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.type && <p className="text-red-400 text-sm mt-1">{errors.type.message}</p>}
-              </div>
+              {/* Type selection removed as it's fixed to 'image' */}
+              <input type="hidden" {...register("type")} value="image" />
 
               <div>
                 <Label htmlFor="title" className="text-gray-300">Judul (Opsional)</Label>
@@ -222,29 +208,20 @@ const InfoSlideSettings: React.FC = () => {
                   id="title"
                   {...register("title")}
                   className="bg-gray-700 border-gray-600 text-white mt-1"
-                  placeholder="Judul slide"
+                  placeholder="Judul slide (mis: Nama Acara)"
                 />
                 {errors.title && <p className="text-red-400 text-sm mt-1">{errors.title.message}</p>}
               </div>
 
               <div>
-                <Label htmlFor="content" className="text-gray-300">Konten</Label>
-                {slideType === "text" ? (
-                  <Textarea
-                    id="content"
-                    {...register("content")}
-                    className="bg-gray-700 border-gray-600 text-white mt-1 min-h-[100px]"
-                    placeholder="Masukkan teks informasi di sini..."
-                  />
-                ) : (
-                  <Input
-                    id="content"
-                    type="url"
-                    {...register("content")}
-                    className="bg-gray-700 border-gray-600 text-white mt-1"
-                    placeholder="URL Gambar (mis: https://example.com/image.jpg)"
-                  />
-                )}
+                <Label htmlFor="content" className="text-gray-300">URL Gambar</Label>
+                <Input
+                  id="content"
+                  type="url" // Enforce URL input
+                  {...register("content")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                  placeholder="URL Gambar (mis: https://example.com/image.jpg)"
+                />
                 {errors.content && <p className="text-red-400 text-sm mt-1">{errors.content.message}</p>}
               </div>
 

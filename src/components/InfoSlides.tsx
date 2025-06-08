@@ -11,7 +11,7 @@ import "swiper/css/navigation";
 
 interface Slide {
   id: string;
-  type: "text" | "image";
+  type: "text" | "image"; // Keep both types for existing data, but new data will be 'image'
   content: string; // Text or image URL
   title?: string;
   display_order: number;
@@ -107,18 +107,12 @@ const InfoSlides: React.FC = () => {
       >
         {slides.map((slide) => (
           <SwiperSlide key={slide.id} className="flex items-center justify-center p-4">
-            {slide.type === "text" ? (
-              <div className="text-center text-gray-200">
-                {slide.title && <h3 className="text-3xl md:text-4xl font-bold mb-4 text-blue-300">{slide.title}</h3>}
-                <p className="text-xl md:text-2xl leading-relaxed">{slide.content}</p>
-              </div>
-            ) : (
-              <img
-                src={slide.content}
-                alt={slide.title || "Info Slide"}
-                className="max-w-full max-h-full object-contain rounded-lg"
-              />
-            )}
+            {/* Always render as image, assuming all new/edited slides will be images */}
+            <img
+              src={slide.content}
+              alt={slide.title || "Info Slide"}
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
           </SwiperSlide>
         ))}
       </Swiper>
