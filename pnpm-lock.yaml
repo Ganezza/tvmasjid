@@ -110,6 +110,9 @@ importers:
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
+      dayjs-plugin-duration:
+        specifier: 0.0.1-security
+        version: 0.0.1-security
       embla-carousel-react:
         specifier: ^8.3.0
         version: 8.6.0(react@18.3.1)
@@ -1568,6 +1571,9 @@ packages:
 
   date-fns@3.6.0:
     resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
+
+  dayjs-plugin-duration@0.0.1-security:
+    resolution: {integrity: sha512-9aWtXq+qowRpOHOwcZyFp6ngExbjU0bgvKspufNPdCyO+i/FKNykFtwqap4JrlEm76LNXQxAMA9Xhawf9PfVIw==}
 
   dayjs@1.11.13:
     resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
@@ -3733,6 +3739,8 @@ snapshots:
   d3-timer@3.0.1: {}
 
   date-fns@3.6.0: {}
+
+  dayjs-plugin-duration@0.0.1-security: {}
 
   dayjs@1.11.13: {}
 
