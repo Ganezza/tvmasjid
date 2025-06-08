@@ -97,7 +97,7 @@ const Index = () => {
       <div className="w-full flex justify-between items-center p-4">
         <div className="flex items-center gap-4">
           {masjidLogoUrl && (
-            <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 object-contain" />
+            <img src={masjidLogoUrl} alt="Masjid Logo" className="h-24 md:h-32 lg:h-40 object-contain" />
           )}
           <div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-green-400 drop-shadow-lg text-left text-outline-black">
