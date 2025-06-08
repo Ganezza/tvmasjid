@@ -10,6 +10,7 @@ import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
 import AppBackground from "@/components/AppBackground";
+import MurottalPlayer from "@/components/MurottalPlayer"; // Import MurottalPlayer
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -90,6 +91,8 @@ const Index = () => {
 
   return (
     <AppBackground>
+      <MurottalPlayer /> {/* Tambahkan MurottalPlayer di sini */}
+
       {/* Header Section */}
       <div className="w-full flex justify-between items-center p-4">
         <div className="flex items-center gap-4">
@@ -114,12 +117,12 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-4 md:py-6">
         {/* Prayer Times Display - Now full width */}
         <div className="col-span-full">
-          <PrayerTimesDisplay className="flex-grow" />
+          <PrayerTimesDisplay />
         </div>
 
         {/* Left Column (FinancialDisplay) */}
         <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
-          <FinancialDisplay heightClass="h-64 md:h-80 lg:h-96" />
+          <FinancialDisplay />
         </div>
 
         {/* Middle Column (ImamMuezzinDisplay and NotificationStudyDisplay) */}
