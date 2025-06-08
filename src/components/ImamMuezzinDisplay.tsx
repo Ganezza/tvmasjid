@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
 import { supabase } from "@/lib/supabase";
-import { CalculationMethod, PrayerTimes, Coordinates } from "adhan"; // Tidak perlu import Prayer enum lagi
+import { CalculationMethod, PrayerTimes, Coordinates } from "adhan";
 import { toast } from "sonner";
 
 interface Schedule {
@@ -30,10 +30,13 @@ const ImamMuezzinDisplay: React.FC = () => {
   const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nextPrayerInfo, setNextPrayerInfo] = useState<{ day: string; prayer: string } | null>(null); // State baru
 
   const fetchAndDisplaySchedule = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setNextPrayerInfo(null); // Reset info setiap kali fetch
+
     try {
       // 1. Fetch app settings for prayer time calculation
       const { data: settings, error: settingsError } = await supabase
@@ -93,7 +96,6 @@ const ImamMuezzinDisplay: React.FC = () => {
       }
 
       if (!nextPrayerDisplayName) {
-        // This case should now be truly rare, only if prayerNameMap is incomplete
         setError("Tidak dapat menentukan waktu sholat berikutnya (pemetaan nama).");
         setIsLoading(false);
         return;
@@ -101,6 +103,9 @@ const ImamMuezzinDisplay: React.FC = () => {
 
       // 4. Get Indonesian day of week, based on targetDay
       const currentDayOfWeek = getIndonesianDayOfWeek(targetDay);
+
+      // Set info sholat berikutnya yang dicari
+      setNextPrayerInfo({ day: currentDayOfWeek, prayer: nextPrayerDisplayName });
 
       // 5. Fetch imam/muezzin schedule for the next prayer and target day
       const { data: scheduleData, error: scheduleError } = await supabase
@@ -179,7 +184,14 @@ const ImamMuezzinDisplay: React.FC = () => {
   if (!currentSchedule) {
     return (
       <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
-        <p className="text-xl text-gray-400">Jadwal imam & muadzin untuk sholat berikutnya tidak ditemukan.</p>
+        <p className="text-xl text-gray-400">
+          Jadwal imam & muadzin untuk sholat berikutnya tidak ditemukan.
+          {nextPrayerInfo && (
+            <span className="block mt-2 text-lg">
+              Mencari: <span className="font-semibold">{nextPrayerInfo.prayer}</span> pada hari <span className="font-semibold">{nextPrayerInfo.day}</span>.
+            </span>
+          )}
+        </p>
       </div>
     );
   }
