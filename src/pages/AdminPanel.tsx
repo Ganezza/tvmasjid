@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import PrayerTimeSettings from "@/components/admin/PrayerTimeSettings";
 import RunningTextSettings from "@/components/admin/RunningTextSettings";
-import InfoSlideSettings from "@/components/admin/InfoSlideSettings"; // Import InfoSlideSettings
+import InfoSlideSettings from "@/components/admin/InfoSlideSettings";
+import ImamMuezzinScheduleSettings from "@/components/admin/ImamMuezzinScheduleSettings"; // Import the new component
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -27,11 +28,10 @@ const AdminPanel = () => {
         {/* Info Slide Settings */}
         <InfoSlideSettings />
 
+        {/* Imam & Muezzin Schedule Settings */}
+        <ImamMuezzinScheduleSettings />
+
         {/* Placeholder for other Admin Sections */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">Jadwal Imam & Muadzin</h2>
-          <p className="text-gray-400">Kelola jadwal imam dan muadzin untuk sholat fardhu dan Jumat.</p>
-        </div>
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">Notifikasi & Kajian</h2>
           <p className="text-gray-400">Tambahkan notifikasi PHBI, jadwal kajian rutin, dan event khusus.</p>
