@@ -66,31 +66,31 @@ const InfoSlides: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-64 md:h-80">
-        <p className="text-2xl">Memuat slide informasi...</p>
+      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-64 md:h-80 lg:h-96 xl:h-[500px]">
+        <p className="text-2xl lg:text-3xl xl:text-4xl">Memuat slide informasi...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-64 md:h-80">
-        <p className="text-2xl font-bold">Error:</p>
-        <p className="text-xl">{error}</p>
+      <div className="bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-64 md:h-80 lg:h-96 xl:h-[500px]">
+        <p className="text-2xl lg:text-3xl xl:text-4xl font-bold">Error:</p>
+        <p className="text-xl lg:text-2xl xl:text-3xl">{error}</p>
       </div>
     );
   }
 
   if (slides.length === 0) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-64 md:h-80">
-        <p className="text-2xl text-gray-400">Tidak ada slide informasi untuk ditampilkan.</p>
+      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-64 md:h-80 lg:h-96 xl:h-[500px]">
+        <p className="text-2xl lg:text-3xl xl:text-4xl text-gray-400">Tidak ada slide informasi untuk ditampilkan.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 h-64 md:h-80">
+    <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 h-64 md:h-80 lg:h-96 xl:h-[500px]">
       <Swiper
         spaceBetween={30}
         centeredSlides={true}
@@ -108,7 +108,7 @@ const InfoSlides: React.FC = () => {
         {slides.map((slide) => (
           <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-4">
             {slide.title && (
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-yellow-300 text-center"> {/* Changed text-3xl md:text-4xl to text-2xl md:text-3xl */}
+              <h3 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 text-yellow-300 text-center">
                 {slide.title}
               </h3>
             )}
