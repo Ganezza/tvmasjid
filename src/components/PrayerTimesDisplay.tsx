@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
-import * as Adhan from "adhan";
+import { CalculationMethod, Coordinates, PrayerTimes, TimeAdjustment } from "adhan"; // Mengimpor secara langsung
 import { toast } from "sonner";
 
 dayjs.extend(duration);
@@ -45,20 +45,21 @@ const PrayerTimesDisplay: React.FC = () => {
       let latitude = data?.latitude || -6.2088;
       let longitude = data?.longitude || 106.8456;
       let calculationMethod = data?.calculation_method || "MuslimWorldLeague";
-      // const isRamadanModeActive = data?.is_ramadan_mode_active || false; // Tidak lagi digunakan untuk Imsak
+      const isRamadanModeActive = data?.is_ramadan_mode_active || false;
 
-      console.log("Settings fetched:", { latitude, longitude, calculationMethod });
+      console.log("Settings fetched:", { latitude, longitude, calculationMethod, isRamadanModeActive });
 
-      const coordinates = new Adhan.Coordinates(latitude, longitude);
-      const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod]();
+      const coordinates = new Coordinates(latitude, longitude);
+      const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod]();
       
       // Selalu aktifkan perhitungan Imsak (10 menit sebelum Subuh)
-      params.imsakParameter = new Adhan.TimeAdjustment(10);
+      // Menggunakan TimeAdjustment yang diimpor secara langsung
+      params.imsakParameter = new TimeAdjustment(10);
       console.log("Imsak parameter set to 10 minutes before Fajr (always active).");
       
       const today = new Date();
       console.log("Calculating prayer times for today:", today);
-      const times = new Adhan.PrayerTimes(coordinates, today, params);
+      const times = new PrayerTimes(coordinates, today, params);
 
       const newPrayerTimes: PrayerTime[] = [
         // Selalu tambahkan Imsak
