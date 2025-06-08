@@ -54,16 +54,20 @@ const Index = () => {
       </div>
 
       {/* Main Content Area - Using Grid for better layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 w-full px-4 py-8 md:py-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-8 md:py-12">
         {/* Left Column */}
-        <div className="col-span-full lg:col-span-1 flex flex-col gap-6">
+        <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
           <InfoSlides />
           <NotificationStudyDisplay />
-          <FinancialDisplay /> {/* Informasi Keuangan di kolom kiri, di bawah Pengumuman */}
+        </div>
+
+        {/* Middle Column */}
+        <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
+          <FinancialDisplay />
         </div>
 
         {/* Right Column */}
-        <div className="col-span-full lg:col-span-1 flex flex-col gap-6">
+        <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
           <PrayerTimesDisplay />
           <ImamMuezzinDisplay />
           <TarawihScheduleDisplay />
