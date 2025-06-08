@@ -4,6 +4,7 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import HijriCalendarDisplay from "@/components/HijriCalendarDisplay";
 import PrayerTimesDisplay from "@/components/PrayerTimesDisplay";
 import RunningText from "@/components/RunningText";
+import InfoSlides from "@/components/InfoSlides"; // Import InfoSlides
 
 const Index = () => {
   const navigate = useNavigate();
@@ -52,10 +53,8 @@ const Index = () => {
           Waktu Sholat & Informasi Masjid
         </p>
         <PrayerTimesDisplay />
-        {/* Placeholder for Info Slides - will be added later */}
-        <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 h-64 flex items-center justify-center">
-          <p className="text-2xl text-gray-400">Info Slides (Coming Soon)</p>
-        </div>
+        {/* Info Slides Component */}
+        <InfoSlides />
       </div>
 
       {/* Footer Section - Running Text and MadeWithDyad */}
