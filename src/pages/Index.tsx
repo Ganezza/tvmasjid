@@ -65,16 +65,16 @@ const Index = () => {
           <FinancialDisplay />
         </div>
 
-        {/* Middle Column (now includes ImamMuezzinDisplay) */}
+        {/* Middle Column (ImamMuezzinDisplay and NotificationStudyDisplay) */}
         <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
-          <NotificationStudyDisplay />
-          <ImamMuezzinDisplay /> {/* Dipindahkan ke sini */}
+          <ImamMuezzinDisplay /> {/* Dipindahkan ke atas */}
+          <NotificationStudyDisplay /> {/* Dipindahkan ke bawah */}
         </div>
 
-        {/* Right Column (now includes AudioDisplay) */}
+        {/* Right Column (Info Slides, AudioDisplay, Tarawih) */}
         <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
           <InfoSlides />
-          <AudioDisplay /> {/* Dipindahkan ke sini */}
+          <AudioDisplay />
           <TarawihScheduleDisplay />
         </div>
       </div>
