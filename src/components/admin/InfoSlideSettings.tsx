@@ -3,29 +3,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea"; // Keep Textarea import for now, might be removed if not used at all
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2, Edit, PlusCircle } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique file names
 
 interface Slide {
   id: string;
-  type: "text" | "image"; // Keep both types for existing data, but form will only allow 'image'
+  type: "text" | "image";
   title?: string;
-  content: string;
+  content: string; // This will now be the URL of the uploaded image
   display_order: number;
 }
 
 const slideFormSchema = z.object({
   id: z.string().optional(),
-  type: z.literal("image"), // Only allow 'image' type
-  title: z.string().max(100, "Judul terlalu panjang.").optional(),
-  content: z.string().url("Konten harus berupa URL gambar yang valid.").min(1, "URL gambar tidak boleh kosong."), // Enforce URL
+  type: z.literal("image"),
+  title: z.string().max(100, "Judul terlalu panjang.").nullable().optional(),
+  content: z.string().min(1, "URL gambar tidak boleh kosong."), // Content will store the URL
   display_order: z.coerce.number().int().min(0, "Urutan tampilan harus non-negatif.").default(0),
 });
 
@@ -35,19 +34,19 @@ const InfoSlideSettings: React.FC = () => {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSlide, setEditingSlide] = useState<Slide | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null); // State for image preview
 
   const form = useForm<SlideFormValues>({
     resolver: zodResolver(slideFormSchema),
     defaultValues: {
-      type: "image", // Default to image
+      type: "image",
       title: "",
       content: "",
       display_order: 0,
     },
   });
 
-  const { handleSubmit, register, setValue, watch, reset, formState: { isSubmitting, errors } } = form;
-  // const slideType = watch("type"); // No longer needed as type is fixed to 'image'
+  const { handleSubmit, register, setValue, reset, formState: { isSubmitting, errors } } = form;
 
   const fetchSlides = useCallback(async () => {
     const { data, error } = await supabase
@@ -70,7 +69,7 @@ const InfoSlideSettings: React.FC = () => {
       .channel('info_slides_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'info_slides' }, (payload) => {
         console.log('Info slides change received!', payload);
-        fetchSlides(); // Re-fetch all slides on any change
+        fetchSlides();
       })
       .subscribe();
 
@@ -81,7 +80,8 @@ const InfoSlideSettings: React.FC = () => {
 
   const handleAddSlide = () => {
     setEditingSlide(null);
-    reset({ type: "image", title: "", content: "", display_order: 0 }); // Default to image
+    reset({ type: "image", title: "", content: "", display_order: 0 });
+    setPreviewImageUrl(null); // Clear preview
     setIsDialogOpen(true);
   };
 
@@ -89,11 +89,12 @@ const InfoSlideSettings: React.FC = () => {
     setEditingSlide(slide);
     reset({
       id: slide.id,
-      type: "image", // Force type to image for editing, assuming all new/edited will be images
+      type: "image",
       title: slide.title || "",
       content: slide.content,
       display_order: slide.display_order,
     });
+    setPreviewImageUrl(slide.content); // Set preview to current image
     setIsDialogOpen(true);
   };
 
@@ -101,6 +102,19 @@ const InfoSlideSettings: React.FC = () => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus slide ini?")) {
       return;
     }
+    // Optionally, delete the file from storage as well
+    const { data: slideToDelete, error: fetchError } = await supabase
+      .from("info_slides")
+      .select("content")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching slide content for deletion:", fetchError);
+      toast.error("Gagal menghapus slide.");
+      return;
+    }
+
     const { error } = await supabase
       .from("info_slides")
       .delete()
@@ -111,21 +125,79 @@ const InfoSlideSettings: React.FC = () => {
       toast.error("Gagal menghapus slide.");
     } else {
       toast.success("Slide berhasil dihapus!");
-      fetchSlides(); // Re-fetch to update list
+      fetchSlides();
+
+      // Attempt to delete the file from storage
+      if (slideToDelete?.content) {
+        try {
+          const urlParts = slideToDelete.content.split('/');
+          const fileNameWithFolder = urlParts.slice(urlParts.indexOf('images') + 1).join('/');
+          const { error: deleteFileError } = await supabase.storage
+            .from('images')
+            .remove([fileNameWithFolder]);
+          if (deleteFileError) {
+            console.warn("Failed to delete file from storage:", deleteFileError);
+          }
+        } catch (e) {
+          console.warn("Error parsing file path for deletion:", e);
+        }
+      }
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExtension}`;
+    const filePath = `slides/${fileName}`; // Path inside the bucket
+
+    const uploadToastId = toast.loading("Mengunggah gambar slide...");
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('images') // Use 'images' bucket
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+
+      if (publicUrlData?.publicUrl) {
+        setValue("content", publicUrlData.publicUrl);
+        setPreviewImageUrl(publicUrlData.publicUrl); // Set preview
+        toast.success("Gambar slide berhasil diunggah!", { id: uploadToastId });
+      } else {
+        throw new Error("Gagal mendapatkan URL publik gambar.");
+      }
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+      toast.error(`Gagal mengunggah gambar: ${error.message}`, { id: uploadToastId });
     }
   };
 
   const onSubmit = async (values: SlideFormValues) => {
+    const payload = {
+      type: "image",
+      title: values.title || null,
+      content: values.content,
+      display_order: values.display_order,
+    };
+
     if (editingSlide) {
-      // Update existing slide
       const { error } = await supabase
         .from("info_slides")
-        .update({
-          type: "image", // Always save as image
-          title: values.title || null,
-          content: values.content,
-          display_order: values.display_order,
-        })
+        .update(payload)
         .eq("id", editingSlide.id);
 
       if (error) {
@@ -134,18 +206,12 @@ const InfoSlideSettings: React.FC = () => {
       } else {
         toast.success("Slide berhasil diperbarui!");
         setIsDialogOpen(false);
-        fetchSlides(); // Re-fetch to update list
+        fetchSlides();
       }
     } else {
-      // Add new slide
       const { error } = await supabase
         .from("info_slides")
-        .insert({
-          type: "image", // Always save as image
-          title: values.title || null,
-          content: values.content,
-          display_order: values.display_order,
-        });
+        .insert(payload);
 
       if (error) {
         console.error("Error adding slide:", error);
@@ -153,7 +219,7 @@ const InfoSlideSettings: React.FC = () => {
       } else {
         toast.success("Slide berhasil ditambahkan!");
         setIsDialogOpen(false);
-        fetchSlides(); // Re-fetch to update list
+        fetchSlides();
       }
     }
   };
@@ -199,7 +265,6 @@ const InfoSlideSettings: React.FC = () => {
               <DialogTitle className="text-blue-300">{editingSlide ? "Edit Slide Gambar" : "Tambah Slide Gambar Baru"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {/* Type selection removed as it's fixed to 'image' */}
               <input type="hidden" {...register("type")} value="image" />
 
               <div>
@@ -214,14 +279,20 @@ const InfoSlideSettings: React.FC = () => {
               </div>
 
               <div>
-                <Label htmlFor="content" className="text-gray-300">URL Gambar</Label>
+                <Label htmlFor="imageUpload" className="text-gray-300">Unggah Gambar</Label>
                 <Input
-                  id="content"
-                  type="url" // Enforce URL input
-                  {...register("content")}
-                  className="bg-gray-700 border-gray-600 text-white mt-1"
-                  placeholder="URL Gambar (mis: https://example.com/image.jpg)"
+                  id="imageUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
                 />
+                {previewImageUrl && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-400 mb-1">Pratinjau Gambar:</p>
+                    <img src={previewImageUrl} alt="Image Preview" className="max-w-full h-32 object-contain rounded-md border border-gray-600" />
+                  </div>
+                )}
                 {errors.content && <p className="text-red-400 text-sm mt-1">{errors.content.message}</p>}
               </div>
 
