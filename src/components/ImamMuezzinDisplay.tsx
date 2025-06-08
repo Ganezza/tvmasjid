@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
 import { supabase } from "@/lib/supabase";
-import { CalculationMethod, PrayerTimes, Coordinates, Prayer } from "adhan"; // Import Prayer enum
+import { CalculationMethod, PrayerTimes, Coordinates } from "adhan"; // Tidak perlu import Prayer enum lagi
 import { toast } from "sonner";
 
 interface Schedule {
@@ -13,7 +13,6 @@ interface Schedule {
   display_order: number;
 }
 
-// Mengembalikan kunci menjadi huruf kapital agar sesuai dengan string representasi dari adhan's Prayer enum
 const prayerNameMap: { [key: string]: string } = {
   Fajr: "Subuh",
   Dhuhr: "Dzuhur",
@@ -60,36 +59,50 @@ const ImamMuezzinDisplay: React.FC = () => {
       const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod]();
       const times = new PrayerTimes(coordinates, now.toDate(), params);
 
-      let nextPrayerAdhanEnum = times.nextPrayer(); // Ini akan mengembalikan nilai enum Prayer (misalnya, Prayer.Fajr, Prayer.None)
-      let targetDay = now; // Default ke hari ini
+      // List of actual prayer times for the day
+      const todayPrayerTimes = [
+        { name: "Fajr", time: dayjs(times.fajr) },
+        { name: "Dhuhr", time: dayjs(times.dhuhr) },
+        { name: "Asr", time: dayjs(times.asr) },
+        { name: "Maghrib", time: dayjs(times.maghrib) },
+        { name: "Isha", time: dayjs(times.isha) },
+      ];
 
-      // Jika tidak ada sholat lagi hari ini (yaitu, setelah Isya), anggap Subuh hari berikutnya
-      if (nextPrayerAdhanEnum === Prayer.None) { // Pengecekan yang benar untuk Prayer.None
-        nextPrayerAdhanEnum = Prayer.Fajr; // Sholat berikutnya akan menjadi Subuh
-        targetDay = now.add(1, 'day'); // Dan itu akan terjadi besok
+      let nextPrayerAdhanName: string | null = null;
+      let targetDay = now;
+
+      // Find the next prayer for today
+      for (const prayer of todayPrayerTimes) {
+        if (prayer.time.isAfter(now)) {
+          nextPrayerAdhanName = prayer.name;
+          break;
+        }
       }
 
-      // Konversi enum ke representasi string-nya (misalnya, "Fajr")
-      const nextPrayerAdhanName = nextPrayerAdhanEnum.toString(); 
+      // If no prayer found for today, it means the next prayer is Fajr tomorrow
+      if (!nextPrayerAdhanName) {
+        nextPrayerAdhanName = "Fajr"; // The next prayer is Fajr
+        targetDay = now.add(1, 'day'); // And it's tomorrow
+      }
+
       let nextPrayerDisplayName = prayerNameMap[nextPrayerAdhanName];
 
-      // Penanganan khusus untuk Jumat Dzuhur -> Jumat
-      // Pastikan menggunakan nama adhan asli ('Dhuhr') dan targetDay yang benar
-      if (targetDay.day() === 5 && nextPrayerAdhanName === "Dhuhr") { // Jumat adalah hari 5, dan sholatnya adalah Dzuhur dari adhan
+      // Handle special case for Friday Dhuhr
+      if (targetDay.day() === 5 && nextPrayerAdhanName === "Dhuhr") {
         nextPrayerDisplayName = "Jumat";
       }
 
       if (!nextPrayerDisplayName) {
-        // Kasus ini seharusnya tidak tercapai jika prayerNameMap lengkap dan adhan mengembalikan nama yang diharapkan
-        setError("Tidak dapat menentukan waktu sholat berikutnya.");
+        // This case should now be truly rare, only if prayerNameMap is incomplete
+        setError("Tidak dapat menentukan waktu sholat berikutnya (pemetaan nama).");
         setIsLoading(false);
         return;
       }
 
-      // 4. Dapatkan nama hari dalam bahasa Indonesia, berdasarkan targetDay
+      // 4. Get Indonesian day of week, based on targetDay
       const currentDayOfWeek = getIndonesianDayOfWeek(targetDay);
 
-      // 5. Ambil jadwal imam/muadzin untuk sholat berikutnya dan hari target
+      // 5. Fetch imam/muezzin schedule for the next prayer and target day
       const { data: scheduleData, error: scheduleError } = await supabase
         .from("imam_muezzin_schedules")
         .select("*")
@@ -105,7 +118,7 @@ const ImamMuezzinDisplay: React.FC = () => {
       } else if (scheduleData) {
         setCurrentSchedule(scheduleData);
       } else {
-        setCurrentSchedule(null); // Tidak ada jadwal ditemukan untuk sholat/hari ini
+        setCurrentSchedule(null); // No schedule found for this prayer/day
       }
     } catch (err) {
       console.error("Unexpected error in ImamMuezzinDisplay:", err);
