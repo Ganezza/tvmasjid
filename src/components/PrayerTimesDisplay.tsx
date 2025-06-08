@@ -52,19 +52,14 @@ const PrayerTimesDisplay: React.FC = () => {
       const coordinates = new Adhan.Coordinates(latitude, longitude);
       const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod]();
       
-      // Tidak perlu mengatur params.imsakParameter secara eksplisit dengan TimeAdjustment
-      // karena adhan secara default menghitung Imsak 10 menit sebelum Subuh.
-      // Jika ada kebutuhan untuk mengubah offset Imsak, ini perlu penanganan lebih lanjut
-      // atau pembaruan pustaka adhan.
-
       const today = new Date();
       console.log("Calculating prayer times for today:", today);
       const times = new Adhan.PrayerTimes(coordinates, today, params);
 
       const newPrayerTimes: PrayerTime[] = [
-        // Selalu tambahkan Imsak
         { name: "Imsak", time: dayjs(times.imsak).format("HH:mm") },
         { name: "Subuh", time: dayjs(times.fajr).format("HH:mm") },
+        { name: "Syuruq", time: dayjs(times.sunrise).format("HH:mm") }, // Menambahkan Syuruq
         { name: "Dzuhur", time: dayjs(times.dhuhr).format("HH:mm") },
         { name: "Ashar", time: dayjs(times.asr).format("HH:mm") },
         { name: "Maghrib", time: dayjs(times.maghrib).format("HH:mm") },
