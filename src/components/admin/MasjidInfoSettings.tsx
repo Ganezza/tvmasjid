@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique file names
 
 // Define schema for form validation
 const formSchema = z.object({
   masjidName: z.string().min(1, "Nama masjid tidak boleh kosong.").max(100, "Nama masjid terlalu panjang.").optional().nullable(),
-  masjidLogoUrl: z.string().url("URL logo tidak valid.").nullable().optional(),
+  masjidLogoUrl: z.string().nullable().optional(), // No longer strictly a URL for input, but will store URL
   masjidAddress: z.string().min(1, "Alamat masjid tidak boleh kosong.").max(255, "Alamat terlalu panjang.").optional().nullable(),
 });
 
@@ -30,6 +31,7 @@ const MasjidInfoSettings: React.FC = () => {
   });
 
   const { handleSubmit, register, setValue, formState: { isSubmitting, errors } } = form;
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -45,11 +47,53 @@ const MasjidInfoSettings: React.FC = () => {
       } else if (data) {
         setValue("masjidName", data.masjid_name || "");
         setValue("masjidLogoUrl", data.masjid_logo_url || "");
+        setCurrentLogoUrl(data.masjid_logo_url);
         setValue("masjidAddress", data.masjid_address || "");
       }
     };
     fetchSettings();
   }, [setValue]);
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExtension}`; // Generate unique file name
+    const filePath = `logos/${fileName}`; // Path inside the bucket
+
+    const uploadToastId = toast.loading("Mengunggah logo masjid...");
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('images') // Use 'images' bucket
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+
+      if (publicUrlData?.publicUrl) {
+        setValue("masjidLogoUrl", publicUrlData.publicUrl);
+        setCurrentLogoUrl(publicUrlData.publicUrl);
+        toast.success("Logo masjid berhasil diunggah!", { id: uploadToastId });
+      } else {
+        throw new Error("Gagal mendapatkan URL publik logo.");
+      }
+    } catch (error: any) {
+      console.error("Error uploading logo:", error);
+      toast.error(`Gagal mengunggah logo: ${error.message}`, { id: uploadToastId });
+    }
+  };
 
   const onSubmit = async (values: MasjidInfoSettingsFormValues) => {
     const { error } = await supabase
@@ -91,14 +135,20 @@ const MasjidInfoSettings: React.FC = () => {
             {errors.masjidName && <p className="text-red-400 text-sm mt-1">{errors.masjidName.message}</p>}
           </div>
           <div>
-            <Label htmlFor="masjidLogoUrl" className="text-gray-300">URL Logo Masjid (Opsional)</Label>
+            <Label htmlFor="masjidLogoUpload" className="text-gray-300">Unggah Logo Masjid (Opsional)</Label>
             <Input
-              id="masjidLogoUrl"
-              type="url"
-              {...register("masjidLogoUrl")}
-              className="bg-gray-700 border-gray-600 text-white mt-1"
-              placeholder="Contoh: https://example.com/logo.png"
+              id="masjidLogoUpload"
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
             />
+            {currentLogoUrl && (
+              <div className="mt-2">
+                <p className="text-sm text-gray-400 mb-1">Logo saat ini:</p>
+                <img src={currentLogoUrl} alt="Current Masjid Logo" className="max-w-full h-24 object-contain rounded-md border border-gray-600" />
+              </div>
+            )}
             {errors.masjidLogoUrl && <p className="text-red-400 text-sm mt-1">{errors.masjidLogoUrl.message}</p>}
           </div>
           <div>
