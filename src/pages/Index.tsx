@@ -9,8 +9,7 @@ import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay";
 import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
-import AudioDisplay from "@/components/AudioDisplay";
-import AppBackground from "@/components/AppBackground";
+import AppBackground from "@/components/AppBackground"; // AudioDisplay removed
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -129,10 +128,10 @@ const Index = () => {
           <NotificationStudyDisplay />
         </div>
 
-        {/* Right Column (Info Slides, AudioDisplay, Tarawih) */}
+        {/* Right Column (Info Slides, Tarawih) */}
         <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
           <InfoSlides />
-          <AudioDisplay />
+          {/* AudioDisplay removed */}
           <TarawihScheduleDisplay />
         </div>
       </div>
