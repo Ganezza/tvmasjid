@@ -10,7 +10,8 @@ import FinancialSettings from "@/components/admin/FinancialSettings";
 import RamadanModeSettings from "@/components/admin/RamadanModeSettings";
 import DisplaySettings from "@/components/admin/DisplaySettings";
 import AudioSettings from "@/components/admin/AudioSettings";
-import MasjidInfoSettings from "@/components/admin/MasjidInfoSettings"; // Import the new component
+import MasjidInfoSettings from "@/components/admin/MasjidInfoSettings";
+import IslamicHolidaySettings from "@/components/admin/IslamicHolidaySettings"; // Import the new component
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const AdminPanel = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Masjid Info Settings - New component */}
+        {/* Masjid Info Settings */}
         <MasjidInfoSettings />
 
         {/* Prayer Time Settings */}
@@ -54,6 +55,9 @@ const AdminPanel = () => {
 
         {/* Audio Settings */}
         <AudioSettings />
+
+        {/* Islamic Holiday Settings - New component */}
+        <IslamicHolidaySettings />
       </div>
     </div>
   );
