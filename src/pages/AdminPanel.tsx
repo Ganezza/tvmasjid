@@ -7,7 +7,8 @@ import InfoSlideSettings from "@/components/admin/InfoSlideSettings";
 import ImamMuezzinScheduleSettings from "@/components/admin/ImamMuezzinScheduleSettings";
 import NotificationStudySettings from "@/components/admin/NotificationStudySettings";
 import FinancialSettings from "@/components/admin/FinancialSettings";
-import RamadanModeSettings from "@/components/admin/RamadanModeSettings"; // Import the new component
+import RamadanModeSettings from "@/components/admin/RamadanModeSettings";
+import DisplaySettings from "@/components/admin/DisplaySettings"; // Import the new component
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -40,8 +41,11 @@ const AdminPanel = () => {
         {/* Financial Settings */}
         <FinancialSettings />
 
-        {/* Ramadan Mode Settings - Replacing the placeholder */}
+        {/* Ramadan Mode Settings */}
         <RamadanModeSettings />
+
+        {/* Display Settings - New component */}
+        <DisplaySettings />
       </div>
     </div>
   );
