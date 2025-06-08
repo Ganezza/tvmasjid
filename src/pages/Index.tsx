@@ -9,7 +9,7 @@ import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay";
 import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
-import AppBackground from "@/components/AppBackground"; // AudioDisplay removed
+import AppBackground from "@/components/AppBackground";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -111,7 +111,7 @@ const Index = () => {
       </div>
 
       {/* Main Content Area - Using Grid for better layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full px-4 py-4 md:py-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-4 md:py-6">
         {/* Prayer Times Display - Now full width */}
         <div className="col-span-full">
           <PrayerTimesDisplay className="flex-grow" />
@@ -119,7 +119,7 @@ const Index = () => {
 
         {/* Left Column (FinancialDisplay) */}
         <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
-          <FinancialDisplay />
+          <FinancialDisplay heightClass="h-64 md:h-80 lg:h-96" />
         </div>
 
         {/* Middle Column (ImamMuezzinDisplay and NotificationStudyDisplay) */}
@@ -131,7 +131,6 @@ const Index = () => {
         {/* Right Column (Info Slides, Tarawih) */}
         <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
           <InfoSlides />
-          {/* AudioDisplay removed */}
           <TarawihScheduleDisplay />
         </div>
       </div>

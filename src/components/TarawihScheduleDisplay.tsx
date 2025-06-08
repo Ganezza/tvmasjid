@@ -23,7 +23,7 @@ const TarawihScheduleDisplay: React.FC = () => {
   const [tarawihSchedule, setTarawihSchedule] = useState<Schedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isRamadanModeActive, setIsRamadanModeActive] = useState(false);
+  const [isRamadanModeActive, setIsRamadanModeActive] = useState(false); // State untuk mode Ramadan
 
   const fetchTarawihSchedule = useCallback(async () => {
     setIsLoading(true);
@@ -136,21 +136,21 @@ const TarawihScheduleDisplay: React.FC = () => {
       <h3 className="text-3xl font-bold mb-3 text-yellow-300">
         Jadwal Sholat Tarawih
       </h3>
-      <p className="text-2xl text-blue-200">
+      <p className="text-3xl text-blue-200">
         Imam: <span className="font-semibold">{tarawihSchedule.imam_name}</span>
       </p>
       {tarawihSchedule.khatib_name && (
-        <p className="text-xl text-gray-300 mt-1">
+        <p className="text-2xl text-gray-300 mt-1">
           Khatib: <span className="font-medium">{tarawihSchedule.khatib_name}</span>
         </p>
       )}
       {tarawihSchedule.bilal_name && (
-        <p className="text-xl text-gray-300 mt-1">
+        <p className="text-2xl text-gray-300 mt-1">
           Bilal: <span className="font-medium">{tarawihSchedule.bilal_name}</span>
         </p>
       )}
       {tarawihSchedule.muezzin_name && ( // Muezzin is still relevant for Tarawih
-        <p className="text-xl text-gray-300 mt-1">
+        <p className="text-2xl text-gray-300 mt-1">
           Muadzin: <span className="font-medium">{tarawihSchedule.muezzin_name}</span>
         </p>
       )}
