@@ -52,7 +52,7 @@ const Index = () => {
       </div>
 
       {/* Main Content Area - Using Grid for better layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl px-4 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-8 md:py-12">
         {/* Prayer Times - always prominent, full width */}
         <div className="col-span-full">
           <PrayerTimesDisplay />
