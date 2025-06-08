@@ -60,7 +60,8 @@ const ImamMuezzinDisplay: React.FC = () => {
       const times = new PrayerTimes(coordinates, now.toDate(), params);
 
       // 3. Determine the next prayer name
-      const nextPrayerAdhanName = times.nextPrayerName(now.toDate());
+      // Menggunakan times.nextPrayer() yang benar
+      const nextPrayerAdhanName = times.nextPrayer(); 
       let nextPrayerDisplayName = prayerNameMap[nextPrayerAdhanName];
 
       // Special handling for Friday Dhuhr -> Jumat
