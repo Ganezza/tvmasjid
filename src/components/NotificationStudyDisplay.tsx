@@ -133,7 +133,7 @@ const NotificationStudyDisplay: React.FC = () => {
             <p className="text-2xl md:text-3xl lg:text-4xl leading-relaxed text-gray-200 break-words">{item.content}</p>
             {(item.event_date || item.event_time) && (
               <p className="text-xl md:text-2xl lg:text-3xl text-green-300 mt-4">
-                {item.event_date && format(new Date(item.event_date), "EEEE, dd MMMM yyyy", { locale: id })}
+                {item.event_date && format(new Date(item.event_date), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')}
                 {item.event_date && item.event_time && " Pukul "}
                 {item.event_time}
               </p>

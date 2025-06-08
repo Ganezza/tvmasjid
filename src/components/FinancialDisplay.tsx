@@ -61,7 +61,7 @@ const FinancialDisplay: React.FC = () => {
     // If today is Friday (5) or Saturday (6), we want the Friday of the current week.
     // If today is Sunday (0) to Thursday (4), we want the Friday of the previous week.
     const lastFriday = today.day(currentDayIndex >= 5 ? 5 : 5 - 7);
-    setLastFridayDate(format(lastFriday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }));
+    setLastFridayDate(format(lastFriday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')); // Replace Minggu with Ahad
 
     // Set up real-time listener for financial_records changes
     const channel = supabase
