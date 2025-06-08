@@ -59,24 +59,31 @@ const ImamMuezzinDisplay: React.FC = () => {
       const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod]();
       const times = new PrayerTimes(coordinates, now.toDate(), params);
 
-      // 3. Determine the next prayer name
-      // Menggunakan times.nextPrayer() yang benar
-      const nextPrayerAdhanName = times.nextPrayer(); 
+      let nextPrayerAdhanName = times.nextPrayer();
+      let targetDay = now; // Default to today
+
+      // If no more prayers today (i.e., after Isha), consider Fajr of the next day
+      if (!nextPrayerAdhanName) {
+        nextPrayerAdhanName = "Fajr"; // The next prayer will be Fajr
+        targetDay = now.add(1, 'day'); // And it will be tomorrow
+      }
+
       let nextPrayerDisplayName = prayerNameMap[nextPrayerAdhanName];
 
       // Special handling for Friday Dhuhr -> Jumat
-      if (now.day() === 5 && nextPrayerAdhanName === "Dhuhr") { // Friday is day 5
+      if (targetDay.day() === 5 && nextPrayerAdhanName === "Dhuhr") { // Friday is day 5
         nextPrayerDisplayName = "Jumat";
       }
 
       if (!nextPrayerDisplayName) {
+        // This case should ideally not be reached if prayerNameMap is complete and adhan returns expected names
         setError("Tidak dapat menentukan waktu sholat berikutnya.");
         setIsLoading(false);
         return;
       }
 
-      // 4. Get current day of the week in Indonesian
-      const currentDayOfWeek = getIndonesianDayOfWeek(now);
+      // 4. Get current day of the week in Indonesian, based on targetDay
+      const currentDayOfWeek = getIndonesianDayOfWeek(targetDay);
 
       // 5. Fetch imam/muezzin schedule for the next prayer and current day
       const { data: scheduleData, error: scheduleError } = await supabase
