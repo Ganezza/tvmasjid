@@ -98,11 +98,11 @@ const Index = () => {
             <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 object-contain" />
           )}
           <div>
-            <h1 className="text-4xl md:text-6xl font-extrabold text-green-400 drop-shadow-lg text-left text-outline-black">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-green-400 drop-shadow-lg text-left text-outline-black">
               {masjidName}
             </h1>
             {masjidAddress && (
-              <p className="text-lg md:text-xl text-gray-300 text-left mt-1 text-outline-black">
+              <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-gray-300 text-left mt-1 text-outline-black">
                 {masjidAddress}
               </p>
             )}
