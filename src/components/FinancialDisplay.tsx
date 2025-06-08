@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import dayjs from "dayjs";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
+import AutoScrollingFinancialRecords from "@/components/AutoScrollingFinancialRecords"; // Import komponen baru
 
 interface FinancialRecord {
   id: string;
@@ -117,7 +117,7 @@ const FinancialDisplay: React.FC = () => {
       {recentRecords.length === 0 ? (
         <p className="text-gray-400 text-lg">Belum ada transaksi yang tercatat.</p>
       ) : (
-        <ScrollArea className="h-48 md:h-64 w-full pr-4"> {/* Scrollable area */}
+        <AutoScrollingFinancialRecords heightClass="h-48 md:h-64"> {/* Menggunakan komponen auto-scroll */}
           <div className="space-y-3">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
@@ -133,7 +133,7 @@ const FinancialDisplay: React.FC = () => {
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </AutoScrollingFinancialRecords>
       )}
     </div>
   );
