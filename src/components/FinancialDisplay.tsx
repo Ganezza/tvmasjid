@@ -54,13 +54,13 @@ const FinancialDisplay: React.FC = () => {
   useEffect(() => {
     fetchFinancialSummary();
 
-    // Calculate last Friday's date
+    // Calculate the most recent Friday (inclusive of today if it's Friday)
     const today = dayjs();
-    // day() returns 0 for Sunday, 1 for Monday, ..., 5 for Friday, 6 for Saturday
-    // If today is Friday (5), it will be today. If today is Saturday (6), it will be yesterday.
-    // If today is Sunday (0), it will be 2 days ago.
-    // This correctly gets the most recent Friday (inclusive of today if it's Friday).
-    const lastFriday = today.day(5); 
+    const currentDayIndex = today.day(); // 0 for Sunday, 1 for Monday, ..., 5 for Friday, 6 for Saturday
+
+    // If today is Friday (5) or Saturday (6), we want the Friday of the current week.
+    // If today is Sunday (0) to Thursday (4), we want the Friday of the previous week.
+    const lastFriday = today.day(currentDayIndex >= 5 ? 5 : 5 - 7);
     setLastFridayDate(format(lastFriday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }));
 
     // Set up real-time listener for financial_records changes
