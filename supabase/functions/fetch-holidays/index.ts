@@ -8,13 +8,17 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
+    console.log("OPTIONS request received.");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log("Incoming request to fetch-holidays.");
     const { year, country } = await req.json();
+    console.log(`Request body parsed: year=${year}, country=${country}`);
 
     if (!year || !country) {
+      console.error("Missing 'year' or 'country' in request body.");
       return new Response(JSON.stringify({ error: "Missing 'year' or 'country' in request body." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -23,16 +27,20 @@ serve(async (req) => {
 
     const CALENDARIFIC_API_KEY = Deno.env.get("CALENDARIFIC_API_KEY");
     if (!CALENDARIFIC_API_KEY) {
+      console.error("CALENDARIFIC_API_KEY is not set in Supabase secrets.");
       return new Response(JSON.stringify({ error: "CALENDARIFIC_API_KEY is not set in Supabase secrets." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
     }
+    console.log("CALENDARIFIC_API_KEY is set.");
 
     const url = `https://calendarific.com/api/v2/holidays?api_key=${CALENDARIFIC_API_KEY}&country=${country}&year=${year}`;
-    console.log(`Fetching holidays from: ${url}`);
+    console.log(`Attempting to fetch holidays from: ${url}`);
 
     const response = await fetch(url);
+    console.log(`Calendarific API response status: ${response.status}`);
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Calendarific API error: ${response.status} - ${errorText}`);
@@ -43,7 +51,8 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log("Calendarific API response received.");
+    console.log("Calendarific API response received and parsed.");
+    console.log(`Number of holidays found: ${data.response.holidays ? data.response.holidays.length : 0}`);
 
     // Initialize Supabase client for database operations
     const supabaseClient = createClient(
@@ -55,12 +64,14 @@ serve(async (req) => {
         },
       }
     );
+    console.log("Supabase client initialized in Edge Function.");
 
     const holidaysToUpsert = data.response.holidays.map((holiday: any) => ({
       name: holiday.name,
       holiday_date: holiday.date.iso,
       display_order: 0, // Default display order
     }));
+    console.log(`Prepared ${holidaysToUpsert.length} holidays for upsert.`);
 
     if (holidaysToUpsert.length > 0) {
       const { error: upsertError } = await supabaseClient
@@ -85,7 +96,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Error in fetch-holidays Edge Function:", error);
+    console.error("Caught unexpected error in fetch-holidays Edge Function:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
