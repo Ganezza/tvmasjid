@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import PrayerTimeSettings from "@/components/admin/PrayerTimeSettings"; // Import PrayerTimeSettings
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -15,11 +16,10 @@ const AdminPanel = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Placeholder for Admin Sections */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">Jadwal Sholat & Iqomah</h2>
-          <p className="text-gray-400">Atur waktu sholat, iqomah, dan audio adzan/tarhim.</p>
-        </div>
+        {/* Prayer Time Settings */}
+        <PrayerTimeSettings />
+
+        {/* Placeholder for other Admin Sections */}
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">Jadwal Imam & Muadzin</h2>
           <p className="text-gray-400">Kelola jadwal imam dan muadzin untuk sholat fardhu dan Jumat.</p>
