@@ -116,10 +116,10 @@ const FinancialDisplay: React.FC = () => {
           <div className="space-y-3">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
-                <p className="font-medium text-lg text-blue-200">
+                <p className="font-medium text-xl text-blue-200"> {/* Changed text-lg to text-xl */}
                   {record.description}
                 </p>
-                <p className={`text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
+                <p className={`text-lg font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}> {/* Changed text-base to text-lg */}
                   {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
                 <p className="text-xs text-gray-400">

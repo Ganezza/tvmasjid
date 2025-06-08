@@ -214,7 +214,7 @@ const PrayerTimesDisplay: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xl md:text-2xl">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-2xl md:text-3xl"> {/* Changed text-xl md:text-2xl to text-2xl md:text-3xl */}
             {prayerTimes.map((prayer) => (
               <div
                 key={prayer.name}
@@ -230,7 +230,7 @@ const PrayerTimesDisplay: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="mt-6 text-yellow-300 font-semibold text-2xl md:text-3xl">
+          <div className="mt-6 text-yellow-300 font-semibold text-3xl md:text-4xl"> {/* Changed text-2xl md:text-3xl to text-3xl md:text-4xl */}
             {nextPrayer ? (
               nextPrayer.name === "Imsak" ? (
                 <>
