@@ -16,8 +16,8 @@ interface FinancialRecord {
 
 const FinancialDisplay: React.FC = () => {
   const [totalBalance, setTotalBalance] = useState<number>(0);
-  const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]); // State baru untuk rincian
-  const [lastFridayDate, setLastFridayDate] = useState<string | null>(null);
+  const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
+  const [lastUpdateDate, setLastUpdateDate] = useState<string | null>(null); // Mengubah nama state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +28,7 @@ const FinancialDisplay: React.FC = () => {
       const { data, error: fetchError } = await supabase
         .from("financial_records")
         .select("id, created_at, transaction_type, amount, description")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }); // Pastikan diurutkan dari yang terbaru
 
       if (fetchError) {
         console.error("Error fetching financial records for display:", fetchError);
@@ -39,16 +39,14 @@ const FinancialDisplay: React.FC = () => {
           return record.transaction_type === "inflow" ? sum + record.amount : sum - record.amount;
         }, 0);
         setTotalBalance(balance);
-        setRecentRecords(data || []); // Simpan semua data untuk rincian
+        setRecentRecords(data || []);
 
-        // Calculate the date of the most recent Friday
-        let friday = dayjs();
-        // If today is not Friday, go back until Friday
-        while (friday.day() !== 5) { // 5 represents Friday in dayjs (0=Sunday, 1=Monday, ..., 6=Saturday)
-          friday = friday.subtract(1, 'day');
+        // Set tanggal update terakhir dari record pertama (terbaru)
+        if (data && data.length > 0) {
+          setLastUpdateDate(format(new Date(data[0].created_at), "EEEE, dd MMMM yyyy, HH:mm", { locale: id }));
+        } else {
+          setLastUpdateDate(null); // Tidak ada record, tidak ada tanggal update
         }
-        
-        setLastFridayDate(format(friday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }));
       }
     } catch (err) {
       console.error("Unexpected error fetching financial summary:", err);
@@ -72,11 +70,12 @@ const FinancialDisplay: React.FC = () => {
       .subscribe();
 
     // Update every minute to ensure the "last Friday" date is accurate if the day changes
-    const interval = setInterval(fetchFinancialSummary, 60 * 1000); 
+    // Removed this interval as we are now showing last update date, not last Friday
+    // const interval = setInterval(fetchFinancialSummary, 60 * 1000); 
 
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(interval);
+      // clearInterval(interval); // Clear the removed interval
     };
   }, [fetchFinancialSummary]);
 
@@ -105,9 +104,9 @@ const FinancialDisplay: React.FC = () => {
       <p className="text-4xl md:text-5xl font-bold text-green-400 mb-2">
         Saldo Kas: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </p>
-      {lastFridayDate && (
+      {lastUpdateDate && (
         <p className="text-xl md:text-2xl text-gray-300 mb-6">
-          Data per {lastFridayDate}
+          Diperbarui terakhir: {lastUpdateDate}
         </p>
       )}
 
@@ -117,7 +116,7 @@ const FinancialDisplay: React.FC = () => {
       {recentRecords.length === 0 ? (
         <p className="text-gray-400 text-lg">Belum ada transaksi yang tercatat.</p>
       ) : (
-        <AutoScrollingFinancialRecords heightClass="h-48 md:h-64"> {/* Menggunakan komponen auto-scroll */}
+        <AutoScrollingFinancialRecords heightClass="h-48 md:h-64">
           <div className="space-y-3">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
