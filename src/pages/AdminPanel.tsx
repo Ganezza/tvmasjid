@@ -6,7 +6,8 @@ import RunningTextSettings from "@/components/admin/RunningTextSettings";
 import InfoSlideSettings from "@/components/admin/InfoSlideSettings";
 import ImamMuezzinScheduleSettings from "@/components/admin/ImamMuezzinScheduleSettings";
 import NotificationStudySettings from "@/components/admin/NotificationStudySettings";
-import FinancialSettings from "@/components/admin/FinancialSettings"; // Import the new component
+import FinancialSettings from "@/components/admin/FinancialSettings";
+import RamadanModeSettings from "@/components/admin/RamadanModeSettings"; // Import the new component
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -39,11 +40,8 @@ const AdminPanel = () => {
         {/* Financial Settings */}
         <FinancialSettings />
 
-        {/* Placeholder for other Admin Sections */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">Pengaturan Umum</h2>
-          <p className="text-gray-400">Konfigurasi mode Ramadan dan pengaturan lainnya.</p>
-        </div>
+        {/* Ramadan Mode Settings - Replacing the placeholder */}
+        <RamadanModeSettings />
       </div>
     </div>
   );

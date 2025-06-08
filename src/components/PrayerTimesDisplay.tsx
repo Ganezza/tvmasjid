@@ -29,7 +29,7 @@ const PrayerTimesDisplay: React.FC = () => {
     try {
       const { data, error: fetchError } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method")
+        .select("latitude, longitude, calculation_method, is_ramadan_mode_active")
         .eq("id", 1)
         .single();
 
@@ -44,9 +44,18 @@ const PrayerTimesDisplay: React.FC = () => {
       let latitude = data?.latitude || -6.2088; // Default to Jakarta if not set
       let longitude = data?.longitude || 106.8456; // Default to Jakarta if not set
       let calculationMethod = data?.calculation_method || "MuslimWorldLeague";
+      const isRamadanModeActive = data?.is_ramadan_mode_active || false;
 
       const coordinates = new Coordinates(latitude, longitude);
       const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod]();
+      
+      // Adjust parameters for Imsak if Ramadan mode is active
+      if (isRamadanModeActive) {
+        params.imsakParameter = CalculationParameters.fromMinutesBeforeFajr(10); // Imsak 10 minutes before Fajr
+      } else {
+        params.imsakParameter = undefined; // Reset if not Ramadan mode
+      }
+
       const today = new Date();
       const times = new PrayerTimes(coordinates, today, params);
 
@@ -57,6 +66,12 @@ const PrayerTimesDisplay: React.FC = () => {
         { name: "Maghrib", time: dayjs(times.maghrib).format("HH:mm") },
         { name: "Isya", time: dayjs(times.isha).format("HH:mm") },
       ];
+
+      // Add Imsak if Ramadan mode is active and imsak time is distinct from fajr
+      if (isRamadanModeActive && dayjs(times.imsak).format("HH:mm") !== dayjs(times.fajr).format("HH:mm")) {
+        newPrayerTimes.unshift({ name: "Imsak", time: dayjs(times.imsak).format("HH:mm") });
+      }
+      
       setPrayerTimes(newPrayerTimes);
       setIsLoading(false);
     } catch (err) {
