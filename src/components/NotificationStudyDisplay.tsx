@@ -85,7 +85,7 @@ const NotificationStudyDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="w-11/12 max-w-4xl h-64 md:h-80 bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white">
+      <div className="w-11/12 max-w-4xl h-56 md:h-72 bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white">
         <p className="text-2xl">Memuat notifikasi & kajian...</p>
       </div>
     );
@@ -93,7 +93,7 @@ const NotificationStudyDisplay: React.FC = () => {
 
   if (error) {
     return (
-      <div className="w-11/12 max-w-4xl h-64 md:h-80 bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white">
+      <div className="w-11/12 max-w-4xl h-56 md:h-72 bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white">
         <p className="text-2xl font-bold">Error:</p>
         <p className="text-xl">{error}</p>
       </div>
@@ -102,14 +102,14 @@ const NotificationStudyDisplay: React.FC = () => {
 
   if (items.length === 0) {
     return (
-      <div className="w-11/12 max-w-4xl h-64 md:h-80 bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white">
+      <div className="w-11/12 max-w-4xl h-56 md:h-72 bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white">
         <p className="text-2xl text-gray-400">Tidak ada notifikasi atau kajian untuk ditampilkan.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-11/12 max-w-4xl h-64 md:h-80 bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8">
+    <div className="w-11/12 max-w-4xl h-56 md:h-72 bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8">
       <Swiper
         spaceBetween={30}
         centeredSlides={true}

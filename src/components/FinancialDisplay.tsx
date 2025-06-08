@@ -112,7 +112,7 @@ const FinancialDisplay: React.FC = () => {
       {recentRecords.length === 0 ? (
         <p className="text-gray-400 text-xl md:text-2xl">Belum ada transaksi yang tercatat.</p>
       ) : (
-        <AutoScrollingFinancialRecords heightClass="h-48 md:h-64">
+        <AutoScrollingFinancialRecords heightClass="h-56 md:h-72 lg:h-88">
           <div className="space-y-3">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
