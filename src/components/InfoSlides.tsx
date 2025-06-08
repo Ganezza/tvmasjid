@@ -66,7 +66,7 @@ const InfoSlides: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-96 md:h-[30rem]">
+      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-[40rem] md:h-[48rem]">
         <p className="text-2xl">Memuat slide informasi...</p>
       </div>
     );
@@ -74,7 +74,7 @@ const InfoSlides: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-96 md:h-[30rem]">
+      <div className="bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-[40rem] md:h-[48rem]">
         <p className="text-2xl font-bold">Error:</p>
         <p className="text-xl">{error}</p>
       </div>
@@ -83,14 +83,14 @@ const InfoSlides: React.FC = () => {
 
   if (slides.length === 0) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-96 md:h-[30rem]">
+      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-[40rem] md:h-[48rem]">
         <p className="text-2xl text-gray-400">Tidak ada slide informasi untuk ditampilkan.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 h-96 md:h-[30rem]">
+    <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 h-[40rem] md:h-[48rem]">
       <Swiper
         spaceBetween={30}
         centeredSlides={true}
@@ -108,11 +108,10 @@ const InfoSlides: React.FC = () => {
         {slides.map((slide) => (
           <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-4">
             {slide.title && (
-              <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-yellow-300 text-center">
+              <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-yellow-300 text-center text-wrap">
                 {slide.title}
               </h3>
             )}
-            {/* New: Use flex-grow on a wrapper div for the image */}
             <div className="flex-grow flex items-center justify-center w-full h-full">
               <img
                 src={slide.content}

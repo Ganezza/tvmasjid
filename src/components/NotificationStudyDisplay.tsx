@@ -130,7 +130,7 @@ const NotificationStudyDisplay: React.FC = () => {
               {item.type === "notification" ? "PENGUMUMAN" : item.type === "study" ? "JADWAL KAJIAN" : "ACARA KHUSUS"}
             </h3>
             <h4 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-2 text-blue-300">{item.title}</h4>
-            <p className="text-2xl md:text-3xl lg:text-4xl leading-relaxed text-gray-200">{item.content}</p>
+            <p className="text-2xl md:text-3xl lg:text-4xl leading-relaxed text-gray-200 break-words">{item.content}</p>
             {(item.event_date || item.event_time) && (
               <p className="text-xl md:text-2xl lg:text-3xl text-green-300 mt-4">
                 {item.event_date && format(new Date(item.event_date), "EEEE, dd MMMM yyyy", { locale: id })}
