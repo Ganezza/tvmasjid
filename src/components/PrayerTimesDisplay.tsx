@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
-import * as Adhan from "adhan"; // Import semua sebagai namespace Adhan
+import * as Adhan from "adhan";
 import { toast } from "sonner";
 
 dayjs.extend(duration);
@@ -27,37 +27,42 @@ const PrayerTimesDisplay: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
+      console.log("Fetching app settings for prayer times...");
       const { data, error: fetchError } = await supabase
         .from("app_settings")
         .select("latitude, longitude, calculation_method, is_ramadan_mode_active")
         .eq("id", 1)
         .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
-        console.error("Error fetching prayer time settings:", fetchError);
-        setError("Gagal memuat pengaturan waktu sholat. Pastikan pengaturan sudah disimpan.");
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error("Error fetching prayer time settings from Supabase:", fetchError);
+        setError(`Gagal memuat pengaturan waktu sholat: ${fetchError.message}. Pastikan pengaturan sudah disimpan.`);
         toast.error("Gagal memuat pengaturan waktu sholat.");
         setIsLoading(false);
         return;
       }
 
-      let latitude = data?.latitude || -6.2088; // Default to Jakarta if not set
-      let longitude = data?.longitude || 106.8456; // Default to Jakarta if not set
+      let latitude = data?.latitude || -6.2088;
+      let longitude = data?.longitude || 106.8456;
       let calculationMethod = data?.calculation_method || "MuslimWorldLeague";
       const isRamadanModeActive = data?.is_ramadan_mode_active || false;
 
-      const coordinates = new Adhan.Coordinates(latitude, longitude); // Gunakan Adhan.Coordinates
-      const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod](); // Gunakan Adhan.CalculationMethod
+      console.log("Settings fetched:", { latitude, longitude, calculationMethod, isRamadanModeActive });
+
+      const coordinates = new Adhan.Coordinates(latitude, longitude);
+      const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod]();
       
-      // Adjust parameters for Imsak if Ramadan mode is active
       if (isRamadanModeActive) {
-        params.imsakParameter = new Adhan.TimeAdjustment(10); // Gunakan Adhan.TimeAdjustment
+        params.imsakParameter = new Adhan.TimeAdjustment(10);
+        console.log("Ramadan mode active. Imsak parameter set to 10 minutes before Fajr.");
       } else {
-        params.imsakParameter = undefined; // Reset if not Ramadan mode
+        params.imsakParameter = undefined;
+        console.log("Ramadan mode inactive. Imsak parameter cleared.");
       }
 
       const today = new Date();
-      const times = new Adhan.PrayerTimes(coordinates, today, params); // Gunakan Adhan.PrayerTimes
+      console.log("Calculating prayer times for today:", today);
+      const times = new Adhan.PrayerTimes(coordinates, today, params);
 
       const newPrayerTimes: PrayerTime[] = [
         { name: "Subuh", time: dayjs(times.fajr).format("HH:mm") },
@@ -67,16 +72,16 @@ const PrayerTimesDisplay: React.FC = () => {
         { name: "Isya", time: dayjs(times.isha).format("HH:mm") },
       ];
 
-      // Add Imsak if Ramadan mode is active and imsak time is distinct from fajr
       if (isRamadanModeActive && dayjs(times.imsak).format("HH:mm") !== dayjs(times.fajr).format("HH:mm")) {
         newPrayerTimes.unshift({ name: "Imsak", time: dayjs(times.imsak).format("HH:mm") });
       }
       
+      console.log("Calculated prayer times:", newPrayerTimes);
       setPrayerTimes(newPrayerTimes);
       setIsLoading(false);
-    } catch (err) {
+    } catch (err: any) { // Catch any type of error
       console.error("Error in fetchAndCalculatePrayerTimes:", err);
-      setError("Terjadi kesalahan saat menghitung waktu sholat.");
+      setError(`Terjadi kesalahan saat menghitung waktu sholat: ${err.message || "Kesalahan tidak diketahui"}.`);
       toast.error("Terjadi kesalahan saat menghitung waktu sholat.");
       setIsLoading(false);
     }
@@ -85,12 +90,11 @@ const PrayerTimesDisplay: React.FC = () => {
   useEffect(() => {
     fetchAndCalculatePrayerTimes();
 
-    // Set up real-time listener for app_settings changes
     const channel = supabase
       .channel('app_settings_changes')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('Change received!', payload);
-        fetchAndCalculatePrayerTimes(); // Recalculate if settings change
+        console.log('App settings change received for PrayerTimesDisplay!', payload);
+        fetchAndCalculatePrayerTimes();
       })
       .subscribe();
 
@@ -101,7 +105,6 @@ const PrayerTimesDisplay: React.FC = () => {
 
   useEffect(() => {
     if (prayerTimes.length === 0 && !isLoading && !error) {
-      // If no prayer times are loaded and no error, try fetching again or show a message
       setError("Waktu sholat belum dimuat. Silakan atur lokasi di panel admin.");
       return;
     }
@@ -129,7 +132,6 @@ const PrayerTimesDisplay: React.FC = () => {
         };
       }).sort((a, b) => a.dateTimeToday.diff(b.dateTimeToday));
 
-      // Determine next prayer
       for (let i = 0; i < sortedPrayerTimes.length; i++) {
         const prayer = sortedPrayerTimes[i];
         let prayerDateTime = prayer.dateTimeToday;
@@ -145,7 +147,6 @@ const PrayerTimesDisplay: React.FC = () => {
         }
       }
 
-      // Determine current prayer based on time intervals
       for (let i = 0; i < sortedPrayerTimes.length; i++) {
         const prayer = sortedPrayerTimes[i];
         const nextIndex = (i + 1) % sortedPrayerTimes.length;
@@ -154,7 +155,6 @@ const PrayerTimesDisplay: React.FC = () => {
         let startOfInterval = prayer.dateTimeToday;
         let endOfInterval = nextPrayerInList.dateTimeToday;
 
-        // Handle midnight wrap-around for intervals
         if (endOfInterval.isBefore(startOfInterval)) {
           endOfInterval = endOfInterval.add(1, 'day');
         }
@@ -165,8 +165,6 @@ const PrayerTimesDisplay: React.FC = () => {
         }
       }
 
-      // If no prayer is found in an interval (e.g., after Isya until Subuh),
-      // the current prayer is the last one (Isya)
       if (!currentPrayer && sortedPrayerTimes.length > 0) {
         const lastPrayerToday = sortedPrayerTimes[sortedPrayerTimes.length - 1].dateTimeToday;
         const firstPrayerTomorrow = sortedPrayerTimes[0].dateTimeToday.add(1, 'day');
@@ -196,10 +194,10 @@ const PrayerTimesDisplay: React.FC = () => {
     };
 
     const interval = setInterval(updateDisplay, 1000);
-    updateDisplay(); // Initial call
+    updateDisplay();
 
     return () => clearInterval(interval);
-  }, [prayerTimes, isLoading, error]); // Re-run if prayerTimes, isLoading, or error changes
+  }, [prayerTimes, isLoading, error]);
 
   if (isLoading) {
     return (
