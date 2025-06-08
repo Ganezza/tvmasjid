@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
+import HijriCalendarDisplay from "@/components/HijriCalendarDisplay";
+import PrayerTimesDisplay from "@/components/PrayerTimesDisplay";
+import RunningText from "@/components/RunningText";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -34,37 +37,31 @@ const Index = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-gray-950 text-white flex flex-col items-center justify-center overflow-hidden">
-      {/* Main Display Content */}
-      <div className="flex-grow flex flex-col items-center justify-center p-4 w-full">
-        <h1 className="text-6xl md:text-8xl font-extrabold mb-8 text-green-400 drop-shadow-lg">
+    <div className="relative min-h-screen w-full bg-gray-950 text-white flex flex-col items-center justify-between overflow-hidden p-4">
+      {/* Header Section */}
+      <div className="w-full flex justify-between items-center p-4">
+        <h1 className="text-4xl md:text-6xl font-extrabold text-green-400 drop-shadow-lg">
           Masjid Digital TV
         </h1>
-        <p className="text-2xl md:text-4xl text-gray-300 mb-12">
+        <HijriCalendarDisplay />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-grow flex flex-col items-center justify-center w-full max-w-6xl px-4">
+        <p className="text-2xl md:text-4xl text-gray-300 mb-8">
           Waktu Sholat & Informasi Masjid
         </p>
-
-        {/* Placeholder for Prayer Times and Countdown */}
-        <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8">
-          <h2 className="text-4xl font-bold mb-4 text-blue-300">Jadwal Sholat</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xl md:text-2xl">
-            <div>Subuh: 04:30</div>
-            <div>Dzuhur: 12:00</div>
-            <div>Ashar: 15:30</div>
-            <div>Maghrib: 18:00</div>
-            <div>Isya: 19:15</div>
-            <div className="col-span-2 md:col-span-1 text-yellow-300 font-semibold">
-              Next Sholat: Dzuhur (Countdown: 00:15:30)
-            </div>
-          </div>
+        <PrayerTimesDisplay />
+        {/* Placeholder for Info Slides - will be added later */}
+        <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 h-64 flex items-center justify-center">
+          <p className="text-2xl text-gray-400">Info Slides (Coming Soon)</p>
         </div>
+      </div>
 
-        {/* Placeholder for Running Text */}
-        <div className="w-full bg-gray-800 bg-opacity-70 p-4 rounded-lg shadow-xl mt-auto">
-          <p className="text-xl md:text-2xl text-gray-200 animate-pulse">
-            Selamat datang di Masjid Agung Al-Falah. Mari tingkatkan iman dan taqwa kita.
-          </p>
-        </div>
+      {/* Footer Section - Running Text and MadeWithDyad */}
+      <div className="w-full">
+        <RunningText text="Selamat datang di Masjid Agung Al-Falah. Mari tingkatkan iman dan taqwa kita. Jangan lupa matikan ponsel saat sholat. Semoga Allah menerima amal ibadah kita. Aamiin." />
+        <MadeWithDyad />
       </div>
 
       {/* Secret Shortcut Area (Bottom Right Corner) */}
@@ -73,8 +70,6 @@ const Index = () => {
         onClick={handleSecretShortcutClick}
         aria-label="Secret shortcut to admin panel"
       />
-
-      <MadeWithDyad />
     </div>
   );
 };
