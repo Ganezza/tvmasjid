@@ -2,7 +2,8 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import PrayerTimeSettings from "@/components/admin/PrayerTimeSettings";
-import RunningTextSettings from "@/components/admin/RunningTextSettings"; // Import RunningTextSettings
+import RunningTextSettings from "@/components/admin/RunningTextSettings";
+import InfoSlideSettings from "@/components/admin/InfoSlideSettings"; // Import InfoSlideSettings
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -23,6 +24,9 @@ const AdminPanel = () => {
         {/* Running Text Settings */}
         <RunningTextSettings />
 
+        {/* Info Slide Settings */}
+        <InfoSlideSettings />
+
         {/* Placeholder for other Admin Sections */}
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">Jadwal Imam & Muadzin</h2>
@@ -35,10 +39,6 @@ const AdminPanel = () => {
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">Informasi Keuangan</h2>
           <p className="text-gray-400">Input data kas masuk, kas keluar, dan saldo masjid.</p>
-        </div>
-        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">Konten Display</h2>
-          <p className="text-gray-400">Atur slide info masjid, background, dan running text.</p>
         </div>
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">Pengaturan Umum</h2>
