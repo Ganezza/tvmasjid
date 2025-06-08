@@ -34,12 +34,13 @@ const FinancialDisplay: React.FC = () => {
         setError("Gagal memuat ringkasan keuangan.");
         toast.error("Gagal memuat ringkasan keuangan.");
       } else {
-        // Calculate balance from ALL records
+        console.log("Fetched financial records:", data); // Log data yang diambil
         const balance = (data || []).reduce((sum, record) => {
           return record.transaction_type === "inflow" ? sum + record.amount : sum - record.amount;
         }, 0);
         setTotalBalance(balance);
         setRecentRecords(data || []); // Set all fetched records as recent
+        console.log("Calculated total balance:", balance); // Log saldo yang dihitung
       }
     } catch (err) {
       console.error("Unexpected error fetching financial summary:", err);
