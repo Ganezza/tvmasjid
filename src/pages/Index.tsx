@@ -7,7 +7,8 @@ import RunningText from "@/components/RunningText";
 import InfoSlides from "@/components/InfoSlides";
 import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay";
 import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
-import FinancialDisplay from "@/components/FinancialDisplay"; // Import FinancialDisplay
+import FinancialDisplay from "@/components/FinancialDisplay";
+import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay"; // Import TarawihScheduleDisplay
 
 const Index = () => {
   const navigate = useNavigate();
@@ -57,8 +58,9 @@ const Index = () => {
         </p>
         <PrayerTimesDisplay />
         <ImamMuezzinDisplay />
+        <TarawihScheduleDisplay /> {/* Tambahkan komponen TarawihScheduleDisplay di sini */}
         <NotificationStudyDisplay />
-        <FinancialDisplay /> {/* Tambahkan komponen FinancialDisplay di sini */}
+        <FinancialDisplay />
         <InfoSlides />
       </div>
 
