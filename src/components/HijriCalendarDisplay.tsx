@@ -35,10 +35,10 @@ const HijriCalendarDisplay: React.FC = () => {
   const gregorianDate = currentDate.format("dddd, DD MMMM YYYY");
 
   return (
-    <div className="text-center text-2xl md:text-4xl font-semibold text-gray-200 mb-4"> {/* Increased font size */}
+    <div className="text-center text-xl md:text-3xl font-semibold text-gray-200 mb-4">
       <p>{gregorianDate}</p>
       <p className="text-green-300">{hijriDate}</p>
-      <p className="text-6xl md:text-8xl font-bold mt-2">{currentTime}</p> {/* Increased font size */}
+      <p className="text-blue-400 text-5xl md:text-7xl font-bold mt-2">{currentTime}</p> {/* Menampilkan jam */}
     </div>
   );
 };

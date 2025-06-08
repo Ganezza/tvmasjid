@@ -98,11 +98,11 @@ const Index = () => {
             <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 object-contain" />
           )}
           <div>
-            <h1 className="text-5xl md:text-7xl font-extrabold text-green-400 drop-shadow-lg text-left"> {/* Increased font size */}
+            <h1 className="text-4xl md:text-6xl font-extrabold text-green-400 drop-shadow-lg text-left">
               {masjidName}
             </h1>
             {masjidAddress && (
-              <p className="text-xl md:text-2xl text-gray-300 text-left mt-1"> {/* Increased font size */}
+              <p className="text-lg md:text-xl text-gray-300 text-left mt-1">
                 {masjidAddress}
               </p>
             )}
@@ -112,7 +112,7 @@ const Index = () => {
       </div>
 
       {/* Main Content Area - Using Grid for better layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full px-4 py-4 md:py-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full px-4 py-4 md:py-6"> {/* Changed py-8 md:py-12 to py-4 md:py-6 */}
         {/* Prayer Times Display - Now full width */}
         <div className="col-span-full">
           <PrayerTimesDisplay className="flex-grow" />
