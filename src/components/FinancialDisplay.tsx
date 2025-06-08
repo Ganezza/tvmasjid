@@ -80,7 +80,7 @@ const FinancialDisplay: React.FC = () => {
   if (isLoading) {
     return (
       <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
-        <p className="text-3xl">Memuat informasi keuangan...</p>
+        <p className="text-2xl">Memuat informasi keuangan...</p>
       </div>
     );
   }
@@ -88,41 +88,41 @@ const FinancialDisplay: React.FC = () => {
   if (error) {
     return (
       <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
-        <p className="text-3xl font-bold">Error:</p>
-        <p className="text-2xl">{error}</p>
+        <p className="text-2xl font-bold">Error:</p>
+        <p className="text-xl">{error}</p>
       </div>
     );
   }
 
   return (
     <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8">
-      <h3 className="text-4xl md:text-5xl font-bold mb-3 text-yellow-300">
+      <h3 className="text-3xl md:text-4xl font-bold mb-3 text-yellow-300">
         Informasi Keuangan Masjid
       </h3>
-      <p className="text-5xl md:text-6xl font-bold text-green-400 mb-2">
+      <p className="text-4xl md:text-5xl font-bold text-green-400 mb-2">
         Saldo Kas: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </p>
-      <p className="text-xl md:text-2xl text-gray-300 mb-4">
+      <p className="text-lg md:text-xl text-gray-300 mb-4">
         Data per: <span className="font-semibold">{lastFridayDate}</span>
       </p>
 
-      <h4 className="text-3xl md:text-4xl font-bold mb-3 text-blue-300">
+      <h4 className="text-2xl md:text-3xl font-bold mb-3 text-blue-300">
         Rincian Transaksi Terbaru
       </h4>
       {recentRecords.length === 0 ? (
-        <p className="text-gray-400 text-xl">Belum ada transaksi yang tercatat.</p>
+        <p className="text-gray-400 text-lg">Belum ada transaksi yang tercatat.</p>
       ) : (
         <AutoScrollingFinancialRecords heightClass="h-48 md:h-64">
           <div className="space-y-3">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
-                <p className="font-medium text-xl text-blue-200">
+                <p className="font-medium text-lg text-blue-200">
                   {record.description}
                 </p>
-                <p className={`text-lg font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
+                <p className={`text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
                   {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
-                <p className="text-sm text-gray-400">
+                <p className="text-xs text-gray-400">
                   {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
                 </p>
               </div>
