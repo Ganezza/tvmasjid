@@ -58,12 +58,12 @@ const Index = () => {
         {/* Left Column */}
         <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
           <InfoSlides />
-          <NotificationStudyDisplay />
+          <FinancialDisplay /> {/* Informasi Keuangan sekarang di kolom kiri */}
         </div>
 
         {/* Middle Column */}
         <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
-          <FinancialDisplay />
+          <NotificationStudyDisplay /> {/* Pengumuman sekarang di kolom tengah */}
         </div>
 
         {/* Right Column */}
