@@ -6,10 +6,6 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import AutoScrollingFinancialRecords from "@/components/AutoScrollingFinancialRecords";
 
-// Import Day.js plugins
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore"; // Import the plugin
-dayjs.extend(isSameOrBefore); // Extend dayjs with the plugin
-
 interface FinancialRecord {
   id: string;
   created_at: string;
@@ -21,7 +17,6 @@ interface FinancialRecord {
 const FinancialDisplay: React.FC = () => {
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
-  const [lastFridayDate, setLastFridayDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,30 +34,12 @@ const FinancialDisplay: React.FC = () => {
         setError("Gagal memuat ringkasan keuangan.");
         toast.error("Gagal memuat ringkasan keuangan.");
       } else {
-        // Hitung hari Jumat terakhir dari tanggal saat ini
-        let friday = dayjs();
-        // day() returns 0 for Sunday, 1 for Monday, ..., 5 for Friday, 6 for Saturday
-        // Loop back until we find the most recent Friday (inclusive of today if today is Friday)
-        while (friday.day() !== 5) { 
-          friday = friday.subtract(1, 'day');
-        }
-        const lastFridayFormatted = format(friday.toDate(), "EEEE, dd MMMM yyyy", { locale: id });
-        setLastFridayDate(lastFridayFormatted);
-
-        // Filter records to only include those created on or before the last Friday
-        const lastFridayEndOfDay = friday.endOf('day'); // Get the end of the day for the last Friday
-
-        const filteredRecords = (data || []).filter(record => {
-          const recordCreatedAt = dayjs(record.created_at);
-          // Use isSameOrBefore from dayjs to compare dates
-          return recordCreatedAt.isSameOrBefore(lastFridayEndOfDay);
-        });
-
-        const balance = filteredRecords.reduce((sum, record) => {
+        // Calculate balance from ALL records
+        const balance = (data || []).reduce((sum, record) => {
           return record.transaction_type === "inflow" ? sum + record.amount : sum - record.amount;
         }, 0);
         setTotalBalance(balance);
-        setRecentRecords(filteredRecords);
+        setRecentRecords(data || []); // Set all fetched records as recent
       }
     } catch (err) {
       console.error("Unexpected error fetching financial summary:", err);
@@ -76,16 +53,17 @@ const FinancialDisplay: React.FC = () => {
   useEffect(() => {
     fetchFinancialSummary();
 
-    // Set up a daily interval to re-fetch data, ensuring it updates when a new Friday arrives
-    const dailyInterval = setInterval(() => {
-      fetchFinancialSummary();
-    }, 24 * 60 * 60 * 1000); // Update once every 24 hours
-
-    // No real-time listener for financial_records changes here, as per request
-    // The data should be static for the week until the next Friday.
+    // Set up real-time listener for financial_records changes
+    const channel = supabase
+      .channel('financial_records_changes_display')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_records' }, (payload) => {
+        console.log('Financial record change received for display!', payload);
+        fetchFinancialSummary(); // Re-fetch all records on any change
+      })
+      .subscribe();
 
     return () => {
-      clearInterval(dailyInterval);
+      supabase.removeChannel(channel);
     };
   }, [fetchFinancialSummary]);
 
@@ -114,17 +92,13 @@ const FinancialDisplay: React.FC = () => {
       <p className="text-4xl md:text-5xl font-bold text-green-400 mb-2">
         Saldo Kas: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </p>
-      {lastFridayDate && (
-        <p className="text-xl md:text-2xl text-gray-300 mb-6">
-          Data per {lastFridayDate}
-        </p>
-      )}
+      {/* Removed "Data per Jumat" line */}
 
       <h4 className="text-2xl md:text-3xl font-bold mb-3 text-blue-300">
         Rincian Transaksi Terbaru
       </h4>
       {recentRecords.length === 0 ? (
-        <p className="text-gray-400 text-lg">Belum ada transaksi yang tercatat hingga Jumat terakhir.</p>
+        <p className="text-gray-400 text-lg">Belum ada transaksi yang tercatat.</p>
       ) : (
         <AutoScrollingFinancialRecords heightClass="h-48 md:h-64">
           <div className="space-y-3">
