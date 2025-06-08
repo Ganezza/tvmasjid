@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
-import { CalculationMethod, PrayerTimes, Coordinates, TimeAdjustment } from "adhan"; // Mengimpor TimeAdjustment sebagai named export
+import * as Adhan from "adhan"; // Mengimpor seluruh pustaka adhan sebagai objek Adhan
 import { toast } from "sonner";
 
 dayjs.extend(duration);
@@ -49,12 +49,12 @@ const PrayerTimesDisplay: React.FC = () => {
 
       console.log("Settings fetched:", { latitude, longitude, calculationMethod, isRamadanModeActive });
 
-      const coordinates = new Coordinates(latitude, longitude);
-      const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod]();
+      const coordinates = new Adhan.Coordinates(latitude, longitude);
+      const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod]();
       
       if (isRamadanModeActive) {
-        // Use TimeAdjustment directly as a named import
-        params.imsakParameter = new TimeAdjustment(10);
+        // Menggunakan Adhan.TimeAdjustment karena diimpor sebagai bagian dari objek Adhan
+        params.imsakParameter = new Adhan.TimeAdjustment(10);
         console.log("Ramadan mode active. Imsak parameter set to 10 minutes before Fajr.");
       } else {
         params.imsakParameter = undefined;
@@ -63,7 +63,7 @@ const PrayerTimesDisplay: React.FC = () => {
 
       const today = new Date();
       console.log("Calculating prayer times for today:", today);
-      const times = new PrayerTimes(coordinates, today, params);
+      const times = new Adhan.PrayerTimes(coordinates, today, params);
 
       const newPrayerTimes: PrayerTime[] = [
         { name: "Subuh", time: dayjs(times.fajr).format("HH:mm") },
