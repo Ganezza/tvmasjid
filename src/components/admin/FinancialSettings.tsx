@@ -172,7 +172,7 @@ const FinancialSettings: React.FC = () => {
         <div className="mb-6 p-4 bg-gray-700 rounded-md shadow-inner">
           <h3 className="text-xl font-semibold text-yellow-300">Saldo Saat Ini:</h3>
           <p className="text-4xl font-bold text-green-400">
-            Rp {totalBalance.toLocaleString('id-ID')}
+            Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </p>
         </div>
 
@@ -191,7 +191,7 @@ const FinancialSettings: React.FC = () => {
                     {record.description}
                   </p>
                   <p className={`text-sm font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
-                    {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID')}
+                    {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </p>
                   <p className="text-xs text-gray-400">
                     {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
