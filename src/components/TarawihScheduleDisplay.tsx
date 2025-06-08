@@ -15,7 +15,7 @@ interface Schedule {
 }
 
 const getIndonesianDayOfWeek = (date: dayjs.Dayjs): string => {
-  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const days = ["Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
   return days[date.day()];
 };
 

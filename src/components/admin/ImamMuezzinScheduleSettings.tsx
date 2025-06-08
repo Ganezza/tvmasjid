@@ -37,13 +37,13 @@ const scheduleFormSchema = z.object({
 type ScheduleFormValues = z.infer<typeof scheduleFormSchema>;
 
 const DAYS_OF_WEEK = [
+  { value: "Ahad", label: "Ahad" }, // Changed Minggu to Ahad
   { value: "Senin", label: "Senin" },
   { value: "Selasa", label: "Selasa" },
   { value: "Rabu", label: "Rabu" },
   { value: "Kamis", label: "Kamis" },
   { value: "Jumat", label: "Jumat" },
   { value: "Sabtu", label: "Sabtu" },
-  { value: "Minggu", label: "Minggu" },
 ];
 
 const PRAYER_NAMES = [

@@ -32,7 +32,7 @@ const HijriCalendarDisplay: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const gregorianDate = currentDate.format("dddd, DD MMMM YYYY");
+  const gregorianDate = currentDate.format("dddd, DD MMMM YYYY").replace('Minggu', 'Ahad'); // Replace Minggu with Ahad
 
   return (
     <div className="text-center text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-gray-200 mb-4">
