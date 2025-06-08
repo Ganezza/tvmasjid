@@ -44,7 +44,7 @@ const FinancialDisplay: React.FC = () => {
         while (friday.day() !== 5) { // 5 represents Friday in dayjs (0=Sunday, 1=Monday, ..., 6=Saturday)
           friday = friday.subtract(1, 'day');
         }
-        setLastFridayDate(format(friday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }));
+        setLastFridayDate(format(friday.toDate(), "dd MMMM yyyy", { locale: id })); // Changed format here
       }
     } catch (err) {
       console.error("Unexpected error fetching financial summary:", err);
@@ -103,7 +103,7 @@ const FinancialDisplay: React.FC = () => {
       </p>
       {lastFridayDate && (
         <p className="text-xl md:text-2xl text-gray-300">
-          Data per Jumat, {lastFridayDate}
+          Data per {lastFridayDate}
         </p>
       )}
     </div>
