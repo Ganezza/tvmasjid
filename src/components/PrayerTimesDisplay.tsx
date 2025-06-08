@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
-import { CalculationMethod, PrayerTimes, Coordinates, CalculationParameters } from "adhan";
+import { CalculationMethod, PrayerTimes, Coordinates, CalculationParameters, TimeAdjustment } from "adhan"; // Import TimeAdjustment
 import { toast } from "sonner";
 
 dayjs.extend(duration);
@@ -51,7 +51,7 @@ const PrayerTimesDisplay: React.FC = () => {
       
       // Adjust parameters for Imsak if Ramadan mode is active
       if (isRamadanModeActive) {
-        params.imsakParameter = CalculationParameters.fromMinutesBeforeFajr(10); // Imsak 10 minutes before Fajr
+        params.imsakParameter = new TimeAdjustment(10); // Correct way to set Imsak 10 minutes before Fajr
       } else {
         params.imsakParameter = undefined; // Reset if not Ramadan mode
       }
