@@ -4,7 +4,8 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import HijriCalendarDisplay from "@/components/HijriCalendarDisplay";
 import PrayerTimesDisplay from "@/components/PrayerTimesDisplay";
 import RunningText from "@/components/RunningText";
-import InfoSlides from "@/components/InfoSlides"; // Import InfoSlides
+import InfoSlides from "@/components/InfoSlides";
+import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay"; // Import ImamMuezzinDisplay
 
 const Index = () => {
   const navigate = useNavigate();
@@ -53,13 +54,13 @@ const Index = () => {
           Waktu Sholat & Informasi Masjid
         </p>
         <PrayerTimesDisplay />
-        {/* Info Slides Component */}
+        <ImamMuezzinDisplay /> {/* Tambahkan komponen ImamMuezzinDisplay di sini */}
         <InfoSlides />
       </div>
 
       {/* Footer Section - Running Text and MadeWithDyad */}
       <div className="w-full">
-        <RunningText text="Selamat datang di Masjid Agung Al-Falah. Mari tingkatkan iman dan taqwa kita. Jangan lupa matikan ponsel saat sholat. Semoga Allah menerima amal ibadah kita. Aamiin." />
+        <RunningText />
         <MadeWithDyad />
       </div>
 
