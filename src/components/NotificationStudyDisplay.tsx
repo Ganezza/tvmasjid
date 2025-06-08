@@ -125,7 +125,7 @@ const NotificationStudyDisplay: React.FC = () => {
         className="mySwiper w-full h-full"
       >
         {items.map((item) => (
-          <SwiperSlide key={item.id} className="flex flex-col items-center justify-center p-4 text-center">
+          <SwiperSlide key={item.id} className="relative flex flex-col items-center justify-center p-4 text-center h-full overflow-y-auto">
             <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-yellow-300">
               {item.type === "notification" ? "PENGUMUMAN" : item.type === "study" ? "JADWAL KAJIAN" : "ACARA KHUSUS"}
             </h3>

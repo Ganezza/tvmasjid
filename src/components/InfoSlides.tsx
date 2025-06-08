@@ -112,11 +112,14 @@ const InfoSlides: React.FC = () => {
                 {slide.title}
               </h3>
             )}
-            <img
-              src={slide.content}
-              alt={slide.title || "Info Slide"}
-              className="max-w-full max-h-full object-contain rounded-lg"
-            />
+            {/* New: Use flex-grow on a wrapper div for the image */}
+            <div className="flex-grow flex items-center justify-center w-full h-full">
+              <img
+                src={slide.content}
+                alt={slide.title || "Info Slide"}
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            </div>
           </SwiperSlide>
         ))}
       </Swiper>
