@@ -126,13 +126,13 @@ const NotificationStudyDisplay: React.FC = () => {
       >
         {items.map((item) => (
           <SwiperSlide key={item.id} className="flex flex-col items-center justify-center p-4 text-center">
-            <h3 className="text-3xl md:text-4xl font-bold mb-4 text-yellow-300">
+            <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-yellow-300">
               {item.type === "notification" ? "PENGUMUMAN" : item.type === "study" ? "JADWAL KAJIAN" : "ACARA KHUSUS"}
             </h3>
-            <h4 className="text-2xl md:text-3xl font-semibold mb-2 text-blue-300">{item.title}</h4>
-            <p className="text-xl md:text-2xl leading-relaxed text-gray-200">{item.content}</p>
+            <h4 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-2 text-blue-300">{item.title}</h4>
+            <p className="text-2xl md:text-3xl lg:text-4xl leading-relaxed text-gray-200">{item.content}</p>
             {(item.event_date || item.event_time) && (
-              <p className="text-lg md:text-xl text-green-300 mt-4">
+              <p className="text-xl md:text-2xl lg:text-3xl text-green-300 mt-4">
                 {item.event_date && format(new Date(item.event_date), "EEEE, dd MMMM yyyy", { locale: id })}
                 {item.event_date && item.event_time && " Pukul "}
                 {item.event_time}

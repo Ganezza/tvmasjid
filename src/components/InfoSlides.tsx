@@ -108,7 +108,7 @@ const InfoSlides: React.FC = () => {
         {slides.map((slide) => (
           <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-4">
             {slide.title && (
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-yellow-300 text-center"> {/* Changed text-3xl md:text-4xl to text-2xl md:text-3xl */}
+              <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-yellow-300 text-center">
                 {slide.title}
               </h3>
             )}
