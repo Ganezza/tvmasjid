@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
-import { CalculationMethod, PrayerTimes, Coordinates, TimeAdjustment } from "adhan"; // Import komponen secara langsung
+import { CalculationMethod, PrayerTimes, Coordinates, TimeAdjustment } from "adhan"; // Mengimpor komponen secara langsung
 import { toast } from "sonner";
 
 dayjs.extend(duration);
