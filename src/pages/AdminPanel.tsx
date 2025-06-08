@@ -1,7 +1,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import PrayerTimeSettings from "@/components/admin/PrayerTimeSettings"; // Import PrayerTimeSettings
+import PrayerTimeSettings from "@/components/admin/PrayerTimeSettings";
+import RunningTextSettings from "@/components/admin/RunningTextSettings"; // Import RunningTextSettings
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -18,6 +19,9 @@ const AdminPanel = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Prayer Time Settings */}
         <PrayerTimeSettings />
+
+        {/* Running Text Settings */}
+        <RunningTextSettings />
 
         {/* Placeholder for other Admin Sections */}
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
