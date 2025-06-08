@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
-import "dayjs/locale/id"; // Import Indonesian locale
 
 const HijriCalendarDisplay: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(dayjs());
@@ -9,7 +8,7 @@ const HijriCalendarDisplay: React.FC = () => {
 
   useEffect(() => {
     const updateDatesAndTimes = () => {
-      const now = dayjs().locale('id'); // Set locale to Indonesian
+      const now = dayjs();
       setCurrentDate(now);
       setCurrentTime(now.format("HH:mm:ss")); // Format jam, menit, detik
 
@@ -33,8 +32,7 @@ const HijriCalendarDisplay: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Format Gregorian date using Indonesian locale, then replace 'Minggu' with 'Ahad'
-  const gregorianDate = currentDate.locale('id').format("dddd, DD MMMM YYYY").replace('Minggu', 'Ahad');
+  const gregorianDate = currentDate.format("dddd, DD MMMM YYYY").replace('Minggu', 'Ahad'); // Replace Minggu with Ahad
 
   return (
     <div className="text-center text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-gray-200 mb-4">
