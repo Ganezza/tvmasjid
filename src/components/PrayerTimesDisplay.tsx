@@ -203,18 +203,18 @@ const PrayerTimesDisplay: React.FC = () => {
 
   return (
     <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl text-center mb-8 min-h-[256px] md:min-h-[320px] flex flex-col justify-between">
-      <h2 className="text-4xl font-bold mb-4 text-blue-300">Jadwal Sholat</h2>
+      <h2 className="text-5xl font-bold mb-4 text-blue-300">Jadwal Sholat</h2>
       {isLoading ? (
-        <p className="text-2xl text-white">Memuat waktu sholat...</p>
+        <p className="text-3xl text-white">Memuat waktu sholat...</p>
       ) : error ? (
         <div className="bg-red-800 bg-opacity-70 p-4 rounded-lg text-white">
-          <p className="text-2xl font-bold">Error:</p>
-          <p className="text-xl">{error}</p>
-          <p className="text-lg mt-2">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+          <p className="text-3xl font-bold">Error:</p>
+          <p className="text-2xl">{error}</p>
+          <p className="text-xl mt-2">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xl md:text-2xl">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-2xl md:text-3xl">
             {prayerTimes.map((prayer) => (
               <div
                 key={prayer.name}
@@ -230,7 +230,7 @@ const PrayerTimesDisplay: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="mt-6 text-yellow-300 font-semibold text-2xl md:text-3xl">
+          <div className="mt-6 text-yellow-300 font-semibold text-3xl md:text-4xl">
             {nextPrayer ? (
               nextPrayer.name === "Imsak" ? (
                 <>
