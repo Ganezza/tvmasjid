@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-import { format } from "date-fns"; // Menggunakan kembali format dari date-fns
-import { id } from "date-fns/locale"; // Menggunakan kembali locale id dari date-fns
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
 
 interface FinancialRecord {
   id: string;
@@ -15,6 +16,7 @@ interface FinancialRecord {
 
 const FinancialDisplay: React.FC = () => {
   const [totalBalance, setTotalBalance] = useState<number>(0);
+  const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]); // State baru untuk rincian
   const [lastFridayDate, setLastFridayDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ const FinancialDisplay: React.FC = () => {
     try {
       const { data, error: fetchError } = await supabase
         .from("financial_records")
-        .select("transaction_type, amount")
+        .select("id, created_at, transaction_type, amount, description")
         .order("created_at", { ascending: false });
 
       if (fetchError) {
@@ -37,6 +39,7 @@ const FinancialDisplay: React.FC = () => {
           return record.transaction_type === "inflow" ? sum + record.amount : sum - record.amount;
         }, 0);
         setTotalBalance(balance);
+        setRecentRecords(data || []); // Simpan semua data untuk rincian
 
         // Calculate the date of the most recent Friday
         let friday = dayjs();
@@ -45,7 +48,6 @@ const FinancialDisplay: React.FC = () => {
           friday = friday.subtract(1, 'day');
         }
         
-        // Menggunakan format dari date-fns untuk menyertakan nama hari
         setLastFridayDate(format(friday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }));
       }
     } catch (err) {
@@ -104,9 +106,34 @@ const FinancialDisplay: React.FC = () => {
         Saldo Kas: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </p>
       {lastFridayDate && (
-        <p className="text-xl md:text-2xl text-gray-300">
+        <p className="text-xl md:text-2xl text-gray-300 mb-6">
           Data per {lastFridayDate}
         </p>
+      )}
+
+      <h4 className="text-2xl md:text-3xl font-bold mb-3 text-blue-300">
+        Rincian Transaksi Terbaru
+      </h4>
+      {recentRecords.length === 0 ? (
+        <p className="text-gray-400 text-lg">Belum ada transaksi yang tercatat.</p>
+      ) : (
+        <ScrollArea className="h-48 md:h-64 w-full pr-4"> {/* Scrollable area */}
+          <div className="space-y-3">
+            {recentRecords.map((record) => (
+              <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
+                <p className="font-medium text-lg text-blue-200">
+                  {record.description}
+                </p>
+                <p className={`text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
+                  {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
       )}
     </div>
   );
