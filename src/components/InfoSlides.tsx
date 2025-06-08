@@ -55,14 +55,14 @@ const InfoSlides: React.FC = () => {
       .channel('info_slides_changes_display')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'info_slides' }, (payload) => {
         console.log('Info slides change received for display!', payload);
-        fetchSlides(); // Re-fetch if slides change
+        fetchItems(); // Re-fetch if slides change
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchSlides]);
+  }, [fetchItems]); // Changed to fetchItems to match the function name
 
   if (isLoading) {
     return (
@@ -106,17 +106,19 @@ const InfoSlides: React.FC = () => {
         className="mySwiper w-full h-full"
       >
         {slides.map((slide) => (
-          <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-4">
+          <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-4 h-full">
             {slide.title && (
-              <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-yellow-300 text-center">
+              <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-yellow-300 text-center flex-shrink-0">
                 {slide.title}
               </h3>
             )}
-            <img
-              src={slide.content}
-              alt={slide.title || "Info Slide"}
-              className="max-w-full max-h-full object-contain rounded-lg"
-            />
+            <div className="flex-grow flex items-center justify-center w-full">
+              <img
+                src={slide.content}
+                alt={slide.title || "Info Slide"}
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            </div>
           </SwiperSlide>
         ))}
       </Swiper>
