@@ -13,12 +13,13 @@ interface Schedule {
   display_order: number;
 }
 
+// Mengubah kunci menjadi huruf kecil agar sesuai dengan output adhan library
 const prayerNameMap: { [key: string]: string } = {
-  Fajr: "Subuh",
-  Dhuhr: "Dzuhur",
-  Asr: "Ashar",
-  Maghrib: "Maghrib",
-  Isha: "Isya",
+  fajr: "Subuh",
+  dhuhr: "Dzuhur",
+  asr: "Ashar",
+  maghrib: "Maghrib",
+  isha: "Isya",
 };
 
 const getIndonesianDayOfWeek = (date: dayjs.Dayjs): string => {
@@ -59,33 +60,33 @@ const ImamMuezzinDisplay: React.FC = () => {
       const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod]();
       const times = new PrayerTimes(coordinates, now.toDate(), params);
 
-      let nextPrayerAdhanName = times.nextPrayer();
-      let targetDay = now; // Default to today
+      let nextPrayerAdhanName = times.nextPrayer(); // Akan mengembalikan 'fajr', 'dhuhr', dll. (huruf kecil) atau null
+      let targetDay = now; // Default ke hari ini
 
-      // If no more prayers today (i.e., after Isha), consider Fajr of the next day
+      // Jika tidak ada sholat lagi hari ini (setelah Isya), anggap Subuh hari berikutnya
       if (!nextPrayerAdhanName) {
-        nextPrayerAdhanName = "Fajr"; // The next prayer will be Fajr
-        targetDay = now.add(1, 'day'); // And it will be tomorrow
+        nextPrayerAdhanName = "fajr"; // Set ke 'fajr' (huruf kecil) untuk hari berikutnya
+        targetDay = now.add(1, 'day'); // Dan itu akan terjadi besok
       }
 
       let nextPrayerDisplayName = prayerNameMap[nextPrayerAdhanName];
 
-      // Special handling for Friday Dhuhr -> Jumat
-      if (targetDay.day() === 5 && nextPrayerAdhanName === "Dhuhr") { // Friday is day 5
+      // Penanganan khusus untuk Jumat Dzuhur -> Jumat
+      // Pastikan menggunakan nama adhan asli ('dhuhr') dan targetDay yang benar
+      if (targetDay.day() === 5 && nextPrayerAdhanName === "dhuhr") { // Jumat adalah hari 5, dan sholat Dzuhur dari adhan
         nextPrayerDisplayName = "Jumat";
       }
 
       if (!nextPrayerDisplayName) {
-        // This case should ideally not be reached if prayerNameMap is complete and adhan returns expected names
         setError("Tidak dapat menentukan waktu sholat berikutnya.");
         setIsLoading(false);
         return;
       }
 
-      // 4. Get current day of the week in Indonesian, based on targetDay
+      // 4. Dapatkan nama hari dalam bahasa Indonesia, berdasarkan targetDay
       const currentDayOfWeek = getIndonesianDayOfWeek(targetDay);
 
-      // 5. Fetch imam/muezzin schedule for the next prayer and current day
+      // 5. Ambil jadwal imam/muadzin untuk sholat berikutnya dan hari ini
       const { data: scheduleData, error: scheduleError } = await supabase
         .from("imam_muezzin_schedules")
         .select("*")
@@ -101,7 +102,7 @@ const ImamMuezzinDisplay: React.FC = () => {
       } else if (scheduleData) {
         setCurrentSchedule(scheduleData);
       } else {
-        setCurrentSchedule(null); // No schedule found for this prayer/day
+        setCurrentSchedule(null); // Tidak ada jadwal ditemukan untuk sholat/hari ini
       }
     } catch (err) {
       console.error("Unexpected error in ImamMuezzinDisplay:", err);
