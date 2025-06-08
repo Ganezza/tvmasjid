@@ -52,31 +52,27 @@ const Index = () => {
       </div>
 
       {/* Main Content Area - Using Grid for better layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-8 md:py-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 w-full px-4 py-8 md:py-12">
         {/* Prayer Times - always prominent, full width */}
         <div className="col-span-full">
           <PrayerTimesDisplay />
         </div>
 
-        {/* Imam/Muezzin & Tarawih - side by side on larger screens */}
-        <div className="col-span-full md:col-span-1 lg:col-span-1">
-          <ImamMuezzinDisplay />
-        </div>
-        <div className="col-span-full md:col-span-1 lg:col-span-1">
-          <TarawihScheduleDisplay />
-        </div>
-
-        {/* Notification & Financial - side by side */}
-        <div className="col-span-full md:col-span-1 lg:col-span-1">
+        {/* Notification & Info Slides - side by side on larger screens */}
+        <div className="col-span-full lg:col-span-1">
           <NotificationStudyDisplay />
         </div>
-        <div className="col-span-full md:col-span-1 lg:col-span-1">
-          <FinancialDisplay />
+        <div className="col-span-full lg:col-span-1">
+          <InfoSlides />
         </div>
 
-        {/* Info Slides - full width */}
-        <div className="col-span-full">
-          <InfoSlides />
+        {/* Imam/Muezzin & Tarawih (grouped) and Financial - side by side on larger screens */}
+        <div className="col-span-full lg:col-span-1 flex flex-col gap-6">
+          <ImamMuezzinDisplay />
+          <TarawihScheduleDisplay />
+        </div>
+        <div className="col-span-full lg:col-span-1">
+          <FinancialDisplay />
         </div>
       </div>
 
