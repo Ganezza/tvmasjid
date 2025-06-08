@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Import ScrollArea dan ScrollBar
-import { ScrollAreaViewport } from "@radix-ui/react-scroll-area"; // Import ScrollAreaViewport
+import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
 
 interface FinancialRecord {
   id: string;
@@ -17,13 +16,10 @@ interface FinancialRecord {
 
 const FinancialDisplay: React.FC = () => {
   const [totalBalance, setTotalBalance] = useState<number>(0);
-  const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
+  const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]); // State baru untuk rincian
   const [lastFridayDate, setLastFridayDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const scrollAreaRef = useRef<HTMLDivElement>(null); // Ref untuk elemen yang bisa digulir
-  const [isScrollingPaused, setIsScrollingPaused] = useState(false);
 
   const fetchFinancialSummary = useCallback(async () => {
     setIsLoading(true);
@@ -43,10 +39,12 @@ const FinancialDisplay: React.FC = () => {
           return record.transaction_type === "inflow" ? sum + record.amount : sum - record.amount;
         }, 0);
         setTotalBalance(balance);
-        setRecentRecords(data || []);
+        setRecentRecords(data || []); // Simpan semua data untuk rincian
 
+        // Calculate the date of the most recent Friday
         let friday = dayjs();
-        while (friday.day() !== 5) {
+        // If today is not Friday, go back until Friday
+        while (friday.day() !== 5) { // 5 represents Friday in dayjs (0=Sunday, 1=Monday, ..., 6=Saturday)
           friday = friday.subtract(1, 'day');
         }
         
@@ -64,14 +62,16 @@ const FinancialDisplay: React.FC = () => {
   useEffect(() => {
     fetchFinancialSummary();
 
+    // Set up real-time listener for financial_records changes
     const channel = supabase
       .channel('financial_display_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_records' }, (payload) => {
         console.log('Financial record change received for display!', payload);
-        fetchFinancialSummary();
+        fetchFinancialSummary(); // Re-fetch if records change
       })
       .subscribe();
 
+    // Update every minute to ensure the "last Friday" date is accurate if the day changes
     const interval = setInterval(fetchFinancialSummary, 60 * 1000); 
 
     return () => {
@@ -79,42 +79,6 @@ const FinancialDisplay: React.FC = () => {
       clearInterval(interval);
     };
   }, [fetchFinancialSummary]);
-
-  // Auto-scroll effect
-  useEffect(() => {
-    let scrollInterval: NodeJS.Timeout;
-
-    const startScrolling = () => {
-      if (scrollAreaRef.current) {
-        const scrollElement = scrollAreaRef.current;
-        const scrollHeight = scrollElement.scrollHeight;
-        const clientHeight = scrollElement.clientHeight;
-
-        if (scrollHeight <= clientHeight) {
-          // No need to scroll if content fits
-          return;
-        }
-
-        scrollInterval = setInterval(() => {
-          if (!isScrollingPaused) {
-            if (scrollElement.scrollTop + clientHeight >= scrollHeight - 1) { // -1 for tolerance
-              scrollElement.scrollTop = 0; // Reset to top
-            } else {
-              scrollElement.scrollTop += 1; // Scroll down by 1 pixel
-            }
-          }
-        }, 50); // Adjust scroll speed here (smaller number = faster)
-      }
-    };
-
-    // Start scrolling after a short delay to allow content to render
-    const initialDelay = setTimeout(startScrolling, 1000); 
-
-    return () => {
-      clearTimeout(initialDelay);
-      clearInterval(scrollInterval);
-    };
-  }, [recentRecords, isScrollingPaused]); // Re-run if records change or pause state changes
 
   if (isLoading) {
     return (
@@ -153,29 +117,22 @@ const FinancialDisplay: React.FC = () => {
       {recentRecords.length === 0 ? (
         <p className="text-gray-400 text-lg">Belum ada transaksi yang tercatat.</p>
       ) : (
-        <ScrollArea 
-          className="h-48 md:h-64 w-full pr-4"
-          onMouseEnter={() => setIsScrollingPaused(true)}
-          onMouseLeave={() => setIsScrollingPaused(false)}
-        >
-          <ScrollAreaViewport ref={scrollAreaRef}> {/* Apply ref to the viewport */}
-            <div className="space-y-3">
-              {recentRecords.map((record) => (
-                <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
-                  <p className="font-medium text-lg text-blue-200">
-                    {record.description}
-                  </p>
-                  <p className={`text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
-                    {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </ScrollAreaViewport>
-          <ScrollBar orientation="vertical" /> {/* Add a scrollbar for manual scrolling if needed */}
+        <ScrollArea className="h-48 md:h-64 w-full pr-4"> {/* Scrollable area */}
+          <div className="space-y-3">
+            {recentRecords.map((record) => (
+              <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
+                <p className="font-medium text-lg text-blue-200">
+                  {record.description}
+                </p>
+                <p className={`text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
+                  {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
+                </p>
+              </div>
+            ))}
+          </div>
         </ScrollArea>
       )}
     </div>
