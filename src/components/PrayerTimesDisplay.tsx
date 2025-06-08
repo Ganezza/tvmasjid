@@ -232,12 +232,21 @@ const PrayerTimesDisplay: React.FC = () => {
           </div>
           <div className="mt-6 text-yellow-300 font-semibold text-2xl md:text-3xl">
             {nextPrayer ? (
-              <>
-                Waktu Sholat Berikutnya:{" "}
-                <span className="text-blue-400">{nextPrayer.name}</span>
-                <br />
-                Hitung Mundur: <span className="text-red-400">{countdown}</span>
-              </>
+              nextPrayer.name === "Imsak" ? (
+                <>
+                  Waktu Imsak:{" "}
+                  <span className="text-blue-400">{nextPrayer.time}</span>
+                  <br />
+                  Menuju Subuh: <span className="text-red-400">{countdown}</span>
+                </>
+              ) : (
+                <>
+                  Waktu Sholat Berikutnya:{" "}
+                  <span className="text-blue-400">{nextPrayer.name}</span>
+                  <br />
+                  Hitung Mundur: <span className="text-red-400">{countdown}</span>
+                </>
+              )
             ) : (
               "Mencari waktu sholat berikutnya..."
             )}
