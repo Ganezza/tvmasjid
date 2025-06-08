@@ -22,6 +22,7 @@ const PrayerTimesDisplay: React.FC = () => {
   const [currentPrayerName, setCurrentPrayerName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRamadanModeActive, setIsRamadanModeActive] = useState(false); // State untuk mode Ramadan
 
   const fetchAndCalculatePrayerTimes = useCallback(async () => {
     setIsLoading(true);
@@ -45,9 +46,10 @@ const PrayerTimesDisplay: React.FC = () => {
       let latitude = data?.latitude || -6.2088;
       let longitude = data?.longitude || 106.8456;
       let calculationMethod = data?.calculation_method || "MuslimWorldLeague";
-      const isRamadanModeActive = data?.is_ramadan_mode_active || false;
+      const ramadanModeStatus = data?.is_ramadan_mode_active || false; // Ambil status mode Ramadan
+      setIsRamadanModeActive(ramadanModeStatus); // Set state mode Ramadan
 
-      console.log("Settings fetched:", { latitude, longitude, calculationMethod, isRamadanModeActive });
+      console.log("Settings fetched:", { latitude, longitude, calculationMethod, ramadanModeStatus });
 
       const coordinates = new Adhan.Coordinates(latitude, longitude);
       const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod]();
@@ -56,19 +58,11 @@ const PrayerTimesDisplay: React.FC = () => {
       console.log("Calculating prayer times for today:", today);
       const times = new Adhan.PrayerTimes(coordinates, today, params);
 
-      // --- START DEBUGGING LOGS ---
-      console.log("Raw Adhan times object:", times);
-      console.log("Raw Fajr time (Date object):", times.fajr);
-      console.log("Raw Imsak time (Date object):", times.imsak); // This will still show Adhan's default Imsak
-      console.log("Formatted Fajr time:", dayjs(times.fajr).format("HH:mm"));
-      // --- END DEBUGGING LOGS ---
-
       // Calculate Imsak manually as 10 minutes before Fajr
       const imsakTime = dayjs(times.fajr).subtract(10, 'minute').format("HH:mm");
       console.log("Manually calculated Imsak time (10 mins before Fajr):", imsakTime);
 
-      const newPrayerTimes: PrayerTime[] = [
-        { name: "Imsak", time: imsakTime }, // Use the manually calculated Imsak
+      const basePrayerTimes: PrayerTime[] = [
         { name: "Subuh", time: dayjs(times.fajr).format("HH:mm") },
         { name: "Syuruq", time: dayjs(times.sunrise).format("HH:mm") },
         { name: "Dzuhur", time: dayjs(times.dhuhr).format("HH:mm") },
@@ -76,9 +70,16 @@ const PrayerTimesDisplay: React.FC = () => {
         { name: "Maghrib", time: dayjs(times.maghrib).format("HH:mm") },
         { name: "Isya", time: dayjs(times.isha).format("HH:mm") },
       ];
+
+      let finalPrayerTimes: PrayerTime[] = [];
+      if (ramadanModeStatus) {
+        // Jika mode Ramadan aktif, tambahkan Imsak di awal
+        finalPrayerTimes.push({ name: "Imsak", time: imsakTime });
+      }
+      finalPrayerTimes = finalPrayerTimes.concat(basePrayerTimes);
       
-      console.log("Calculated prayer times:", newPrayerTimes);
-      setPrayerTimes(newPrayerTimes);
+      console.log("Calculated prayer times:", finalPrayerTimes);
+      setPrayerTimes(finalPrayerTimes);
       setIsLoading(false);
     } catch (err: any) {
       console.error("Error in fetchAndCalculatePrayerTimes:", err);
@@ -200,55 +201,49 @@ const PrayerTimesDisplay: React.FC = () => {
     return () => clearInterval(interval);
   }, [prayerTimes, isLoading, error]);
 
-  if (isLoading) {
-    return (
-      <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
-        <p className="text-2xl">Memuat waktu sholat...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-800 bg-opacity-70 p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
-        <p className="text-2xl font-bold">Error:</p>
-        <p className="text-xl">{error}</p>
-        <p className="text-lg mt-2">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8">
       <h2 className="text-4xl font-bold mb-4 text-blue-300">Jadwal Sholat</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xl md:text-2xl">
-        {prayerTimes.map((prayer) => (
-          <div
-            key={prayer.name}
-            className={`p-2 rounded-md ${
-              nextPrayer?.name === prayer.name
-                ? "bg-blue-600 text-white font-bold scale-105 transition-all duration-300"
-                : currentPrayerName === prayer.name
-                ? "bg-green-700 text-white font-bold"
-                : "bg-gray-700 text-gray-200"
-            }`}
-          >
-            {prayer.name}: {prayer.time}
+      {isLoading ? (
+        <p className="text-2xl text-white">Memuat waktu sholat...</p>
+      ) : error ? (
+        <div className="bg-red-800 bg-opacity-70 p-4 rounded-lg text-white">
+          <p className="text-2xl font-bold">Error:</p>
+          <p className="text-xl">{error}</p>
+          <p className="text-lg mt-2">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xl md:text-2xl">
+            {prayerTimes.map((prayer) => (
+              <div
+                key={prayer.name}
+                className={`p-2 rounded-md ${
+                  nextPrayer?.name === prayer.name
+                    ? "bg-blue-600 text-white font-bold scale-105 transition-all duration-300"
+                    : currentPrayerName === prayer.name
+                    ? "bg-green-700 text-white font-bold"
+                    : "bg-gray-700 text-gray-200"
+                }`}
+              >
+                {prayer.name}: {prayer.time}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="mt-6 text-yellow-300 font-semibold text-2xl md:text-3xl">
-        {nextPrayer ? (
-          <>
-            Waktu Sholat Berikutnya:{" "}
-            <span className="text-blue-400">{nextPrayer.name}</span>
-            <br />
-            Hitung Mundur: <span className="text-red-400">{countdown}</span>
-          </>
-        ) : (
-          "Mencari waktu sholat berikutnya..."
-        )}
-      </div>
+          <div className="mt-6 text-yellow-300 font-semibold text-2xl md:text-3xl">
+            {nextPrayer ? (
+              <>
+                Waktu Sholat Berikutnya:{" "}
+                <span className="text-blue-400">{nextPrayer.name}</span>
+                <br />
+                Hitung Mundur: <span className="text-red-400">{countdown}</span>
+              </>
+            ) : (
+              "Mencari waktu sholat berikutnya..."
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };
