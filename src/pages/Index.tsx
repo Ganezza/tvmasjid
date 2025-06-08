@@ -9,7 +9,8 @@ import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay";
 import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
-import { supabase } from "@/lib/supabase"; // Import supabase client
+import AudioDisplay from "@/components/AudioDisplay"; // Import the new component
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 const Index = () => {
@@ -124,8 +125,9 @@ const Index = () => {
           <ImamMuezzinDisplay />
           <TarawihScheduleDisplay />
         </div>
-        <div className="col-span-full lg:col-span-1">
+        <div className="col-span-full lg:col-span-1 flex flex-col gap-6"> {/* Added flex-col and gap-6 here */}
           <FinancialDisplay />
+          <AudioDisplay /> {/* New AudioDisplay component */}
         </div>
       </div>
 
