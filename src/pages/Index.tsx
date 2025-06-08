@@ -9,7 +9,7 @@ import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay";
 import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
-import AppBackground from "@/components/AppBackground"; // AudioDisplay removed
+import AppBackground from "@/components/AppBackground";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -91,10 +91,10 @@ const Index = () => {
   return (
     <AppBackground>
       {/* Header Section */}
-      <div className="w-full flex justify-between items-center p-4">
-        <div className="flex items-center gap-4">
+      <div className="w-full flex justify-between items-center px-8 py-6"> {/* Adjusted padding */}
+        <div className="flex items-center gap-6"> {/* Adjusted gap */}
           {masjidLogoUrl && (
-            <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 object-contain" />
+            <img src={masjidLogoUrl} alt={masjidName || "Masjid Logo"} className="h-16 md:h-24 object-contain" />
           )}
           <div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-green-400 drop-shadow-lg text-left text-outline-black">
@@ -131,7 +131,6 @@ const Index = () => {
         {/* Right Column (Info Slides, Tarawih) */}
         <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
           <InfoSlides />
-          {/* AudioDisplay removed */}
           <TarawihScheduleDisplay />
         </div>
       </div>

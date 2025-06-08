@@ -35,7 +35,7 @@ const HijriCalendarDisplay: React.FC = () => {
   const gregorianDate = currentDate.format("dddd, DD MMMM YYYY");
 
   return (
-    <div className="text-center text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-gray-200 mb-4">
+    <div className="text-right text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-gray-200 mb-4"> {/* Added text-right */}
       <p className="text-outline-black">{gregorianDate}</p>
       <p className="text-green-300 text-outline-black">{hijriDate}</p>
       <p className="text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-bold mt-2 text-outline-black">{currentTime}</p>
