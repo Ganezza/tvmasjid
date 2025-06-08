@@ -202,7 +202,7 @@ const PrayerTimesDisplay: React.FC = () => {
   }, [prayerTimes, isLoading, error]);
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8">
+    <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center">
       <h2 className="text-4xl font-bold mb-4 text-blue-300">Jadwal Sholat</h2>
       {isLoading ? (
         <p className="text-2xl text-white">Memuat waktu sholat...</p>
