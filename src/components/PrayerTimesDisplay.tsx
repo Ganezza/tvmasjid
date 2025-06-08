@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
-import * as Adhan from "adhan"; // Mengimpor seluruh pustaka adhan sebagai objek Adhan
+import * as Adhan from "adhan";
 import { toast } from "sonner";
 
 dayjs.extend(duration);
@@ -45,37 +45,30 @@ const PrayerTimesDisplay: React.FC = () => {
       let latitude = data?.latitude || -6.2088;
       let longitude = data?.longitude || 106.8456;
       let calculationMethod = data?.calculation_method || "MuslimWorldLeague";
-      const isRamadanModeActive = data?.is_ramadan_mode_active || false;
+      // const isRamadanModeActive = data?.is_ramadan_mode_active || false; // Tidak lagi digunakan untuk Imsak
 
-      console.log("Settings fetched:", { latitude, longitude, calculationMethod, isRamadanModeActive });
+      console.log("Settings fetched:", { latitude, longitude, calculationMethod });
 
       const coordinates = new Adhan.Coordinates(latitude, longitude);
       const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod]();
       
-      if (isRamadanModeActive) {
-        // Menggunakan Adhan.TimeAdjustment karena diimpor sebagai bagian dari objek Adhan
-        params.imsakParameter = new Adhan.TimeAdjustment(10);
-        console.log("Ramadan mode active. Imsak parameter set to 10 minutes before Fajr.");
-      } else {
-        params.imsakParameter = undefined;
-        console.log("Ramadan mode inactive. Imsak parameter cleared.");
-      }
-
+      // Selalu aktifkan perhitungan Imsak (10 menit sebelum Subuh)
+      params.imsakParameter = new Adhan.TimeAdjustment(10);
+      console.log("Imsak parameter set to 10 minutes before Fajr (always active).");
+      
       const today = new Date();
       console.log("Calculating prayer times for today:", today);
       const times = new Adhan.PrayerTimes(coordinates, today, params);
 
       const newPrayerTimes: PrayerTime[] = [
+        // Selalu tambahkan Imsak
+        { name: "Imsak", time: dayjs(times.imsak).format("HH:mm") },
         { name: "Subuh", time: dayjs(times.fajr).format("HH:mm") },
         { name: "Dzuhur", time: dayjs(times.dhuhr).format("HH:mm") },
         { name: "Ashar", time: dayjs(times.asr).format("HH:mm") },
         { name: "Maghrib", time: dayjs(times.maghrib).format("HH:mm") },
         { name: "Isya", time: dayjs(times.isha).format("HH:mm") },
       ];
-
-      if (isRamadanModeActive && dayjs(times.imsak).format("HH:mm") !== dayjs(times.fajr).format("HH:mm")) {
-        newPrayerTimes.unshift({ name: "Imsak", time: dayjs(times.imsak).format("HH:mm") });
-      }
       
       console.log("Calculated prayer times:", newPrayerTimes);
       setPrayerTimes(newPrayerTimes);
