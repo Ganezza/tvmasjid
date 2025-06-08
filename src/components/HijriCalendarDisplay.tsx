@@ -4,11 +4,13 @@ import dayjs from "dayjs";
 const HijriCalendarDisplay: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [hijriDate, setHijriDate] = useState<string>("Memuat...");
+  const [currentTime, setCurrentTime] = useState<string>("");
 
   useEffect(() => {
-    const updateDates = () => {
+    const updateDatesAndTimes = () => {
       const now = dayjs();
       setCurrentDate(now);
+      setCurrentTime(now.format("HH:mm:ss")); // Format jam, menit, detik
 
       // Menggunakan Intl.DateTimeFormat untuk mendapatkan tanggal Hijriah
       try {
@@ -24,8 +26,8 @@ const HijriCalendarDisplay: React.FC = () => {
       }
     };
 
-    const timer = setInterval(updateDates, 1000); // Update every second to keep time accurate
-    updateDates(); // Initial call
+    const timer = setInterval(updateDatesAndTimes, 1000); // Update every second to keep time accurate
+    updateDatesAndTimes(); // Initial call
 
     return () => clearInterval(timer);
   }, []);
@@ -36,6 +38,7 @@ const HijriCalendarDisplay: React.FC = () => {
     <div className="text-center text-xl md:text-3xl font-semibold text-gray-200 mb-4">
       <p>{gregorianDate}</p>
       <p className="text-green-300">{hijriDate}</p>
+      <p className="text-blue-400 text-5xl md:text-7xl font-bold mt-2">{currentTime}</p> {/* Menampilkan jam */}
     </div>
   );
 };
