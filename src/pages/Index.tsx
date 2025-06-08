@@ -5,7 +5,8 @@ import HijriCalendarDisplay from "@/components/HijriCalendarDisplay";
 import PrayerTimesDisplay from "@/components/PrayerTimesDisplay";
 import RunningText from "@/components/RunningText";
 import InfoSlides from "@/components/InfoSlides";
-import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay"; // Import ImamMuezzinDisplay
+import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay";
+import NotificationStudyDisplay from "@/components/NotificationStudyDisplay"; // Import NotificationStudyDisplay
 
 const Index = () => {
   const navigate = useNavigate();
@@ -54,7 +55,8 @@ const Index = () => {
           Waktu Sholat & Informasi Masjid
         </p>
         <PrayerTimesDisplay />
-        <ImamMuezzinDisplay /> {/* Tambahkan komponen ImamMuezzinDisplay di sini */}
+        <ImamMuezzinDisplay />
+        <NotificationStudyDisplay /> {/* Tambahkan komponen NotificationStudyDisplay di sini */}
         <InfoSlides />
       </div>
 
