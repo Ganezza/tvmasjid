@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
+// import { format } from "date-fns"; // Tidak lagi digunakan
+// import { id } from "date-fns/locale"; // Tidak lagi digunakan
 
 interface FinancialRecord {
   id: string;
@@ -44,7 +44,14 @@ const FinancialDisplay: React.FC = () => {
         while (friday.day() !== 5) { // 5 represents Friday in dayjs (0=Sunday, 1=Monday, ..., 6=Saturday)
           friday = friday.subtract(1, 'day');
         }
-        setLastFridayDate(format(friday.toDate(), "dd MMMM yyyy", { locale: id })); // Changed format here
+        
+        // Menggunakan Intl.DateTimeFormat untuk format tanggal tanpa nama hari
+        const formatter = new Intl.DateTimeFormat('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        });
+        setLastFridayDate(formatter.format(friday.toDate()));
       }
     } catch (err) {
       console.error("Unexpected error fetching financial summary:", err);
