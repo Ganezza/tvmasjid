@@ -19,6 +19,7 @@ const FinancialDisplay: React.FC = () => {
   const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastFridayDate, setLastFridayDate] = useState<string>(""); // State untuk tanggal Jumat terakhir
 
   const fetchFinancialSummary = useCallback(async () => {
     setIsLoading(true);
@@ -34,13 +35,12 @@ const FinancialDisplay: React.FC = () => {
         setError("Gagal memuat ringkasan keuangan.");
         toast.error("Gagal memuat ringkasan keuangan.");
       } else {
-        console.log("Fetched financial records:", data); // Log data yang diambil
+        // Calculate balance from ALL records
         const balance = (data || []).reduce((sum, record) => {
           return record.transaction_type === "inflow" ? sum + record.amount : sum - record.amount;
         }, 0);
         setTotalBalance(balance);
         setRecentRecords(data || []); // Set all fetched records as recent
-        console.log("Calculated total balance:", balance); // Log saldo yang dihitung
       }
     } catch (err) {
       console.error("Unexpected error fetching financial summary:", err);
@@ -53,6 +53,15 @@ const FinancialDisplay: React.FC = () => {
 
   useEffect(() => {
     fetchFinancialSummary();
+
+    // Calculate last Friday's date
+    const today = dayjs();
+    // day() returns 0 for Sunday, 1 for Monday, ..., 5 for Friday, 6 for Saturday
+    // If today is Friday (5), it will be today. If today is Saturday (6), it will be yesterday.
+    // If today is Sunday (0), it will be 2 days ago.
+    // This correctly gets the most recent Friday (inclusive of today if it's Friday).
+    const lastFriday = today.day(5); 
+    setLastFridayDate(format(lastFriday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }));
 
     // Set up real-time listener for financial_records changes
     const channel = supabase
@@ -93,7 +102,9 @@ const FinancialDisplay: React.FC = () => {
       <p className="text-4xl md:text-5xl font-bold text-green-400 mb-2">
         Saldo Kas: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </p>
-      {/* Removed "Data per Jumat" line */}
+      <p className="text-lg md:text-xl text-gray-300 mb-4">
+        Data per: <span className="font-semibold">{lastFridayDate}</span>
+      </p>
 
       <h4 className="text-2xl md:text-3xl font-bold mb-3 text-blue-300">
         Rincian Transaksi Terbaru
