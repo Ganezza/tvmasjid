@@ -8,7 +8,7 @@ import InfoSlides from "@/components/InfoSlides";
 import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay";
 import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
-import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay"; // Import TarawihScheduleDisplay
+import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -51,17 +51,33 @@ const Index = () => {
         <HijriCalendarDisplay />
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-grow flex flex-col items-center justify-center w-full max-w-6xl px-4">
-        <p className="text-2xl md:text-4xl text-gray-300 mb-8">
-          Waktu Sholat & Informasi Masjid
-        </p>
-        <PrayerTimesDisplay />
-        <ImamMuezzinDisplay />
-        <TarawihScheduleDisplay /> {/* Tambahkan komponen TarawihScheduleDisplay di sini */}
-        <NotificationStudyDisplay />
-        <FinancialDisplay />
-        <InfoSlides />
+      {/* Main Content Area - Using Grid for better layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl px-4 py-8">
+        {/* Prayer Times - always prominent, full width */}
+        <div className="col-span-full">
+          <PrayerTimesDisplay />
+        </div>
+
+        {/* Imam/Muezzin & Tarawih - side by side on larger screens */}
+        <div className="col-span-full md:col-span-1 lg:col-span-1">
+          <ImamMuezzinDisplay />
+        </div>
+        <div className="col-span-full md:col-span-1 lg:col-span-1">
+          <TarawihScheduleDisplay />
+        </div>
+
+        {/* Notification & Financial - side by side */}
+        <div className="col-span-full md:col-span-1 lg:col-span-1">
+          <NotificationStudyDisplay />
+        </div>
+        <div className="col-span-full md:col-span-1 lg:col-span-1">
+          <FinancialDisplay />
+        </div>
+
+        {/* Info Slides - full width */}
+        <div className="col-span-full">
+          <InfoSlides />
+        </div>
       </div>
 
       {/* Footer Section - Running Text and MadeWithDyad */}
