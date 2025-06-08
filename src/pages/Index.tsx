@@ -10,7 +10,8 @@ import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
 import AppBackground from "@/components/AppBackground";
-import MurottalPlayer from "@/components/MurottalPlayer"; // Import MurottalPlayer
+import MurottalPlayer from "@/components/MurottalPlayer";
+import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown"; // Import the new component
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -91,7 +92,7 @@ const Index = () => {
 
   return (
     <AppBackground>
-      <MurottalPlayer /> {/* Tambahkan MurottalPlayer di sini */}
+      <MurottalPlayer />
 
       {/* Header Section */}
       <div className="w-full flex justify-between items-center p-4">
@@ -131,9 +132,10 @@ const Index = () => {
           <NotificationStudyDisplay />
         </div>
 
-        {/* Right Column (Info Slides, Tarawih) */}
+        {/* Right Column (Info Slides, Islamic Holiday Countdown, Tarawih) */}
         <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
           <InfoSlides />
+          <IslamicHolidayCountdown /> {/* New component added here */}
           <TarawihScheduleDisplay />
         </div>
       </div>
