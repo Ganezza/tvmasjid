@@ -58,9 +58,9 @@ const ImamMuezzinDisplay: React.FC = () => {
 
       // 2. Calculate prayer times for today
       const now = dayjs();
-      const coordinates = new Adhan.Coordinates(latitude, longitude);
+      const coordinates = new Coordinates(latitude, longitude);
       const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod]();
-      const times = new Adhan.PrayerTimes(coordinates, now.toDate(), params);
+      const times = new PrayerTimes(coordinates, now.toDate(), params);
 
       // List of actual prayer times for the day
       const todayPrayerTimes = [
@@ -167,7 +167,7 @@ const ImamMuezzinDisplay: React.FC = () => {
   if (isLoading) {
     return (
       <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
-        <p className="text-2xl lg:text-3xl xl:text-4xl">Memuat jadwal imam & muadzin...</p>
+        <p className="text-xl">Memuat jadwal imam & muadzin...</p>
       </div>
     );
   }
@@ -175,8 +175,8 @@ const ImamMuezzinDisplay: React.FC = () => {
   if (error) {
     return (
       <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
-        <p className="text-2xl lg:text-3xl xl:text-4xl font-bold">Error:</p>
-        <p className="text-xl lg:text-2xl xl:text-3xl">{error}</p>
+        <p className="text-xl font-bold">Error:</p>
+        <p className="text-lg">{error}</p>
       </div>
     );
   }
@@ -184,10 +184,10 @@ const ImamMuezzinDisplay: React.FC = () => {
   if (!currentSchedule) {
     return (
       <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
-        <p className="text-xl lg:text-2xl xl:text-3xl text-gray-400">
+        <p className="text-xl text-gray-400">
           Jadwal imam & muadzin untuk sholat berikutnya tidak ditemukan.
           {nextPrayerInfo && (
-            <span className="block mt-2 text-lg lg:text-xl xl:text-2xl">
+            <span className="block mt-2 text-lg">
               Mencari: <span className="font-semibold">{nextPrayerInfo.prayer}</span> pada hari <span className="font-semibold">{nextPrayerInfo.day}</span>.
             </span>
           )}
@@ -198,14 +198,14 @@ const ImamMuezzinDisplay: React.FC = () => {
 
   return (
     <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8">
-      <h3 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-3 text-green-300">
+      <h3 className="text-4xl md:text-5xl font-bold mb-3 text-green-300"> {/* Changed text-3xl to text-4xl md:text-5xl */}
         Sholat {currentSchedule.prayer_name} Berikutnya
       </h3>
-      <p className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-blue-200">
+      <p className="text-3xl md:text-4xl text-blue-200"> {/* Changed text-2xl to text-3xl md:text-4xl */}
         Imam: <span className="font-semibold">{currentSchedule.imam_name}</span>
       </p>
       {currentSchedule.muezzin_name && (
-        <p className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-gray-300 mt-1">
+        <p className="text-2xl md:text-3xl text-gray-300 mt-1"> {/* Changed text-xl to text-2xl md:text-3xl */}
           Muadzin: <span className="font-medium">{currentSchedule.muezzin_name}</span>
         </p>
       )}
