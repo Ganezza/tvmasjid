@@ -17,12 +17,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <SessionProvider> {/* Wrap Routes with SessionProvider */}
+        <SessionProvider> {/* Bungkus Routes dengan SessionProvider */}
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/login" element={<Login />} /> {/* Add Login route */}
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/login" element={<Login />} /> {/* Tambahkan rute Login */}
+            {/* TAMBAHKAN SEMUA RUTE KUSTOM DI ATAS RUTE CATCH-ALL "*" */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </SessionProvider>
