@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
-import * as Adhan from "adhan"; // Mengimpor seluruh pustaka adhan sebagai objek Adhan
+import * as Adhan from "adhan";
 import { toast } from "sonner";
 
 dayjs.extend(duration);
@@ -45,7 +45,7 @@ const PrayerTimesDisplay: React.FC = () => {
       let latitude = data?.latitude || -6.2088;
       let longitude = data?.longitude || 106.8456;
       let calculationMethod = data?.calculation_method || "MuslimWorldLeague";
-      const isRamadanModeActive = data?.is_ramadan_mode_active || false; // Tetap ambil status Ramadan mode
+      const isRamadanModeActive = data?.is_ramadan_mode_active || false;
 
       console.log("Settings fetched:", { latitude, longitude, calculationMethod, isRamadanModeActive });
 
@@ -56,10 +56,18 @@ const PrayerTimesDisplay: React.FC = () => {
       console.log("Calculating prayer times for today:", today);
       const times = new Adhan.PrayerTimes(coordinates, today, params);
 
+      // --- START DEBUGGING LOGS ---
+      console.log("Raw Adhan times object:", times);
+      console.log("Raw Fajr time (Date object):", times.fajr);
+      console.log("Raw Imsak time (Date object):", times.imsak);
+      console.log("Formatted Fajr time:", dayjs(times.fajr).format("HH:mm"));
+      console.log("Formatted Imsak time:", dayjs(times.imsak).format("HH:mm"));
+      // --- END DEBUGGING LOGS ---
+
       const newPrayerTimes: PrayerTime[] = [
         { name: "Imsak", time: dayjs(times.imsak).format("HH:mm") },
         { name: "Subuh", time: dayjs(times.fajr).format("HH:mm") },
-        { name: "Syuruq", time: dayjs(times.sunrise).format("HH:mm") }, // Menambahkan Syuruq
+        { name: "Syuruq", time: dayjs(times.sunrise).format("HH:mm") },
         { name: "Dzuhur", time: dayjs(times.dhuhr).format("HH:mm") },
         { name: "Ashar", time: dayjs(times.asr).format("HH:mm") },
         { name: "Maghrib", time: dayjs(times.maghrib).format("HH:mm") },
