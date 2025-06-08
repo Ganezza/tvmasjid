@@ -18,6 +18,8 @@ interface Schedule {
   prayer_name: string;
   imam_name: string;
   muezzin_name?: string | null;
+  khatib_name?: string | null; // Tambahkan kolom baru
+  bilal_name?: string | null;  // Tambahkan kolom baru
   display_order: number;
 }
 
@@ -27,6 +29,8 @@ const scheduleFormSchema = z.object({
   prayer_name: z.string().min(1, "Nama sholat tidak boleh kosong."),
   imam_name: z.string().min(1, "Nama imam tidak boleh kosong."),
   muezzin_name: z.string().nullable().optional(),
+  khatib_name: z.string().nullable().optional(), // Tambahkan validasi untuk khatib_name
+  bilal_name: z.string().nullable().optional(),  // Tambahkan validasi untuk bilal_name
   display_order: z.coerce.number().int().min(0, "Urutan tampilan harus non-negatif.").default(0),
 });
 
@@ -49,6 +53,7 @@ const PRAYER_NAMES = [
   { value: "Maghrib", label: "Maghrib" },
   { value: "Isya", label: "Isya" },
   { value: "Jumat", label: "Jumat" },
+  { value: "Tarawih", label: "Tarawih" }, // Tambahkan Tarawih
   { value: "Idul Fitri", label: "Idul Fitri" },
   { value: "Idul Adha", label: "Idul Adha" },
 ];
@@ -65,11 +70,14 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
       prayer_name: "",
       imam_name: "",
       muezzin_name: "",
+      khatib_name: "", // Default value
+      bilal_name: "",  // Default value
       display_order: 0,
     },
   });
 
-  const { handleSubmit, register, setValue, reset, formState: { isSubmitting, errors } } = form;
+  const { handleSubmit, register, setValue, reset, watch, formState: { isSubmitting, errors } } = form;
+  const prayerName = watch("prayer_name"); // Watch the prayer_name field
 
   const fetchSchedules = useCallback(async () => {
     const { data, error } = await supabase
@@ -105,7 +113,7 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
 
   const handleAddSchedule = () => {
     setEditingSchedule(null);
-    reset({ day_of_week: "", prayer_name: "", imam_name: "", muezzin_name: "", display_order: 0 });
+    reset({ day_of_week: "", prayer_name: "", imam_name: "", muezzin_name: "", khatib_name: "", bilal_name: "", display_order: 0 });
     setIsDialogOpen(true);
   };
 
@@ -117,6 +125,8 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
       prayer_name: schedule.prayer_name,
       imam_name: schedule.imam_name,
       muezzin_name: schedule.muezzin_name || "",
+      khatib_name: schedule.khatib_name || "", // Set value for khatib_name
+      bilal_name: schedule.bilal_name || "",  // Set value for bilal_name
       display_order: schedule.display_order,
     });
     setIsDialogOpen(true);
@@ -141,17 +151,21 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
   };
 
   const onSubmit = async (values: ScheduleFormValues) => {
+    const payload = {
+      day_of_week: values.day_of_week,
+      prayer_name: values.prayer_name,
+      imam_name: values.imam_name,
+      muezzin_name: values.muezzin_name || null,
+      khatib_name: values.khatib_name || null, // Sertakan khatib_name
+      bilal_name: values.bilal_name || null,  // Sertakan bilal_name
+      display_order: values.display_order,
+    };
+
     if (editingSchedule) {
       // Update existing schedule
       const { error } = await supabase
         .from("imam_muezzin_schedules")
-        .update({
-          day_of_week: values.day_of_week,
-          prayer_name: values.prayer_name,
-          imam_name: values.imam_name,
-          muezzin_name: values.muezzin_name || null,
-          display_order: values.display_order,
-        })
+        .update(payload)
         .eq("id", editingSchedule.id);
 
       if (error) {
@@ -166,13 +180,7 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
       // Add new schedule
       const { error } = await supabase
         .from("imam_muezzin_schedules")
-        .insert({
-          day_of_week: values.day_of_week,
-          prayer_name: values.prayer_name,
-          imam_name: values.imam_name,
-          muezzin_name: values.muezzin_name || null,
-          display_order: values.display_order,
-        });
+        .insert(payload);
 
       if (error) {
         console.error("Error adding schedule:", error);
@@ -191,7 +199,7 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
         <CardTitle className="text-2xl font-semibold text-blue-300">Pengaturan Jadwal Imam & Muadzin</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-400 mb-4">Kelola jadwal imam dan muadzin untuk sholat fardhu dan Jumat.</p>
+        <p className="text-gray-400 mb-4">Kelola jadwal imam dan muadzin untuk sholat fardhu, Jumat, dan Tarawih.</p>
         <Button onClick={handleAddSchedule} className="w-full bg-green-600 hover:bg-green-700 text-white mb-4">
           <PlusCircle className="mr-2 h-4 w-4" /> Tambah Jadwal Baru
         </Button>
@@ -209,6 +217,12 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
                   <p className="text-sm text-gray-300">Imam: {schedule.imam_name}</p>
                   {schedule.muezzin_name && (
                     <p className="text-xs text-gray-400">Muadzin: {schedule.muezzin_name}</p>
+                  )}
+                  {schedule.khatib_name && (
+                    <p className="text-xs text-gray-400">Khatib: {schedule.khatib_name}</p>
+                  )}
+                  {schedule.bilal_name && (
+                    <p className="text-xs text-gray-400">Bilal: {schedule.bilal_name}</p>
                   )}
                   <p className="text-xs text-gray-400">Urutan: {schedule.display_order}</p>
                 </div>
@@ -292,6 +306,31 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
                 />
                 {errors.muezzin_name && <p className="text-red-400 text-sm mt-1">{errors.muezzin_name.message}</p>}
               </div>
+
+              {prayerName === "Tarawih" && (
+                <>
+                  <div>
+                    <Label htmlFor="khatib_name" className="text-gray-300">Nama Khatib (Opsional)</Label>
+                    <Input
+                      id="khatib_name"
+                      {...register("khatib_name")}
+                      className="bg-gray-700 border-gray-600 text-white mt-1"
+                      placeholder="Nama Khatib"
+                    />
+                    {errors.khatib_name && <p className="text-red-400 text-sm mt-1">{errors.khatib_name.message}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="bilal_name" className="text-gray-300">Nama Bilal (Opsional)</Label>
+                    <Input
+                      id="bilal_name"
+                      {...register("bilal_name")}
+                      className="bg-gray-700 border-gray-600 text-white mt-1"
+                      placeholder="Nama Bilal"
+                    />
+                    {errors.bilal_name && <p className="text-red-400 text-sm mt-1">{errors.bilal_name.message}</p>}
+                  </div>
+                </>
+              )}
 
               <div>
                 <Label htmlFor="display_order" className="text-gray-300">Urutan Tampilan</Label>
