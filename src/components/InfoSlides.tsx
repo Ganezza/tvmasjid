@@ -41,7 +41,7 @@ const InfoSlides: React.FC = () => {
     } catch (err) {
       console.error("Unexpected error fetching info slides:", err);
       setError("Terjadi kesalahan saat memuat slide informasi.");
-      toast.error("Terjadi kesalahan saat memuat slide informasi.");
+        toast.error("Terjadi kesalahan saat memuat slide informasi.");
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +66,7 @@ const InfoSlides: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-64 md:h-80">
+      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-48 md:h-64">
         <p className="text-2xl">Memuat slide informasi...</p>
       </div>
     );
@@ -74,7 +74,7 @@ const InfoSlides: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-64 md:h-80">
+      <div className="bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-48 md:h-64">
         <p className="text-2xl font-bold">Error:</p>
         <p className="text-xl">{error}</p>
       </div>
@@ -83,14 +83,14 @@ const InfoSlides: React.FC = () => {
 
   if (slides.length === 0) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-64 md:h-80">
+      <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 flex items-center justify-center text-white h-48 md:h-64">
         <p className="text-2xl text-gray-400">Tidak ada slide informasi untuk ditampilkan.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 h-64 md:h-80">
+    <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden mb-8 h-48 md:h-64">
       <Swiper
         spaceBetween={30}
         centeredSlides={true}
