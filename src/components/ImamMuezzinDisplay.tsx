@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
 import { supabase } from "@/lib/supabase";
-import { CalculationMethod, PrayerTimes, Coordinates } from "adhan";
+import { CalculationMethod, PrayerTimes, Coordinates, Prayer } from "adhan"; // Import Prayer enum
 import { toast } from "sonner";
 
 interface Schedule {
@@ -13,13 +13,13 @@ interface Schedule {
   display_order: number;
 }
 
-// Mengubah kunci menjadi huruf kecil agar sesuai dengan output adhan library
+// Mengembalikan kunci menjadi huruf kapital agar sesuai dengan string representasi dari adhan's Prayer enum
 const prayerNameMap: { [key: string]: string } = {
-  fajr: "Subuh",
-  dhuhr: "Dzuhur",
-  asr: "Ashar",
-  maghrib: "Maghrib",
-  isha: "Isya",
+  Fajr: "Subuh",
+  Dhuhr: "Dzuhur",
+  Asr: "Ashar",
+  Maghrib: "Maghrib",
+  Isha: "Isya",
 };
 
 const getIndonesianDayOfWeek = (date: dayjs.Dayjs): string => {
@@ -60,24 +60,27 @@ const ImamMuezzinDisplay: React.FC = () => {
       const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod]();
       const times = new PrayerTimes(coordinates, now.toDate(), params);
 
-      let nextPrayerAdhanName = times.nextPrayer(); // Akan mengembalikan 'fajr', 'dhuhr', dll. (huruf kecil) atau null
+      let nextPrayerAdhanEnum = times.nextPrayer(); // Ini akan mengembalikan nilai enum Prayer (misalnya, Prayer.Fajr, Prayer.None)
       let targetDay = now; // Default ke hari ini
 
-      // Jika tidak ada sholat lagi hari ini (setelah Isya), anggap Subuh hari berikutnya
-      if (!nextPrayerAdhanName) {
-        nextPrayerAdhanName = "fajr"; // Set ke 'fajr' (huruf kecil) untuk hari berikutnya
+      // Jika tidak ada sholat lagi hari ini (yaitu, setelah Isya), anggap Subuh hari berikutnya
+      if (nextPrayerAdhanEnum === Prayer.None) { // Pengecekan yang benar untuk Prayer.None
+        nextPrayerAdhanEnum = Prayer.Fajr; // Sholat berikutnya akan menjadi Subuh
         targetDay = now.add(1, 'day'); // Dan itu akan terjadi besok
       }
 
+      // Konversi enum ke representasi string-nya (misalnya, "Fajr")
+      const nextPrayerAdhanName = nextPrayerAdhanEnum.toString(); 
       let nextPrayerDisplayName = prayerNameMap[nextPrayerAdhanName];
 
       // Penanganan khusus untuk Jumat Dzuhur -> Jumat
-      // Pastikan menggunakan nama adhan asli ('dhuhr') dan targetDay yang benar
-      if (targetDay.day() === 5 && nextPrayerAdhanName === "dhuhr") { // Jumat adalah hari 5, dan sholat Dzuhur dari adhan
+      // Pastikan menggunakan nama adhan asli ('Dhuhr') dan targetDay yang benar
+      if (targetDay.day() === 5 && nextPrayerAdhanName === "Dhuhr") { // Jumat adalah hari 5, dan sholatnya adalah Dzuhur dari adhan
         nextPrayerDisplayName = "Jumat";
       }
 
       if (!nextPrayerDisplayName) {
+        // Kasus ini seharusnya tidak tercapai jika prayerNameMap lengkap dan adhan mengembalikan nama yang diharapkan
         setError("Tidak dapat menentukan waktu sholat berikutnya.");
         setIsLoading(false);
         return;
@@ -86,7 +89,7 @@ const ImamMuezzinDisplay: React.FC = () => {
       // 4. Dapatkan nama hari dalam bahasa Indonesia, berdasarkan targetDay
       const currentDayOfWeek = getIndonesianDayOfWeek(targetDay);
 
-      // 5. Ambil jadwal imam/muadzin untuk sholat berikutnya dan hari ini
+      // 5. Ambil jadwal imam/muadzin untuk sholat berikutnya dan hari target
       const { data: scheduleData, error: scheduleError } = await supabase
         .from("imam_muezzin_schedules")
         .select("*")
