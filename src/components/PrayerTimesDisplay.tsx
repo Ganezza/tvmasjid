@@ -4,7 +4,7 @@ import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
 import { CalculationMethod, PrayerTimes, Coordinates } from "adhan";
-import { TimeAdjustment } from "adhan/lib/esm/Adhan"; // Mengimpor TimeAdjustment dari jalur eksplisit
+import { TimeAdjustment } from "adhan/lib/esm/TimeAdjustment"; // Mengimpor TimeAdjustment dari jalur eksplisit yang berbeda
 import { toast } from "sonner";
 
 dayjs.extend(duration);
