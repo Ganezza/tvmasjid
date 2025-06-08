@@ -22,7 +22,7 @@ const prayerNameMap: { [key: string]: string } = {
 };
 
 const getIndonesianDayOfWeek = (date: dayjs.Dayjs): string => {
-  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const days = ["Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]; // Changed Minggu to Ahad
   return days[date.day()];
 };
 
