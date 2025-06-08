@@ -5,7 +5,8 @@ import PrayerTimeSettings from "@/components/admin/PrayerTimeSettings";
 import RunningTextSettings from "@/components/admin/RunningTextSettings";
 import InfoSlideSettings from "@/components/admin/InfoSlideSettings";
 import ImamMuezzinScheduleSettings from "@/components/admin/ImamMuezzinScheduleSettings";
-import NotificationStudySettings from "@/components/admin/NotificationStudySettings"; // Import the new component
+import NotificationStudySettings from "@/components/admin/NotificationStudySettings";
+import FinancialSettings from "@/components/admin/FinancialSettings"; // Import the new component
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -35,11 +36,10 @@ const AdminPanel = () => {
         {/* Notification & Study Settings */}
         <NotificationStudySettings />
 
+        {/* Financial Settings */}
+        <FinancialSettings />
+
         {/* Placeholder for other Admin Sections */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">Informasi Keuangan</h2>
-          <p className="text-gray-400">Input data kas masuk, kas keluar, dan saldo masjid.</p>
-        </div>
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">Pengaturan Umum</h2>
           <p className="text-gray-400">Konfigurasi mode Ramadan dan pengaturan lainnya.</p>
