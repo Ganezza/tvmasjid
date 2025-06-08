@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
-import hijri from "dayjs-plugin-hijri"; // Corrected import path
+import hijri from "dayjs/plugin/hijri"; // Reverted to standard Day.js plugin import path
 
 dayjs.extend(hijri);
 
