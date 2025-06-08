@@ -11,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Trash2, Edit, PlusCircle, Calendar as CalendarIcon } from "lucide-react";
+import { Trash2, Edit, PlusCircle, Calendar as CalendarIcon, CloudDownload } from "lucide-react"; // Added CloudDownload icon
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,7 @@ const IslamicHolidaySettings: React.FC = () => {
   const [holidays, setHolidays] = useState<IslamicHoliday[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHoliday, setEditingHoliday] = useState<IslamicHoliday | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false); // New state for sync loading
 
   const form = useForm<HolidayFormValues>({
     resolver: zodResolver(holidayFormSchema),
@@ -154,6 +155,37 @@ const IslamicHolidaySettings: React.FC = () => {
     }
   };
 
+  const handleSyncHolidays = async () => {
+    const currentYear = new Date().getFullYear();
+    const yearToSync = prompt(`Masukkan tahun untuk sinkronisasi hari besar (misal: ${currentYear}):`, currentYear.toString());
+
+    if (!yearToSync || isNaN(Number(yearToSync))) {
+      toast.info("Sinkronisasi dibatalkan atau tahun tidak valid.");
+      return;
+    }
+
+    setIsSyncing(true);
+    const syncToastId = toast.loading(`Menyinkronkan hari besar untuk tahun ${yearToSync}...`);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-holidays', {
+        body: { year: Number(yearToSync), country: "ID" }, // 'ID' for Indonesia
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success(`Berhasil menyinkronkan ${data.count} hari besar untuk tahun ${yearToSync}!`, { id: syncToastId });
+      fetchHolidays(); // Re-fetch to update the displayed list
+    } catch (error: any) {
+      console.error("Error syncing holidays:", error);
+      toast.error(`Gagal menyinkronkan hari besar: ${error.message || "Terjadi kesalahan."}`, { id: syncToastId });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <Card className="bg-gray-800 text-white border-gray-700 col-span-full lg:col-span-2">
       <CardHeader>
@@ -161,9 +193,14 @@ const IslamicHolidaySettings: React.FC = () => {
       </CardHeader>
       <CardContent>
         <p className="text-gray-400 mb-4">Kelola daftar hari besar Islam yang akan ditampilkan dengan hitung mundur.</p>
-        <Button onClick={handleAddHoliday} className="w-full bg-green-600 hover:bg-green-700 text-white mb-4">
-          <PlusCircle className="mr-2 h-4 w-4" /> Tambah Hari Besar
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <Button onClick={handleAddHoliday} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Hari Besar Manual
+          </Button>
+          <Button onClick={handleSyncHolidays} disabled={isSyncing} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white">
+            <CloudDownload className="mr-2 h-4 w-4" /> {isSyncing ? "Menyinkronkan..." : "Sinkronkan dari Online"}
+          </Button>
+        </div>
 
         <div className="space-y-3">
           {holidays.length === 0 ? (
