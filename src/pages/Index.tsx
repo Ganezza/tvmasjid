@@ -64,12 +64,12 @@ const Index = () => {
         {/* Middle Column */}
         <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
           <NotificationStudyDisplay />
-          <AudioDisplay /> {/* AudioDisplay sekarang di kolom tengah */}
+          <AudioDisplay />
         </div>
 
         {/* Right Column */}
         <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
-          <PrayerTimesDisplay />
+          <PrayerTimesDisplay className="flex-grow" /> {/* Menambahkan flex-grow di sini */}
           <ImamMuezzinDisplay />
           <TarawihScheduleDisplay />
         </div>
