@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import HijriCalendarDisplay from "@/components/HijriCalendarDisplay";
@@ -9,54 +9,13 @@ import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay";
 import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
-import AudioDisplay from "@/components/AudioDisplay"; // Import the new component
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+import AudioDisplay from "@/components/AudioDisplay";
+import AppBackground from "@/components/AppBackground"; // Import the new AppBackground component
 
 const Index = () => {
   const navigate = useNavigate();
   const [clickCount, setClickCount] = useState(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
-  const [backgroundColor, setBackgroundColor] = useState<string>("#0A0A0A"); // Default dark background
-
-  const fetchDisplaySettings = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("background_image_url, background_color")
-        .eq("id", 1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error("Error fetching display settings:", error);
-        toast.error("Gagal memuat pengaturan tampilan.");
-      } else if (data) {
-        setBackgroundImageUrl(data.background_image_url);
-        setBackgroundColor(data.background_color || "#0A0A0A");
-      }
-    } catch (err) {
-      console.error("Unexpected error fetching display settings:", err);
-      toast.error("Terjadi kesalahan saat memuat pengaturan tampilan.");
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDisplaySettings();
-
-    const channel = supabase
-      .channel('display_settings_changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('Display settings change received!', payload);
-        setBackgroundImageUrl(payload.new.background_image_url);
-        setBackgroundColor(payload.new.background_color || "#0A0A0A");
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchDisplaySettings]);
 
   useEffect(() => {
     if (clickCount >= 5) {
@@ -84,19 +43,8 @@ const Index = () => {
     setClickCount((prev) => prev + 1);
   };
 
-  const backgroundStyle = {
-    backgroundColor: backgroundColor,
-    backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : 'none',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-  };
-
   return (
-    <div
-      className="relative min-h-screen w-full text-white flex flex-col items-center justify-between overflow-hidden p-4"
-      style={backgroundStyle}
-    >
+    <AppBackground> {/* Use the new AppBackground component */}
       {/* Header Section */}
       <div className="w-full flex justify-between items-center p-4">
         <h1 className="text-4xl md:text-6xl font-extrabold text-green-400 drop-shadow-lg">
@@ -125,9 +73,9 @@ const Index = () => {
           <ImamMuezzinDisplay />
           <TarawihScheduleDisplay />
         </div>
-        <div className="col-span-full lg:col-span-1 flex flex-col gap-6"> {/* Added flex-col and gap-6 here */}
+        <div className="col-span-full lg:col-span-1 flex flex-col gap-6">
           <FinancialDisplay />
-          <AudioDisplay /> {/* New AudioDisplay component */}
+          <AudioDisplay />
         </div>
       </div>
 
@@ -143,7 +91,7 @@ const Index = () => {
         onClick={handleSecretShortcutClick}
         aria-label="Secret shortcut to admin panel"
       />
-    </div>
+    </AppBackground>
   );
 };
 
