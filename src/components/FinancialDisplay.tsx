@@ -6,6 +6,10 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import AutoScrollingFinancialRecords from "@/components/AutoScrollingFinancialRecords";
 
+// Import Day.js plugins
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore"; // Import the plugin
+dayjs.extend(isSameOrBefore); // Extend dayjs with the plugin
+
 interface FinancialRecord {
   id: string;
   created_at: string;
