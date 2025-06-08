@@ -59,13 +59,16 @@ const PrayerTimesDisplay: React.FC = () => {
       // --- START DEBUGGING LOGS ---
       console.log("Raw Adhan times object:", times);
       console.log("Raw Fajr time (Date object):", times.fajr);
-      console.log("Raw Imsak time (Date object):", times.imsak);
+      console.log("Raw Imsak time (Date object):", times.imsak); // This will still show Adhan's default Imsak
       console.log("Formatted Fajr time:", dayjs(times.fajr).format("HH:mm"));
-      console.log("Formatted Imsak time:", dayjs(times.imsak).format("HH:mm"));
       // --- END DEBUGGING LOGS ---
 
+      // Calculate Imsak manually as 10 minutes before Fajr
+      const imsakTime = dayjs(times.fajr).subtract(10, 'minute').format("HH:mm");
+      console.log("Manually calculated Imsak time (10 mins before Fajr):", imsakTime);
+
       const newPrayerTimes: PrayerTime[] = [
-        { name: "Imsak", time: dayjs(times.imsak).format("HH:mm") },
+        { name: "Imsak", time: imsakTime }, // Use the manually calculated Imsak
         { name: "Subuh", time: dayjs(times.fajr).format("HH:mm") },
         { name: "Syuruq", time: dayjs(times.sunrise).format("HH:mm") },
         { name: "Dzuhur", time: dayjs(times.dhuhr).format("HH:mm") },
