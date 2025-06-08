@@ -57,10 +57,9 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 w-full px-4 py-8 md:py-12">
         {/* Left Column */}
         <div className="col-span-full lg:col-span-1 flex flex-col gap-6">
-          <NotificationStudyDisplay />
           <InfoSlides />
-          <FinancialDisplay />
-          <AudioDisplay />
+          <NotificationStudyDisplay />
+          <FinancialDisplay /> {/* Informasi Keuangan di kolom kiri, di bawah Pengumuman */}
         </div>
 
         {/* Right Column */}
@@ -68,6 +67,7 @@ const Index = () => {
           <PrayerTimesDisplay />
           <ImamMuezzinDisplay />
           <TarawihScheduleDisplay />
+          <AudioDisplay />
         </div>
       </div>
 
