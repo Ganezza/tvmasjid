@@ -17,7 +17,7 @@ interface FinancialRecord {
 const FinancialDisplay: React.FC = () => {
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
-  const [lastFridayDate, setLastFridayDate] = useState<string | null>(null); // Mengubah nama state kembali
+  const [lastFridayDate, setLastFridayDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,22 +35,29 @@ const FinancialDisplay: React.FC = () => {
         setError("Gagal memuat ringkasan keuangan.");
         toast.error("Gagal memuat ringkasan keuangan.");
       } else {
-        const balance = (data || []).reduce((sum, record) => {
-          return record.transaction_type === "inflow" ? sum + record.amount : sum - record.amount;
-        }, 0);
-        setTotalBalance(balance);
-        setRecentRecords(data || []);
-
         // Hitung hari Jumat terakhir dari tanggal saat ini
         let friday = dayjs();
         // day() returns 0 for Sunday, 1 for Monday, ..., 5 for Friday, 6 for Saturday
-        // If today is Friday, it should still show today's Friday.
-        // If today is Saturday, it should show yesterday's Friday.
-        // If today is Thursday, it should show last week's Friday.
-        while (friday.day() !== 5) { // 5 represents Friday
+        // Loop back until we find the most recent Friday (inclusive of today if today is Friday)
+        while (friday.day() !== 5) { 
           friday = friday.subtract(1, 'day');
         }
-        setLastFridayDate(format(friday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }));
+        const lastFridayFormatted = format(friday.toDate(), "EEEE, dd MMMM yyyy", { locale: id });
+        setLastFridayDate(lastFridayFormatted);
+
+        // Filter records to only include those created on or before the last Friday
+        const lastFridayEndOfDay = friday.endOf('day'); // Get the end of the day for the last Friday
+
+        const filteredRecords = (data || []).filter(record => {
+          const recordCreatedAt = dayjs(record.created_at);
+          return recordCreatedAt.isSameOrBefore(lastFridayEndOfDay);
+        });
+
+        const balance = filteredRecords.reduce((sum, record) => {
+          return record.transaction_type === "inflow" ? sum + record.amount : sum - record.amount;
+        }, 0);
+        setTotalBalance(balance);
+        setRecentRecords(filteredRecords);
       }
     } catch (err) {
       console.error("Unexpected error fetching financial summary:", err);
@@ -119,7 +126,7 @@ const FinancialDisplay: React.FC = () => {
         Rincian Transaksi Terbaru
       </h4>
       {recentRecords.length === 0 ? (
-        <p className="text-gray-400 text-lg">Belum ada transaksi yang tercatat.</p>
+        <p className="text-gray-400 text-lg">Belum ada transaksi yang tercatat hingga Jumat terakhir.</p>
       ) : (
         <AutoScrollingFinancialRecords heightClass="h-48 md:h-64">
           <div className="space-y-3">
