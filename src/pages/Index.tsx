@@ -10,7 +10,7 @@ import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
 import AudioDisplay from "@/components/AudioDisplay";
-import AppBackground from "@/components/AppBackground";
+import AppBackground from "@/components/AppBackground"; // Import the new AppBackground component
 
 const Index = () => {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ const Index = () => {
   };
 
   return (
-    <AppBackground>
+    <AppBackground> {/* Use the new AppBackground component */}
       {/* Header Section */}
       <div className="w-full flex justify-between items-center p-4">
         <h1 className="text-4xl md:text-6xl font-extrabold text-green-400 drop-shadow-lg">
@@ -54,22 +54,26 @@ const Index = () => {
       </div>
 
       {/* Main Content Area - Using Grid for better layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full px-4 py-8 md:py-12">
-        {/* Prayer Times - always prominent, full width, placed inside the grid for consistent padding */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 w-full px-4 py-8 md:py-12">
+        {/* Prayer Times - always prominent, full width */}
         <div className="col-span-full">
           <PrayerTimesDisplay />
         </div>
 
-        {/* Left Column for Notification/Study and Imam/Muezzin Schedules */}
-        <div className="flex flex-col gap-6">
+        {/* Notification & Info Slides - side by side on larger screens */}
+        <div className="col-span-full lg:col-span-1">
           <NotificationStudyDisplay />
+        </div>
+        <div className="col-span-full lg:col-span-1">
+          <InfoSlides />
+        </div>
+
+        {/* Imam/Muezzin & Tarawih (grouped) and Financial - side by side on larger screens */}
+        <div className="col-span-full lg:col-span-1 flex flex-col gap-6">
           <ImamMuezzinDisplay />
           <TarawihScheduleDisplay />
         </div>
-
-        {/* Right Column for Info Slides, Financial Info, and Audio Controls */}
-        <div className="flex flex-col gap-6">
-          <InfoSlides />
+        <div className="col-span-full lg:col-span-1 flex flex-col gap-6">
           <FinancialDisplay />
           <AudioDisplay />
         </div>
