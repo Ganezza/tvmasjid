@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import HijriCalendarDisplay from "@/components/HijriCalendarDisplay";
@@ -11,11 +11,57 @@ import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
 import AudioDisplay from "@/components/AudioDisplay";
 import AppBackground from "@/components/AppBackground";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
   const [clickCount, setClickCount] = useState(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [masjidName, setMasjidName] = useState<string>("Masjid Digital TV");
+  const [masjidLogoUrl, setMasjidLogoUrl] = useState<string | null>(null);
+  const [masjidAddress, setMasjidAddress] = useState<string | null>(null);
+
+  const fetchMasjidInfo = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("app_settings")
+        .select("masjid_name, masjid_logo_url, masjid_address")
+        .eq("id", 1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error("Error fetching masjid info:", error);
+        toast.error("Gagal memuat informasi masjid.");
+      } else if (data) {
+        setMasjidName(data.masjid_name || "Masjid Digital TV");
+        setMasjidLogoUrl(data.masjid_logo_url);
+        setMasjidAddress(data.masjid_address);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching masjid info:", err);
+      toast.error("Terjadi kesalahan saat memuat informasi masjid.");
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMasjidInfo();
+
+    const channel = supabase
+      .channel('masjid_info_changes')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+        console.log('Masjid info change received!', payload);
+        setMasjidName(payload.new.masjid_name || "Masjid Digital TV");
+        setMasjidLogoUrl(payload.new.masjid_logo_url);
+        setMasjidAddress(payload.new.masjid_address);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchMasjidInfo]);
 
   useEffect(() => {
     if (clickCount >= 5) {
@@ -47,9 +93,21 @@ const Index = () => {
     <AppBackground>
       {/* Header Section */}
       <div className="w-full flex justify-between items-center p-4">
-        <h1 className="text-4xl md:text-6xl font-extrabold text-green-400 drop-shadow-lg">
-          Masjid Digital TV
-        </h1>
+        <div className="flex items-center gap-4">
+          {masjidLogoUrl && (
+            <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 object-contain" />
+          )}
+          <div>
+            <h1 className="text-4xl md:text-6xl font-extrabold text-green-400 drop-shadow-lg text-left">
+              {masjidName}
+            </h1>
+            {masjidAddress && (
+              <p className="text-lg md:text-xl text-gray-300 text-left mt-1">
+                {masjidAddress}
+              </p>
+            )}
+          </div>
+        </div>
         <HijriCalendarDisplay />
       </div>
 
@@ -67,8 +125,8 @@ const Index = () => {
 
         {/* Middle Column (ImamMuezzinDisplay and NotificationStudyDisplay) */}
         <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
-          <ImamMuezzinDisplay /> {/* Dipindahkan ke atas */}
-          <NotificationStudyDisplay /> {/* Dipindahkan ke bawah */}
+          <ImamMuezzinDisplay />
+          <NotificationStudyDisplay />
         </div>
 
         {/* Right Column (Info Slides, AudioDisplay, Tarawih) */}

@@ -9,7 +9,8 @@ import NotificationStudySettings from "@/components/admin/NotificationStudySetti
 import FinancialSettings from "@/components/admin/FinancialSettings";
 import RamadanModeSettings from "@/components/admin/RamadanModeSettings";
 import DisplaySettings from "@/components/admin/DisplaySettings";
-import AudioSettings from "@/components/admin/AudioSettings"; // Import the new component
+import AudioSettings from "@/components/admin/AudioSettings";
+import MasjidInfoSettings from "@/components/admin/MasjidInfoSettings"; // Import the new component
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -24,6 +25,9 @@ const AdminPanel = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Masjid Info Settings - New component */}
+        <MasjidInfoSettings />
+
         {/* Prayer Time Settings */}
         <PrayerTimeSettings />
 
@@ -48,7 +52,7 @@ const AdminPanel = () => {
         {/* Display Settings */}
         <DisplaySettings />
 
-        {/* Audio Settings - New component */}
+        {/* Audio Settings */}
         <AudioSettings />
       </div>
     </div>
