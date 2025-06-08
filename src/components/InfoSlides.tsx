@@ -106,8 +106,12 @@ const InfoSlides: React.FC = () => {
         className="mySwiper w-full h-full"
       >
         {slides.map((slide) => (
-          <SwiperSlide key={slide.id} className="flex items-center justify-center p-4">
-            {/* Always render as image, assuming all new/edited slides will be images */}
+          <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-4">
+            {slide.title && (
+              <h3 className="text-3xl md:text-4xl font-bold mb-4 text-yellow-300 text-center">
+                {slide.title}
+              </h3>
+            )}
             <img
               src={slide.content}
               alt={slide.title || "Info Slide"}
