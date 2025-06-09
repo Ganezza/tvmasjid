@@ -79,7 +79,7 @@ const FinancialDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
+      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white">
         <p className="text-2xl">Memuat informasi keuangan...</p>
       </div>
     );
@@ -87,7 +87,7 @@ const FinancialDisplay: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
+      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white">
         <p className="text-2xl font-bold">Error:</p>
         <p className="text-xl">{error}</p>
       </div>
@@ -95,7 +95,7 @@ const FinancialDisplay: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8">
+    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center">
       <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 text-yellow-300">
         Informasi Keuangan Masjid
       </h3>
