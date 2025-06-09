@@ -56,21 +56,21 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
     setError(null);
     try {
       const today = dayjs();
-      const currentDayOfWeek = "Jumat"; // Explicitly for Friday
+      const currentDayOfWeek = "Jum'at"; // Explicitly for Friday
 
       // Fetch Jumuah schedule
       const { data: scheduleData, error: scheduleError } = await supabase
         .from("imam_muezzin_schedules")
         .select("*")
         .eq("day_of_week", currentDayOfWeek)
-        .eq("prayer_name", "Jumat")
+        .eq("prayer_name", "Jum'at")
         .order("display_order", { ascending: true })
-        .limit(1); // Removed .single()
+        .limit(1);
 
       if (scheduleError) {
         console.error("Error fetching Jumuah schedule:", scheduleError);
-        setError("Gagal memuat jadwal Jumat.");
-      } else if (scheduleData && scheduleData.length > 0) { // Check for data[0]
+        setError("Gagal memuat jadwal Jum'at.");
+      } else if (scheduleData && scheduleData.length > 0) {
         setJumuahSchedule(scheduleData[0]);
       } else {
         setJumuahSchedule(null);
@@ -94,8 +94,8 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
       }
     } catch (err) {
       console.error("Unexpected error in JumuahInfoOverlay:", err);
-      setError("Terjadi kesalahan saat memuat informasi Jumat.");
-      toast.error("Terjadi kesalahan saat memuat informasi Jumat.");
+      setError("Terjadi kesalahan saat memuat informasi Jum'at.");
+      toast.error("Terjadi kesalahan saat memuat informasi Jum'at.");
     } finally {
       setIsLoading(false);
     }
@@ -186,7 +186,7 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 text-white">
-        <p className="text-3xl">Memuat informasi Jumat...</p>
+        <p className="text-3xl">Memuat informasi Jum'at...</p>
       </div>
     );
   }
@@ -216,7 +216,7 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
             {jumuahSchedule ? (
               <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
                 <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 text-green-300">
-                  Jadwal Sholat Jumat
+                  Jadwal Sholat Jum'at
                 </h3>
                 <p className="text-3xl md:text-4xl lg:text-5xl text-blue-200">
                   Imam: <span className="font-semibold">{jumuahSchedule.imam_name}</span>
@@ -239,7 +239,7 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
               </div>
             ) : (
               <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
-                <p className="text-2xl text-gray-400">Jadwal Jumat tidak ditemukan.</p>
+                <p className="text-2xl text-gray-400">Jadwal Jum'at tidak ditemukan.</p>
               </div>
             )}
 

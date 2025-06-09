@@ -74,12 +74,12 @@ const Index = () => {
         const isFriday = today.day() === 5;
 
         const prayerTimesList = [
-          { name: "Fajr", time: dayjs(times.fajr) },
+          { name: "Subuh", time: dayjs(times.fajr) },
           { name: "Syuruq", time: dayjs(times.sunrise) },
-          { name: isFriday ? "Jumat" : "Dhuhr", time: dayjs(times.dhuhr) },
-          { name: "Asr", time: dayjs(times.asr) },
+          { name: isFriday ? "Jum'at" : "Dzuhur", time: dayjs(times.dhuhr) },
+          { name: "Ashar", time: dayjs(times.asr) },
           { name: "Maghrib", time: dayjs(times.maghrib) },
-          { name: "Isha", time: dayjs(times.isha) },
+          { name: "Isya", time: dayjs(times.isha) },
         ];
 
         // Set Jumuah Dhuhr time if today is Friday
@@ -143,14 +143,19 @@ const Index = () => {
   const handlePrayerOrKhutbahEnd = useCallback(() => {
     setShowPrayerOverlay(false);
     setShowJumuahOverlay(false);
-    setShowImsakOverlay(false); // Ensure Imsak overlay is also hidden
-    setIsScreenDarkened(true);
-    console.log("Screen darkened for prayer/khutbah. Will revert in 5 minutes.");
-    setTimeout(() => {
-      setIsScreenDarkened(false);
-      console.log("Screen reverted to normal after prayer/khutbah.");
-    }, 5 * 60 * 1000); // 5 minutes
-  }, []);
+    // Imsak overlay does not trigger screen darkening, it just closes itself
+    // setShowImsakOverlay(false); // This is handled by ImsakOverlay's internal onClose
+
+    // Only darken screen for regular prayers and Jumuah
+    if (nextPrayerName !== "Imsak") { // Ensure Imsak doesn't trigger darkening
+      setIsScreenDarkened(true);
+      console.log("Screen darkened for prayer/khutbah. Will revert in 5 minutes.");
+      setTimeout(() => {
+        setIsScreenDarkened(false);
+        console.log("Screen reverted to normal after prayer/khutbah.");
+      }, 5 * 60 * 1000); // 5 minutes
+    }
+  }, [nextPrayerName]); // Add nextPrayerName to dependencies
 
   // Logic to control overlay visibility
   useEffect(() => {
@@ -162,11 +167,11 @@ const Index = () => {
       setShowPrayerOverlay(false);
       setShowJumuahOverlay(false);
       setShowImsakOverlay(false);
-      setIsScreenDarkened(false);
+      setIsScreenDarkened(false); // Reset darkening state
 
       // Imsak Overlay logic (highest priority if Ramadan mode is active)
       if (isRamadanModeActive && imsakTime) {
-        const IMSAK_OVERLAY_DURATION_SECONDS = 60; // 1 minute
+        const IMSAK_OVERLAY_DURATION_SECONDS = 10; // Matches ImsakOverlay's internal duration
         const imsakEndTime = imsakTime.add(IMSAK_OVERLAY_DURATION_SECONDS, 'second');
         if (now.isBetween(imsakTime, imsakEndTime, null, '[)')) {
           setShowImsakOverlay(true);
@@ -247,7 +252,10 @@ const Index = () => {
         {showImsakOverlay && isRamadanModeActive && imsakTime && (
           <ImsakOverlay
             imsakTime={imsakTime}
-            onClose={handlePrayerOrKhutbahEnd}
+            onClose={() => {
+              setShowImsakOverlay(false);
+              // Imsak overlay does NOT trigger screen darkening
+            }}
           />
         )}
         {showPrayerOverlay && (
@@ -255,7 +263,7 @@ const Index = () => {
             nextPrayerName={nextPrayerName}
             nextPrayerTime={nextPrayerTime}
             iqomahCountdownDuration={iqomahCountdownDuration}
-            onClose={handlePrayerOrKhutbahEnd}
+            onClose={handlePrayerOrKhutbahEnd} // This will trigger darkening for regular prayers
             isJumuah={false}
           />
         )}
@@ -263,7 +271,7 @@ const Index = () => {
           <JumuahInfoOverlay
             jumuahDhuhrTime={jumuahDhuhrTime}
             khutbahDurationMinutes={khutbahDurationMinutes}
-            onClose={handlePrayerOrKhutbahEnd}
+            onClose={handlePrayerOrKhutbahEnd} // This will trigger darkening for Jumuah
           />
         )}
 
