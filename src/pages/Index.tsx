@@ -20,9 +20,16 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
+import isBetween from "dayjs/plugin/isBetween"; // Import isBetween plugin
 import * as Adhan from "adhan";
 
 dayjs.extend(duration);
+dayjs.extend(isBetween); // Extend dayjs with isBetween plugin
+
+const ADHAN_DURATION_SECONDS = 120; // Diperbarui menjadi 120 detik (2 menit)
+const ADHAN_JUMUAH_DURATION_SECONDS = 120; // Diperbarui menjadi 120 detik (2 menit)
+const PRE_ADHAN_COUNTDOWN_SECONDS = 30; // 30 detik sebelum adzan untuk overlay sholat biasa
+const IMSAK_OVERLAY_DURATION_SECONDS = 10; // Durasi overlay Imsak (10 detik)
 
 const Index = () => {
   const navigate = useNavigate();
@@ -49,6 +56,7 @@ const Index = () => {
 
   const fetchMasjidInfoAndSettings = useCallback(async () => {
     try {
+      console.log("Index: Fetching masjid info and settings...");
       const { data, error } = await supabase
         .from("app_settings")
         .select("masjid_name, masjid_logo_url, masjid_address, latitude, longitude, calculation_method, iqomah_countdown_duration, khutbah_duration_minutes, is_ramadan_mode_active")
@@ -56,7 +64,7 @@ const Index = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error("Error fetching masjid info and settings:", error);
+        console.error("Index: Error fetching masjid info and settings:", error);
         toast.error("Gagal memuat informasi masjid & pengaturan.");
       } else if (data) {
         setMasjidName(data.masjid_name || "Masjid Digital TV");
@@ -65,6 +73,7 @@ const Index = () => {
         setIqomahCountdownDuration(data.iqomah_countdown_duration || 300);
         setKhutbahDurationMinutes(data.khutbah_duration_minutes || 45);
         setIsRamadanModeActive(data.is_ramadan_mode_active || false);
+        console.log("Index: Settings fetched:", data);
 
         const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
         const params = Adhan.CalculationMethod[data.calculation_method as keyof typeof Adhan.CalculationMethod]();
@@ -85,13 +94,16 @@ const Index = () => {
         // Set Jumuah Dhuhr time if today is Friday
         if (isFriday) {
           setJumuahDhuhrTime(dayjs(times.dhuhr));
+          console.log("Index: Jumuah Dhuhr Time set:", dayjs(times.dhuhr).format('HH:mm:ss'));
         } else {
           setJumuahDhuhrTime(null);
         }
 
         // Set Imsak time if Ramadan mode is active
         if (data.is_ramadan_mode_active) {
-          setImsakTime(dayjs(times.fajr).subtract(10, 'minute'));
+          const calculatedImsakTime = dayjs(times.fajr).subtract(10, 'minute');
+          setImsakTime(calculatedImsakTime);
+          console.log("Index: Imsak Time set (Ramadan mode active):", calculatedImsakTime.format('HH:mm:ss'));
         } else {
           setImsakTime(null);
         }
@@ -101,9 +113,10 @@ const Index = () => {
         const now = dayjs();
 
         for (const prayer of prayerTimesList) {
-          if (prayer.name === "Syuruq") continue;
+          if (prayer.name === "Syuruq") continue; // Syuruq is not a prayer with Adhan/Iqomah
 
           let prayerDateTime = prayer.time;
+          // If the prayer time for today has already passed, consider it for tomorrow
           if (prayerDateTime.isBefore(now)) {
             prayerDateTime = prayerDateTime.add(1, 'day');
           }
@@ -116,9 +129,10 @@ const Index = () => {
         
         setNextPrayerName(foundNextPrayer?.name || null);
         setNextPrayerTime(foundNextPrayer?.time || null);
+        console.log("Index: Next prayer determined:", foundNextPrayer?.name, foundNextPrayer?.time?.format('HH:mm:ss'));
       }
     } catch (err) {
-      console.error("Unexpected error fetching masjid info and settings:", err);
+      console.error("Index: Unexpected error fetching masjid info and settings:", err);
       toast.error("Terjadi kesalahan saat memuat informasi masjid & pengaturan.");
     }
   }, []);
@@ -129,7 +143,7 @@ const Index = () => {
     const channel = supabase
       .channel('masjid_info_and_settings_changes')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('Masjid info and settings change received!', payload);
+        console.log('Index: Masjid info and settings change received!', payload);
         fetchMasjidInfoAndSettings();
       })
       .subscribe();
@@ -141,6 +155,7 @@ const Index = () => {
 
   // Function to handle the end of prayer/khutbah and trigger screen darkening
   const handlePrayerOrKhutbahEnd = useCallback(() => {
+    console.log("Index: handlePrayerOrKhutbahEnd called.");
     setShowPrayerOverlay(false);
     setShowJumuahOverlay(false);
     // Imsak overlay does not trigger screen darkening, it just closes itself
@@ -149,10 +164,10 @@ const Index = () => {
     // Only darken screen for regular prayers and Jumuah
     if (nextPrayerName !== "Imsak") { // Ensure Imsak doesn't trigger darkening
       setIsScreenDarkened(true);
-      console.log("Screen darkened for prayer/khutbah. Will revert in 5 minutes.");
+      console.log("Index: Screen darkened for prayer/khutbah. Will revert in 5 minutes.");
       setTimeout(() => {
         setIsScreenDarkened(false);
-        console.log("Screen reverted to normal after prayer/khutbah.");
+        console.log("Index: Screen reverted to normal after prayer/khutbah.");
       }, 5 * 60 * 1000); // 5 minutes
     }
   }, [nextPrayerName]); // Add nextPrayerName to dependencies
@@ -169,48 +184,51 @@ const Index = () => {
       setShowImsakOverlay(false);
       setIsScreenDarkened(false); // Reset darkening state
 
+      console.log(`Index: updateOverlayVisibility - Current Time: ${now.format('HH:mm:ss')}`);
+
       // Imsak Overlay logic (highest priority if Ramadan mode is active)
       if (isRamadanModeActive && imsakTime) {
-        const IMSAK_OVERLAY_DURATION_SECONDS = 10; // Matches ImsakOverlay's internal duration
         const imsakEndTime = imsakTime.add(IMSAK_OVERLAY_DURATION_SECONDS, 'second');
+        console.log(`Index: Checking Imsak Overlay. Imsak Time: ${imsakTime.format('HH:mm:ss')}, End Time: ${imsakEndTime.format('HH:mm:ss')}`);
         if (now.isBetween(imsakTime, imsakEndTime, null, '[)')) {
           setShowImsakOverlay(true);
+          console.log("Index: Imsak Overlay is active.");
           return; // Stop further checks if Imsak overlay is active
         }
       }
 
       // Jumuah Overlay logic (next priority, only on Friday)
       if (isFriday && jumuahDhuhrTime) {
-        const PRE_ADHAN_JUMUAH_SECONDS = 300; // 5 minutes
-        const ADHAN_JUMUAH_DURATION_SECONDS = 90; // 1.5 minutes
-
-        const preAdhanStartTime = jumuahDhuhrTime.subtract(PRE_ADHAN_JUMUAH_SECONDS, 'second');
+        const PRE_ADHAN_JUMUAH_SECONDS_LOCAL = 300; // 5 minutes
         const adhanEndTime = jumuahDhuhrTime.add(ADHAN_JUMUAH_DURATION_SECONDS, 'second');
+        const preAdhanStartTime = jumuahDhuhrTime.subtract(PRE_ADHAN_JUMUAH_SECONDS_LOCAL, 'second');
         const khutbahEndTime = adhanEndTime.add(khutbahDurationMinutes, 'minute');
 
+        console.log(`Index: Checking Jumuah Overlay. Pre-Adhan Start: ${preAdhanStartTime.format('HH:mm:ss')}, Adhan End: ${adhanEndTime.format('HH:mm:ss')}, Khutbah End: ${khutbahEndTime.format('HH:mm:ss')}`);
         if (now.isBetween(preAdhanStartTime, khutbahEndTime, null, '[)')) {
           setShowJumuahOverlay(true);
+          console.log("Index: Jumuah Overlay is active.");
           return; // Stop further checks if Jumuah overlay is active
         }
       }
 
       // Prayer Countdown Overlay logic (lowest priority, only if no other overlay is active)
       if (nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
-        const ADHAN_DURATION_SECONDS = 90;
-        const PRE_ADHAN_COUNTDOWN_SECONDS = 30;
-
         const overlayStartTime = nextPrayerTime.subtract(PRE_ADHAN_COUNTDOWN_SECONDS, 'second');
         const overlayEndTime = nextPrayerTime.add(ADHAN_DURATION_SECONDS + iqomahCountdownDuration, 'second');
 
+        console.log(`Index: Checking Prayer Overlay. Next Prayer: ${nextPrayerName} at ${nextPrayerTime.format('HH:mm:ss')}. Overlay Start: ${overlayStartTime.format('HH:mm:ss')}, Overlay End: ${overlayEndTime.format('HH:mm:ss')}`);
         if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
           setShowPrayerOverlay(true);
+          console.log("Index: Prayer Countdown Overlay is active.");
           return; // Stop further checks if Prayer overlay is active
         }
       }
+      console.log("Index: No overlay is active.");
     };
 
     const interval = setInterval(updateOverlayVisibility, 1000);
-    updateOverlayVisibility();
+    updateOverlayVisibility(); // Initial call
 
     return () => clearInterval(interval);
   }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive]);
@@ -254,6 +272,7 @@ const Index = () => {
             imsakTime={imsakTime}
             onClose={() => {
               setShowImsakOverlay(false);
+              console.log("Index: ImsakOverlay closed.");
               // Imsak overlay does NOT trigger screen darkening
             }}
           />
