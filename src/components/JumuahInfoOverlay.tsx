@@ -65,14 +65,13 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
         .eq("day_of_week", currentDayOfWeek)
         .eq("prayer_name", "Jumat")
         .order("display_order", { ascending: true })
-        .limit(1)
-        .single();
+        .limit(1); // Removed .single()
 
-      if (scheduleError && scheduleError.code !== 'PGRST116') {
+      if (scheduleError) {
         console.error("Error fetching Jumuah schedule:", scheduleError);
         setError("Gagal memuat jadwal Jumat.");
-      } else if (scheduleData) {
-        setJumuahSchedule(scheduleData);
+      } else if (scheduleData && scheduleData.length > 0) { // Check for data[0]
+        setJumuahSchedule(scheduleData[0]);
       } else {
         setJumuahSchedule(null);
       }
