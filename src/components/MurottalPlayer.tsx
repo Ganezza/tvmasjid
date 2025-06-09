@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter"; // Import isSameOrAfter
 import { supabase } from "@/lib/supabase";
 import * as Adhan from "adhan";
 import { toast } from "sonner";
 
 dayjs.extend(duration);
 dayjs.extend(isBetween);
+dayjs.extend(isSameOrAfter); // Extend dayjs with isSameOrAfter
 
 interface PrayerTimeConfig {
   name: string;
@@ -23,7 +25,7 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
 ];
 
-const ADHAN_DURATION_SECONDS = 120; // Diperbarui menjadi 120 detik (2 menit)
+const ADHAN_DURATION_SECONDS = 120; // Durasi adzan sekitar 2 menit
 
 const MurottalPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -166,7 +168,7 @@ const MurottalPlayer: React.FC = () => {
 
       // Check if the ended audio was the Imsak beep
       if (settings.imsak_beep_audio_url && endedAudioSrc.includes(settings.imsak_beep_audio_url.split('/').pop() || '')) { // Use .includes and .pop() for robust URL comparison
-        console.log("MurottalPlayer: Imsak beep ended.");
+        console.log("MurottalPlayer: Imsak beep ended. Attempting to resume murottal if paused.");
         if (pausedMurottalInfo) {
           // Resume paused murottal
           audioRef.current.src = pausedMurottalInfo.url;
@@ -209,11 +211,16 @@ const MurottalPlayer: React.FC = () => {
       if (settings.is_ramadan_mode_active && settings.imsak_beep_audio_url) {
         const imsakTime = dayjs(prayerTimes.fajr).subtract(10, 'minute');
         const imsakEventName = "Imsak Beep";
-        console.log(`MurottalPlayer: Imsak Time: ${imsakTime.format('HH:mm:ss')}, Current Time: ${now.format('HH:mm:ss')}`);
-        if (now.isBetween(imsakTime.subtract(1, 'second'), imsakTime.add(1, 'second'), null, '[]')) {
-          console.log(`MurottalPlayer: Condition met for Imsak Beep. Attempting to play.`);
+        console.log(`MurottalPlayer: Imsak Time: ${imsakTime.format('HH:mm:ss')}, Current Time: ${now.format('HH:mm:ss')}, Played Today: ${playedTodayRef.current.has(imsakEventName)}`);
+        
+        // Trigger Imsak beep if current time is at or after imsakTime and within the first 5 seconds, AND hasn't played today
+        if (now.isSameOrAfter(imsakTime) && now.isBefore(imsakTime.add(5, 'second')) && !playedTodayRef.current.has(imsakEventName)) {
+          console.log(`MurottalPlayer: *** Imsak Beep condition MET! Attempting to play. ***`);
           if (await playAudio(settings.imsak_beep_audio_url, imsakEventName)) {
+            console.log(`MurottalPlayer: Imsak Beep successfully triggered.`);
             return; // Successfully started Imsak beep, stop checking other audio
+          } else {
+            console.log(`MurottalPlayer: Failed to play Imsak Beep.`);
           }
         }
       }
