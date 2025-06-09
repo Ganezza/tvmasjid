@@ -63,14 +63,13 @@ const TarawihScheduleDisplay: React.FC = () => {
         .eq("day_of_week", currentDayOfWeek)
         .eq("prayer_name", "Tarawih")
         .order("display_order", { ascending: true })
-        .limit(1)
-        .single();
+        .limit(1); // Removed .single()
 
-      if (scheduleError && scheduleError.code !== 'PGRST116') {
+      if (scheduleError) {
         console.error("Error fetching Tarawih schedule:", scheduleError);
         setError("Gagal memuat jadwal Tarawih.");
-      } else if (scheduleData) {
-        setTarawihSchedule(scheduleData);
+      } else if (scheduleData && scheduleData.length > 0) { // Check for data[0]
+        setTarawihSchedule(scheduleData[0]);
       } else {
         setTarawihSchedule(null); // No Tarawih schedule found for today
       }
