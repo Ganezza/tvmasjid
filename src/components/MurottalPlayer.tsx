@@ -26,7 +26,11 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
 
 const TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER = 5; // Tarhim typically plays 5 minutes before Fajr/Isha
 
-const MurottalPlayer: React.FC = () => {
+interface MurottalPlayerProps {
+  hasUserInteracted: boolean; // New prop
+}
+
+const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
@@ -116,6 +120,12 @@ const MurottalPlayer: React.FC = () => {
         console.log(`MurottalPlayer: New day detected (${todayDate}). Resetting played audio list.`);
       }
 
+      // Only attempt to play audio if user has interacted
+      if (!hasUserInteracted) {
+        console.log("MurottalPlayer: User has not interacted yet. Skipping audio playback attempts.");
+        return;
+      }
+
       // --- Logic for Tarhim ---
       if (settings.tarhim_active && settings.tarhim_audio_url) {
         const tarhimPrayers = [
@@ -124,9 +134,6 @@ const MurottalPlayer: React.FC = () => {
         ];
 
         for (const tarhimConfig of tarhimPrayers) {
-          // Tarhim is not typically played before Jumuah Dhuhr, so no special check needed here.
-          // The adhanTime for tarhimConfig is already Fajr or Isha.
-
           const tarhimStartTime = tarhimConfig.adhanTime.subtract(TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER, 'minute');
           const tarhimEndTime = tarhimConfig.adhanTime; // Tarhim plays until Adhan
 
@@ -192,7 +199,7 @@ const MurottalPlayer: React.FC = () => {
 
           if (timeUntilPrayer > 0 && timeUntilPrayer <= preAdhanDurationMs && !playedTodayRef.current.has(config.name)) {
             if (audioRef.current && audioRef.current.src !== audioUrl) {
-              console.log(`MurottalPlayer: Playing murottal for ${config.name}. Time until prayer: ${dayjs.duration(timeUntilPrayer).format("H:mm:ss")}`);
+              console.log(`MurottalPlayer: Attempting to play murottal for ${config.name}. Time until prayer: ${dayjs.duration(timeUntilPrayer).format("H:mm:ss")}`);
               audioRef.current.src = audioUrl;
               audioRef.current.load();
               audioRef.current.play().then(() => {
@@ -220,7 +227,7 @@ const MurottalPlayer: React.FC = () => {
       }
       console.log("MurottalPlayer: Cleanup. Audio player stopped.");
     };
-  }, [settings, prayerTimes]);
+  }, [settings, prayerTimes, hasUserInteracted]); // Add hasUserInteracted to dependencies
 
   return (
     <audio ref={audioRef} onEnded={() => {
