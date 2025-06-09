@@ -30,9 +30,10 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
-  const [playedToday, setPlayedToday] = useState<Set<string>>(new Set()); // To track which murottal has played today
-  const [lastCheckedDay, setLastCheckedDay] = useState<string | null>(null); // To reset playedToday set daily
-  const [currentPlayingAudioUrl, setCurrentPlayingAudioUrl] = useState<string | null>(null); // New state to track currently playing audio URL
+  
+  // Menggunakan useRef untuk playedToday dan lastCheckedDay agar tidak memicu re-render
+  const playedTodayRef = useRef<Set<string>>(new Set());
+  const lastCheckedDayRef = useRef<string | null>(null);
 
   const fetchSettingsAndPrayerTimes = useCallback(async () => {
     try {
@@ -90,7 +91,6 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
-        setCurrentPlayingAudioUrl(null); // Reset current playing state
       }
       return;
     }
@@ -99,26 +99,26 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
       const now = dayjs();
       const todayDate = now.format("YYYY-MM-DD");
 
-      // Reset playedToday set at the start of a new day
-      if (lastCheckedDay !== todayDate) {
-        setPlayedToday(new Set());
-        setLastCheckedDay(todayDate);
+      // Reset playedTodayRef pada awal hari baru
+      if (lastCheckedDayRef.current !== todayDate) {
+        playedTodayRef.current = new Set();
+        lastCheckedDayRef.current = todayDate;
       }
 
-      const preAdhanDurationMs = settings.murottal_pre_adhan_duration * 60 * 1000; // Convert minutes to milliseconds
+      const preAdhanDurationMs = settings.murottal_pre_adhan_duration * 60 * 1000; // Konversi menit ke milidetik
 
       for (const config of PRAYER_CONFIGS) {
         let prayerTime: dayjs.Dayjs | null = null;
         let audioUrl: string | null = null;
 
         if (config.name === "Imsak") {
-          if (!settings.is_ramadan_mode_active) continue; // Skip Imsak if Ramadan mode is not active
+          if (!settings.is_ramadan_mode_active) continue; // Lewati Imsak jika mode Ramadan tidak aktif
           const fajrTime = dayjs(prayerTimes.fajr);
-          prayerTime = fajrTime.subtract(10, 'minute'); // Imsak is 10 minutes before Fajr
+          prayerTime = fajrTime.subtract(10, 'minute'); // Imsak adalah 10 menit sebelum Fajr
           audioUrl = settings[config.audioUrlField];
         } else {
           const adhanTime = prayerTimes[config.adhanName];
-          if (!adhanTime) continue; // Skip if prayer time is not available
+          if (!adhanTime) continue; // Lewati jika waktu sholat tidak tersedia
           prayerTime = dayjs(adhanTime);
           audioUrl = settings[config.audioUrlField];
         }
@@ -127,42 +127,39 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
 
         const timeUntilPrayer = prayerTime.diff(now);
 
-        // Check if it's time to play murottal
-        // Play if within the pre-adhan duration, hasn't been played for this prayer today,
-        // AND it's not already playing this specific audio.
-        if (timeUntilPrayer > 0 && timeUntilPrayer <= preAdhanDurationMs && !playedToday.has(config.name)) {
-          if (audioRef.current && audioRef.current.src !== audioUrl) { // Only change src if different
+        // Periksa apakah sudah waktunya memutar murottal
+        // Putar jika dalam durasi pra-adzan, belum diputar untuk sholat ini hari ini,
+        // DAN audio ini belum sedang diputar.
+        if (timeUntilPrayer > 0 && timeUntilPrayer <= preAdhanDurationMs && !playedTodayRef.current.has(config.name)) {
+          if (audioRef.current && audioRef.current.src !== audioUrl) { // Hanya ganti src jika berbeda
             console.log(`Playing murottal for ${config.name}. Time until prayer: ${dayjs.duration(timeUntilPrayer).format("H:mm:ss")}`);
             audioRef.current.src = audioUrl;
-            audioRef.current.load(); // Ensure it loads the new source
+            audioRef.current.load(); // Pastikan memuat sumber baru
             audioRef.current.play().then(() => {
-                setCurrentPlayingAudioUrl(audioUrl); // Set the URL of the audio that successfully started playing
-                setPlayedToday(prev => new Set(prev).add(config.name)); // Mark as played for today
+                playedTodayRef.current.add(config.name); // Tandai sudah diputar untuk hari ini
             }).catch(e => console.error("Error playing audio:", e));
           }
         }
       }
     };
 
-    const interval = setInterval(checkAndPlayMurottal, 1000); // Check every second
+    const interval = setInterval(checkAndPlayMurottal, 1000); // Periksa setiap detik
 
     return () => {
       clearInterval(interval);
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = ""; // Clear source on unmount
-        setCurrentPlayingAudioUrl(null); // Reset current playing state on unmount
+        audioRef.current.src = ""; // Hapus sumber saat unmount
       }
     };
-  }, [settings, prayerTimes, playedToday, lastCheckedDay, isAudioEnabledByUser, currentPlayingAudioUrl]); // Add currentPlayingAudioUrl to dependencies
+  }, [settings, prayerTimes, isAudioEnabledByUser]); // Dependensi sekarang hanya props/state yang tidak berubah dalam logika efek ini
 
-  // Hidden audio element for playback
+  // Elemen audio tersembunyi untuk pemutaran
   return (
     <audio ref={audioRef} onEnded={() => {
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = ""; // Clear source after playing
-        setCurrentPlayingAudioUrl(null); // Clear current playing state after audio ends
+        audioRef.current.src = ""; // Hapus sumber setelah selesai diputar
       }
     }} />
   );
