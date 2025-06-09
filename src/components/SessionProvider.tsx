@@ -16,43 +16,60 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Gunakan ref untuk memastikan listener hanya diatur sekali
   const isListenerSetup = useRef(false);
 
   useEffect(() => {
+    console.log("SessionProvider: useEffect (mount/update)");
+
     if (isListenerSetup.current) {
-      return; // Mencegah eksekusi ulang jika sudah diatur
+      console.log("SessionProvider: Listener already set up. Skipping re-setup.");
+      return;
     }
 
     isListenerSetup.current = true;
+    console.log("SessionProvider: Setting up initial session and auth state listener.");
 
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+      console.log("SessionProvider: Fetching initial session...");
+      const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("SessionProvider: Error fetching initial session:", error);
+      }
+      setSession(initialSession);
       setIsLoading(false);
+      console.log("SessionProvider: Initial session fetched. Session:", initialSession);
     };
 
     getInitialSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("SessionProvider: Auth state change event:", event, "Session:", session);
       setSession(session);
-      setIsLoading(false); // Pastikan status loading diperbarui
+      setIsLoading(false);
+      if (event === 'SIGNED_OUT') {
+        console.log("SessionProvider: User signed out. Clearing session.");
+        setSession(null);
+      }
     });
 
     return () => {
+      console.log("SessionProvider: useEffect cleanup. Unsubscribing from auth state changes.");
       subscription.unsubscribe();
-      isListenerSetup.current = false; // Reset ref saat komponen dilepas
+      isListenerSetup.current = false;
     };
-  }, []); // Array dependensi kosong untuk hanya berjalan sekali
+  }, []);
 
   useEffect(() => {
+    console.log("SessionProvider: Redirect effect triggered. isLoading:", isLoading, "session:", !!session, "pathname:", location.pathname);
     if (!isLoading) {
       const protectedRoutes = ["/admin"];
       const isProtectedRoute = protectedRoutes.includes(location.pathname);
 
       if (isProtectedRoute && !session) {
+        console.log("SessionProvider: Redirecting to /login (protected route, no session).");
         navigate("/login");
       } else if (session && location.pathname === "/login") {
+        console.log("SessionProvider: Redirecting to / (session exists, on login page).");
         navigate("/");
       }
     }
