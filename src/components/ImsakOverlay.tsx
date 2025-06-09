@@ -10,7 +10,7 @@ interface ImsakOverlayProps {
   onClose: () => void;
 }
 
-const IMSAK_OVERLAY_DURATION_SECONDS = 60; // Durasi overlay Imsak (1 menit)
+const IMSAK_OVERLAY_DURATION_SECONDS = 10; // Durasi overlay Imsak (10 detik)
 
 const ImsakOverlay: React.FC<ImsakOverlayProps> = ({ imsakTime, onClose }) => {
   const [displayPhase, setDisplayPhase] = useState<"imsak" | "hidden">("hidden");
