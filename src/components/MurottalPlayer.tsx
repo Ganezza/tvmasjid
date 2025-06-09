@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
+import isBetween from "dayjs/plugin/isBetween"; // Import isBetween plugin
 import { supabase } from "@/lib/supabase";
 import * as Adhan from "adhan";
 import { toast } from "sonner";
 
 dayjs.extend(duration);
+dayjs.extend(isBetween); // Extend dayjs with isBetween plugin
 
 interface PrayerTimeConfig {
   name: string;
@@ -115,21 +117,25 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
         for (const tarhimConfig of tarhimPrayers) {
           // Skip Tarhim for Jumuah (Dhuhr on Friday)
           if (now.day() === 5 && tarhimConfig.adhanTime.isSame(dayjs(prayerTimes.dhuhr), 'minute')) {
+            console.log(`Skipping Tarhim for Jumuah Dhuhr.`);
             continue; 
           }
 
-          const tarhimPlaybackTime = tarhimConfig.adhanTime.subtract(TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER, 'minute');
-          const timeUntilTarhim = tarhimPlaybackTime.diff(now);
+          const tarhimStartTime = tarhimConfig.adhanTime.subtract(TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER, 'minute');
+          const tarhimEndTime = tarhimConfig.adhanTime; // Tarhim plays until Adhan
 
-          if (timeUntilTarhim > 0 && timeUntilTarhim <= 1000 && !playedTodayRef.current.has(tarhimConfig.name)) {
+          console.log(`Checking ${tarhimConfig.name}: now=${now.format('HH:mm:ss')}, tarhimStartTime=${tarhimStartTime.format('HH:mm:ss')}, tarhimEndTime=${tarhimEndTime.format('HH:mm:ss')}, played=${playedTodayRef.current.has(tarhimConfig.name)}`);
+
+          if (now.isBetween(tarhimStartTime, tarhimEndTime, null, '[)') && !playedTodayRef.current.has(tarhimConfig.name)) {
             if (audioRef.current && audioRef.current.src !== settings.tarhim_audio_url) {
-              console.log(`Playing ${tarhimConfig.name}. Time until prayer: ${dayjs.duration(tarhimConfig.adhanTime.diff(now)).format("H:mm:ss")}`);
+              console.log(`Attempting to play ${tarhimConfig.name} audio.`);
               audioRef.current.src = settings.tarhim_audio_url;
               audioRef.current.load();
               audioRef.current.play().then(() => {
                 playedTodayRef.current.add(tarhimConfig.name);
+                console.log(`${tarhimConfig.name} audio started playing.`);
               }).catch(e => console.error(`Error playing ${tarhimConfig.name} audio:`, e));
-              return;
+              return; // Play one audio at a time
             }
           }
         }
