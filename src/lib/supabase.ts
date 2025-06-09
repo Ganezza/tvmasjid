@@ -5,7 +5,13 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error("Supabase URL or Anon Key is not set in environment variables.");
-  // You might want to throw an error or handle this more gracefully in a production app
+  // Anda mungkin ingin melempar error atau menangani ini dengan lebih baik di aplikasi produksi
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true, // Pastikan sesi disimpan secara persisten
+    detectSessionInUrl: true, // Penting untuk menangani redirect dari alur autentikasi
+  },
+});
