@@ -73,6 +73,7 @@ const Index = () => {
 
         const prayerTimesList = [
           { name: "Fajr", time: dayjs(times.fajr) },
+          { name: "Syuruq", time: dayjs(times.sunrise) }, // Tambahkan Syuruq
           { name: isFriday ? "Jumat" : "Dhuhr", time: dayjs(times.dhuhr) }, // Conditional name
           { name: "Asr", time: dayjs(times.asr) },
           { name: "Maghrib", time: dayjs(times.maghrib) },
@@ -91,6 +92,8 @@ const Index = () => {
         const now = dayjs();
 
         for (const prayer of prayerTimesList) {
+          if (prayer.name === "Syuruq") continue; // Skip Syuruq for next prayer calculation
+
           let prayerDateTime = prayer.time;
           if (prayerDateTime.isBefore(now)) {
             prayerDateTime = prayerDateTime.add(1, 'day');

@@ -69,6 +69,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
 
       const basePrayerTimes: PrayerTime[] = [
         { name: "Subuh", time: dayjs(adhanTimes.fajr).format("HH:mm") },
+        { name: "Syuruq", time: dayjs(adhanTimes.sunrise).format("HH:mm") }, // Tambahkan Syuruq
         { name: isFriday ? "Jumat" : "Dzuhur", time: dayjs(adhanTimes.dhuhr).format("HH:mm") }, // Conditional name
         { name: "Ashar", time: dayjs(adhanTimes.asr).format("HH:mm") },
         { name: "Maghrib", time: dayjs(adhanTimes.maghrib).format("HH:mm") },
@@ -138,8 +139,11 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
         };
       }).sort((a, b) => a.dateTimeToday.diff(b.dateTimeToday));
 
+      // Find the next *actual* prayer (excluding Syuruq)
       for (let i = 0; i < sortedPrayerTimes.length; i++) {
         const prayer = sortedPrayerTimes[i];
+        if (prayer.name === "Syuruq") continue; // Skip Syuruq for next prayer calculation
+
         let prayerDateTime = prayer.dateTimeToday;
 
         if (prayerDateTime.isBefore(now)) {
@@ -153,6 +157,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
         }
       }
 
+      // Determine current prayer (including Syuruq for display purposes)
       for (let i = 0; i < sortedPrayerTimes.length; i++) {
         const prayer = sortedPrayerTimes[i];
         const nextIndex = (i + 1) % sortedPrayerTimes.length;
