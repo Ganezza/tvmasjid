@@ -22,7 +22,8 @@ const formSchema = z.object({
   murottalAudioUrlMaghrib: z.string().nullable().optional(),
   murottalAudioUrlIsha: z.string().nullable().optional(),
   murottalAudioUrlImsak: z.string().nullable().optional(),
-  tarhimAudioUrl: z.string().nullable().optional(), // New field for Tarhim audio
+  tarhimAudioUrl: z.string().nullable().optional(),
+  khutbahDurationMinutes: z.coerce.number().int().min(1, "Durasi khutbah harus lebih dari 0 menit.").default(45), // New field
 });
 
 type AudioSettingsFormValues = z.infer<typeof formSchema>;
@@ -50,7 +51,8 @@ const AudioSettings: React.FC = () => {
       murottalAudioUrlMaghrib: null,
       murottalAudioUrlIsha: null,
       murottalAudioUrlImsak: null,
-      tarhimAudioUrl: null, // Initialize new field
+      tarhimAudioUrl: null,
+      khutbahDurationMinutes: 45, // Default value
     },
   });
 
@@ -60,7 +62,7 @@ const AudioSettings: React.FC = () => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url") // Fetch new field
+        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url, khutbah_duration_minutes") // Fetch new field
         .eq("id", 1)
         .single();
 
@@ -78,7 +80,8 @@ const AudioSettings: React.FC = () => {
         setValue("murottalAudioUrlMaghrib", data.murottal_audio_url_maghrib);
         setValue("murottalAudioUrlIsha", data.murottal_audio_url_isha);
         setValue("murottalAudioUrlImsak", data.murottal_audio_url_imsak);
-        setValue("tarhimAudioUrl", data.tarhim_audio_url); // Set new field
+        setValue("tarhimAudioUrl", data.tarhim_audio_url);
+        setValue("khutbahDurationMinutes", data.khutbah_duration_minutes || 45); // Set new field
       }
     };
     fetchSettings();
@@ -170,7 +173,8 @@ const AudioSettings: React.FC = () => {
           murottal_audio_url_maghrib: values.murottalAudioUrlMaghrib,
           murottal_audio_url_isha: values.murottalAudioUrlIsha,
           murottal_audio_url_imsak: values.murottalAudioUrlImsak,
-          tarhim_audio_url: values.tarhimAudioUrl, // Save new field
+          tarhim_audio_url: values.tarhimAudioUrl,
+          khutbah_duration_minutes: values.khutbahDurationMinutes, // Save new field
         },
         { onConflict: "id" }
       );
@@ -264,7 +268,7 @@ const AudioSettings: React.FC = () => {
                 </div>
               ))}
 
-              {/* New Tarhim Audio Upload Field */}
+              {/* Tarhim Audio Upload Field */}
               <div>
                 <Label htmlFor="tarhimAudioUrl" className="text-gray-300">Audio Tarhim (Opsional)</Label>
                 <Input
@@ -289,6 +293,22 @@ const AudioSettings: React.FC = () => {
                 )}
                 {errors.tarhimAudioUrl && <p className="text-red-400 text-sm mt-1">{errors.tarhimAudioUrl.message}</p>}
               </div>
+            </div>
+          </div>
+
+          {/* New Khutbah Duration Setting */}
+          <div className="border-t border-gray-700 pt-6">
+            <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Khutbah Jumat</h3>
+            <div>
+              <Label htmlFor="khutbahDurationMinutes" className="text-gray-300">Durasi Khutbah Jumat (menit)</Label>
+              <Input
+                id="khutbahDurationMinutes"
+                type="number"
+                {...register("khutbahDurationMinutes")}
+                className="bg-gray-700 border-gray-600 text-white mt-1"
+                placeholder="Contoh: 45"
+              />
+              {errors.khutbahDurationMinutes && <p className="text-red-400 text-sm mt-1">{errors.khutbahDurationMinutes.message}</p>}
             </div>
           </div>
 
