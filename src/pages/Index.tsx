@@ -60,7 +60,7 @@ const Index = () => {
       console.log("Index: Fetching masjid info and settings...");
       const { data, error } = await supabase
         .from("app_settings")
-        .select("masjid_name, masjid_logo_url, masjid_address, latitude, longitude, calculation_method, iqomah_countdown_duration, khutbah_duration_minutes, is_ramadan_mode_active, masjid_name_color")
+        .select("masjid_name, masjid_logo_url, masjid_address, latitude, longitude, calculation_method, iqomah_countdown_duration, khutbah_duration_minutes, is_ramadan_mode_active, masjid_name_color, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset") // Select all offset fields
         .eq("id", 1)
         .single();
 
@@ -82,28 +82,35 @@ const Index = () => {
         const today = dayjs();
         const times = new Adhan.PrayerTimes(coordinates, today.toDate(), params);
 
+        // Apply offsets to Adhan times
+        const adjustedFajr = dayjs(times.fajr).add(data.fajr_offset ?? 0, 'minute');
+        const adjustedDhuhr = dayjs(times.dhuhr).add(data.dhuhr_offset ?? 0, 'minute');
+        const adjustedAsr = dayjs(times.asr).add(data.asr_offset ?? 0, 'minute');
+        const adjustedMaghrib = dayjs(times.maghrib).add(data.maghrib_offset ?? 0, 'minute');
+        const adjustedIsha = dayjs(times.isha).add(data.isha_offset ?? 0, 'minute');
+        const calculatedImsakTime = dayjs(times.fajr).subtract(10, 'minute').add(data.imsak_offset ?? 0, 'minute');
+
         const isFriday = today.day() === 5;
 
         const prayerTimesList = [
-          { name: "Subuh", time: dayjs(times.fajr) },
-          { name: "Syuruq", time: dayjs(times.sunrise) },
-          { name: isFriday ? "Jum'at" : "Dzuhur", time: dayjs(times.dhuhr) },
-          { name: "Ashar", time: dayjs(times.asr) },
-          { name: "Maghrib", time: dayjs(times.maghrib) },
-          { name: "Isya", time: dayjs(times.isha) },
+          { name: "Subuh", time: adjustedFajr },
+          { name: "Syuruq", time: dayjs(times.sunrise) }, // Sunrise typically no offset
+          { name: isFriday ? "Jum'at" : "Dzuhur", time: adjustedDhuhr },
+          { name: "Ashar", time: adjustedAsr },
+          { name: "Maghrib", time: adjustedMaghrib },
+          { name: "Isya", time: adjustedIsha },
         ];
 
         // Set Jumuah Dhuhr time if today is Friday
         if (isFriday) {
-          setJumuahDhuhrTime(dayjs(times.dhuhr));
-          console.log("Index: Jumuah Dhuhr Time set:", dayjs(times.dhuhr).format('HH:mm:ss'));
+          setJumuahDhuhrTime(adjustedDhuhr); // Use adjusted Dhuhr for Jumuah
+          console.log("Index: Jumuah Dhuhr Time set:", adjustedDhuhr.format('HH:mm:ss'));
         } else {
           setJumuahDhuhrTime(null);
         }
 
         // Set Imsak time if Ramadan mode is active
         if (data.is_ramadan_mode_active) {
-          const calculatedImsakTime = dayjs(times.fajr).subtract(10, 'minute');
           setImsakTime(calculatedImsakTime);
           console.log("Index: Imsak Time set (Ramadan mode active):", calculatedImsakTime.format('HH:mm:ss'));
         } else {
