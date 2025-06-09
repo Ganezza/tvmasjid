@@ -70,7 +70,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
       const basePrayerTimes: PrayerTime[] = [
         { name: "Subuh", time: dayjs(adhanTimes.fajr).format("HH:mm") },
         { name: "Syuruq", time: dayjs(adhanTimes.sunrise).format("HH:mm") },
-        { name: isFriday ? "Jumat" : "Dzuhur", time: dayjs(adhanTimes.dhuhr).format("HH:mm") },
+        { name: isFriday ? "Jum'at" : "Dzuhur", time: dayjs(adhanTimes.dhuhr).format("HH:mm") },
         { name: "Ashar", time: dayjs(adhanTimes.asr).format("HH:mm") },
         { name: "Maghrib", time: dayjs(adhanTimes.maghrib).format("HH:mm") },
         { name: "Isya", time: dayjs(adhanTimes.isha).format("HH:mm") },

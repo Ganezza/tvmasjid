@@ -24,7 +24,7 @@ const prayerNameMap: { [key: string]: string } = {
 };
 
 const getIndonesianDayOfWeek = (date: dayjs.Dayjs): string => {
-  const days = ["Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]; // Changed Minggu to Ahad
+  const days = ["Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"]; // Changed Minggu to Ahad, Jumat to Jum'at
   return days[date.day()];
 };
 
@@ -94,7 +94,7 @@ const ImamMuezzinDisplay: React.FC = () => {
 
       // Handle special case for Friday Dhuhr
       if (targetDay.day() === 5 && nextPrayerAdhanName === "Dhuhr") {
-        nextPrayerDisplayName = "Jumat";
+        nextPrayerDisplayName = "Jum'at"; // Changed to Jum'at
       }
 
       if (!nextPrayerDisplayName) {
