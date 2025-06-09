@@ -24,8 +24,6 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
 ];
 
-const TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER = 5; // Tarhim typically plays 5 minutes before Fajr/Isha
-
 interface MurottalPlayerProps {
   hasUserInteracted: boolean; // New prop
 }
@@ -42,7 +40,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
     try {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url")
+        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration") // Fetch new field
         .eq("id", 1)
         .single();
 
@@ -61,8 +59,9 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
             tarhimActive: data.tarhim_active,
             tarhimAudioUrl: data.tarhim_audio_url,
             murottalPreAdhanDuration: data.murottal_pre_adhan_duration,
+            tarhimPreAdhanDuration: data.tarhim_pre_adhan_duration, // Log new field
             isRamadanModeActive: data.is_ramadan_mode_active,
-            tarhimAudioUrlExists: !!data.tarhim_audio_url // Check if URL exists
+            tarhimAudioUrlExists: !!data.tarhim_audio_url
         });
 
         if (data.murottal_active || data.tarhim_active) {
@@ -128,13 +127,15 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
 
       // --- Logic for Tarhim ---
       if (settings.tarhim_active && settings.tarhim_audio_url) {
+        const tarhimPreAdhanDurationMs = (settings.tarhim_pre_adhan_duration || 5) * 60 * 1000; // Use configurable duration
+
         const tarhimPrayers = [
           { name: "Tarhim Subuh", adhanTime: dayjs(prayerTimes.fajr) },
           { name: "Tarhim Isya", adhanTime: dayjs(prayerTimes.isha) },
         ];
 
         for (const tarhimConfig of tarhimPrayers) {
-          const tarhimStartTime = tarhimConfig.adhanTime.subtract(TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER, 'minute');
+          const tarhimStartTime = tarhimConfig.adhanTime.subtract(tarhimPreAdhanDurationMs, 'millisecond');
           const tarhimEndTime = tarhimConfig.adhanTime; // Tarhim plays until Adhan
 
           console.log(`MurottalPlayer: Checking ${tarhimConfig.name}`);
