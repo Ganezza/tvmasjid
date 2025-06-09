@@ -24,7 +24,7 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
 ];
 
-const MurottalPlayer: React.FC = () => { // Removed hasUserInteracted prop
+const MurottalPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
@@ -116,14 +116,15 @@ const MurottalPlayer: React.FC = () => { // Removed hasUserInteracted prop
         console.log(`MurottalPlayer: New day detected (${todayDate}). Resetting played audio list.`);
       }
 
+      // Declare tarhimPrayers here so it's always accessible
+      const tarhimPrayers = [
+        { name: "Tarhim Subuh", adhanTime: dayjs(prayerTimes.fajr) },
+        { name: "Tarhim Isya", adhanTime: dayjs(prayerTimes.isha) },
+      ];
+
       // --- Logic for Tarhim ---
       if (settings.tarhim_active && settings.tarhim_audio_url) {
         const tarhimPreAdhanDurationMs = (settings.tarhim_pre_adhan_duration || 300) * 1000; // Use configurable duration in seconds
-
-        const tarhimPrayers = [
-          { name: "Tarhim Subuh", adhanTime: dayjs(prayerTimes.fajr) },
-          { name: "Tarhim Isya", adhanTime: dayjs(prayerTimes.isha) },
-        ];
 
         for (const tarhimConfig of tarhimPrayers) {
           const tarhimStartTime = tarhimConfig.adhanTime.subtract(tarhimPreAdhanDurationMs, 'millisecond');
@@ -233,7 +234,7 @@ const MurottalPlayer: React.FC = () => { // Removed hasUserInteracted prop
       }
       console.log("MurottalPlayer: Cleanup. Audio player stopped.");
     };
-  }, [settings, prayerTimes]); // Removed hasUserInteracted from dependencies
+  }, [settings, prayerTimes]);
 
   return (
     <audio ref={audioRef} onEnded={() => {
