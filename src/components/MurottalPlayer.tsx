@@ -40,7 +40,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
     try {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active")
+        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration")
         .eq("id", 1)
         .single();
 
@@ -61,12 +61,10 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
             murottalPreAdhanDuration: data.murottal_pre_adhan_duration,
             tarhimPreAdhanDuration: data.tarhim_pre_adhan_duration,
             isRamadanModeActive: data.is_ramadan_mode_active,
-            tarhimAudioUrlExists: !!data.tarhim_audio_url,
-            isMasterAudioActive: data.is_master_audio_active, // Log new setting
+            tarhimAudioUrlExists: !!data.tarhim_audio_url
         });
 
-        // Only calculate prayer times if any audio feature is active
-        if (data.murottal_active || data.tarhim_active || data.is_master_audio_active) {
+        if (data.murottal_active || data.tarhim_active) {
           const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
           const params = Adhan.CalculationMethod[data.calculation_method as keyof typeof Adhan.CalculationMethod]();
           const today = new Date();
@@ -74,7 +72,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
           console.log("MurottalPlayer: Prayer times calculated.");
         } else {
           setPrayerTimes(null);
-          console.log("MurottalPlayer: All audio features are inactive. Skipping prayer time calculation.");
+          console.log("MurottalPlayer: Murottal and Tarhim are inactive. Skipping prayer time calculation.");
         }
       }
     } catch (err) {
@@ -119,16 +117,6 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
         playedTodayRef.current = new Set();
         lastCheckedDayRef.current = todayDate;
         console.log(`MurottalPlayer: New day detected (${todayDate}). Resetting played audio list.`);
-      }
-
-      // Master switch for all audio functionality
-      if (!settings.is_master_audio_active) {
-        if (audioRef.current && !audioRef.current.paused) {
-          audioRef.current.pause();
-          audioRef.current.src = "";
-          console.log("MurottalPlayer: Master audio switch is OFF. Pausing and clearing audio.");
-        }
-        return;
       }
 
       // Only attempt to play audio if user has interacted
@@ -227,22 +215,6 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
         }
       } else {
         console.log("MurottalPlayer: Murottal is inactive.");
-      }
-
-      // If no audio is supposed to be playing, ensure it's paused
-      const isAnyAudioActive = settings.murottal_active || settings.tarhim_active;
-      const isCurrentlyPlaying = audioRef.current && !audioRef.current.paused;
-      const isAudioSourceSet = audioRef.current && audioRef.current.src;
-
-      if (!isAnyAudioActive && isCurrentlyPlaying) {
-        audioRef.current.pause();
-        audioRef.current.src = ""; // Clear source to prevent re-play
-        console.log("MurottalPlayer: No audio features active, pausing current audio.");
-      } else if (isAudioSourceSet && !isCurrentlyPlaying && !now.isBetween(dayjs(audioRef.current.src).subtract(preAdhanDurationMs, 'millisecond'), dayjs(audioRef.current.src).add(preAdhanDurationMs, 'millisecond'))) {
-        // This condition attempts to stop audio if it's paused but its time window has passed
-        // This might be overly complex, simpler is to rely on `onEnded` and `return` from play logic
-        // For now, let's simplify: if it's not actively playing and not in a valid window, clear it.
-        // This part needs careful testing. For now, rely on `onEnded` and the `return` statements in the play logic.
       }
     };
 
