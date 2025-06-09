@@ -15,6 +15,7 @@ import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
 import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import DarkScreenOverlay from "@/components/DarkScreenOverlay";
+import ImsakOverlay from "@/components/ImsakOverlay"; // Import ImsakOverlay
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -40,10 +41,11 @@ const Index = () => {
 
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
+  const [showImsakOverlay, setShowImsakOverlay] = useState(false); // New state for Imsak overlay
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
 
-  // New state to hold Jumuah Dhuhr time
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
+  const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null); // New state for Imsak time
 
   const fetchMasjidInfoAndSettings = useCallback(async () => {
     try {
@@ -66,15 +68,15 @@ const Index = () => {
 
         const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
         const params = Adhan.CalculationMethod[data.calculation_method as keyof typeof Adhan.CalculationMethod]();
-        const today = dayjs(); // Use dayjs for current day check
+        const today = dayjs();
         const times = new Adhan.PrayerTimes(coordinates, today.toDate(), params);
 
-        const isFriday = today.day() === 5; // 0 for Sunday, 5 for Friday
+        const isFriday = today.day() === 5;
 
         const prayerTimesList = [
           { name: "Fajr", time: dayjs(times.fajr) },
-          { name: "Syuruq", time: dayjs(times.sunrise) }, // Tambahkan Syuruq
-          { name: isFriday ? "Jumat" : "Dhuhr", time: dayjs(times.dhuhr) }, // Conditional name
+          { name: "Syuruq", time: dayjs(times.sunrise) },
+          { name: isFriday ? "Jumat" : "Dhuhr", time: dayjs(times.dhuhr) },
           { name: "Asr", time: dayjs(times.asr) },
           { name: "Maghrib", time: dayjs(times.maghrib) },
           { name: "Isha", time: dayjs(times.isha) },
@@ -87,12 +89,19 @@ const Index = () => {
           setJumuahDhuhrTime(null);
         }
 
+        // Set Imsak time if Ramadan mode is active
+        if (data.is_ramadan_mode_active) {
+          setImsakTime(dayjs(times.fajr).subtract(10, 'minute'));
+        } else {
+          setImsakTime(null);
+        }
+
         let foundNextPrayer: { name: string; time: dayjs.Dayjs } | null = null;
         let minDiff = Infinity;
         const now = dayjs();
 
         for (const prayer of prayerTimesList) {
-          if (prayer.name === "Syuruq") continue; // Skip Syuruq for next prayer calculation
+          if (prayer.name === "Syuruq") continue;
 
           let prayerDateTime = prayer.time;
           if (prayerDateTime.isBefore(now)) {
@@ -134,6 +143,7 @@ const Index = () => {
   const handlePrayerOrKhutbahEnd = useCallback(() => {
     setShowPrayerOverlay(false);
     setShowJumuahOverlay(false);
+    setShowImsakOverlay(false); // Ensure Imsak overlay is also hidden
     setIsScreenDarkened(true);
     console.log("Screen darkened for prayer/khutbah. Will revert in 5 minutes.");
     setTimeout(() => {
@@ -142,12 +152,29 @@ const Index = () => {
     }, 5 * 60 * 1000); // 5 minutes
   }, []);
 
+  // Logic to control overlay visibility
   useEffect(() => {
     const updateOverlayVisibility = () => {
       const now = dayjs();
       const isFriday = now.day() === 5;
 
-      // Jumuah Overlay logic
+      // Reset all overlays first
+      setShowPrayerOverlay(false);
+      setShowJumuahOverlay(false);
+      setShowImsakOverlay(false);
+      setIsScreenDarkened(false);
+
+      // Imsak Overlay logic (highest priority if Ramadan mode is active)
+      if (isRamadanModeActive && imsakTime) {
+        const IMSAK_OVERLAY_DURATION_SECONDS = 60; // 1 minute
+        const imsakEndTime = imsakTime.add(IMSAK_OVERLAY_DURATION_SECONDS, 'second');
+        if (now.isBetween(imsakTime, imsakEndTime, null, '[)')) {
+          setShowImsakOverlay(true);
+          return; // Stop further checks if Imsak overlay is active
+        }
+      }
+
+      // Jumuah Overlay logic (next priority, only on Friday)
       if (isFriday && jumuahDhuhrTime) {
         const PRE_ADHAN_JUMUAH_SECONDS = 300; // 5 minutes
         const ADHAN_JUMUAH_DURATION_SECONDS = 90; // 1.5 minutes
@@ -156,20 +183,14 @@ const Index = () => {
         const adhanEndTime = jumuahDhuhrTime.add(ADHAN_JUMUAH_DURATION_SECONDS, 'second');
         const khutbahEndTime = adhanEndTime.add(khutbahDurationMinutes, 'minute');
 
-        // Check if within the entire Jumuah sequence window
         if (now.isBetween(preAdhanStartTime, khutbahEndTime, null, '[)')) {
           setShowJumuahOverlay(true);
-          setShowPrayerOverlay(false); // Ensure prayer overlay is hidden
-          setIsScreenDarkened(false); // Ensure screen is not darkened during Jumuah overlay
-        } else {
-          setShowJumuahOverlay(false);
+          return; // Stop further checks if Jumuah overlay is active
         }
-      } else {
-        setShowJumuahOverlay(false);
       }
 
-      // Prayer Countdown Overlay logic (only if Jumuah overlay is NOT active)
-      if (!showJumuahOverlay && nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
+      // Prayer Countdown Overlay logic (lowest priority, only if no other overlay is active)
+      if (nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
         const ADHAN_DURATION_SECONDS = 90;
         const PRE_ADHAN_COUNTDOWN_SECONDS = 30;
 
@@ -178,12 +199,8 @@ const Index = () => {
 
         if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
           setShowPrayerOverlay(true);
-          setIsScreenDarkened(false); // Ensure screen is not darkened during prayer overlay
-        } else {
-          setShowPrayerOverlay(false);
+          return; // Stop further checks if Prayer overlay is active
         }
-      } else if (showJumuahOverlay) {
-        setShowPrayerOverlay(false); // Explicitly hide if Jumuah overlay is active
       }
     };
 
@@ -191,7 +208,7 @@ const Index = () => {
     updateOverlayVisibility();
 
     return () => clearInterval(interval);
-  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, showJumuahOverlay]); // Add jumuahDhuhrTime and showJumuahOverlay to dependencies
+  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive]);
 
   useEffect(() => {
     if (clickCount >= 5) {
@@ -219,7 +236,7 @@ const Index = () => {
     setClickCount((prev) => prev + 1);
   };
 
-  const isOverlayActive = showPrayerOverlay || showJumuahOverlay;
+  const isOverlayActive = showPrayerOverlay || showJumuahOverlay || showImsakOverlay;
 
   return (
     <>
@@ -227,6 +244,12 @@ const Index = () => {
         <MurottalPlayer />
 
         {/* Overlays */}
+        {showImsakOverlay && isRamadanModeActive && imsakTime && (
+          <ImsakOverlay
+            imsakTime={imsakTime}
+            onClose={handlePrayerOrKhutbahEnd}
+          />
+        )}
         {showPrayerOverlay && (
           <PrayerCountdownOverlay
             nextPrayerName={nextPrayerName}

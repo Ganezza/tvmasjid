@@ -69,8 +69,8 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
 
       const basePrayerTimes: PrayerTime[] = [
         { name: "Subuh", time: dayjs(adhanTimes.fajr).format("HH:mm") },
-        { name: "Syuruq", time: dayjs(adhanTimes.sunrise).format("HH:mm") }, // Tambahkan Syuruq
-        { name: isFriday ? "Jumat" : "Dzuhur", time: dayjs(adhanTimes.dhuhr).format("HH:mm") }, // Conditional name
+        { name: "Syuruq", time: dayjs(adhanTimes.sunrise).format("HH:mm") },
+        { name: isFriday ? "Jumat" : "Dzuhur", time: dayjs(adhanTimes.dhuhr).format("HH:mm") },
         { name: "Ashar", time: dayjs(adhanTimes.asr).format("HH:mm") },
         { name: "Maghrib", time: dayjs(adhanTimes.maghrib).format("HH:mm") },
         { name: "Isya", time: dayjs(adhanTimes.isha).format("HH:mm") },
@@ -78,7 +78,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
 
       let finalPrayerTimes: PrayerTime[] = [];
       if (ramadanModeStatus) {
-        // Jika mode Ramadan aktif, tambahkan Imsak di awal
+        // Jika mode Ramadan aktif, tambahkan Imsak di awal untuk perhitungan internal
         finalPrayerTimes.push({ name: "Imsak", time: imsakTime });
       }
       finalPrayerTimes = finalPrayerTimes.concat(basePrayerTimes);
@@ -139,11 +139,12 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
         };
       }).sort((a, b) => a.dateTimeToday.diff(b.dateTimeToday));
 
-      // Find the next *actual* prayer (excluding Syuruq)
-      for (let i = 0; i < sortedPrayerTimes.length; i++) {
-        const prayer = sortedPrayerTimes[i];
-        if (prayer.name === "Syuruq") continue; // Skip Syuruq for next prayer calculation
+      // Find the next *actual* prayer (excluding Syuruq and Imsak for next prayer calculation)
+      const prayersForNextCalculation = sortedPrayerTimes.filter(p => p.name !== "Syuruq" && p.name !== "Imsak");
 
+      for (let i = 0; i < prayersForNextCalculation.length; i++) {
+        const prayer = prayersForNextCalculation[i];
+        
         let prayerDateTime = prayer.dateTimeToday;
 
         if (prayerDateTime.isBefore(now)) {
@@ -157,7 +158,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
         }
       }
 
-      // Determine current prayer (including Syuruq for display purposes)
+      // Determine current prayer (including Syuruq and Imsak for display purposes)
       for (let i = 0; i < sortedPrayerTimes.length; i++) {
         const prayer = sortedPrayerTimes[i];
         const nextIndex = (i + 1) % sortedPrayerTimes.length;
@@ -210,6 +211,9 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
     return () => clearInterval(interval);
   }, [prayerTimes, isLoading, error]);
 
+  // Filter out Imsak for display if Ramadan mode is active
+  const prayersToDisplay = prayerTimes.filter(prayer => !(isRamadanModeActive && prayer.name === "Imsak"));
+
   return (
     <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl text-center mb-8 min-h-[256px] md:min-h-[320px] flex flex-col justify-between">
       <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-blue-300">Jadwal Sholat</h2>
@@ -224,7 +228,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-2xl md:text-3xl lg:text-4xl xl:text-5xl">
-            {prayerTimes.map((prayer) => (
+            {prayersToDisplay.map((prayer) => (
               <div
                 key={prayer.name}
                 className={`p-2 rounded-md ${
