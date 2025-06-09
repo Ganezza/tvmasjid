@@ -16,15 +16,13 @@ interface PrayerTimeConfig {
 }
 
 const PRAYER_CONFIGS: PrayerTimeConfig[] = [
-  { name: "Imsak", adhanName: "fajr", audioUrlField: "murottal_audio_url_imsak" },
+  // Imsak tidak lagi menggunakan murottal, hanya beep Adzan
   { name: "Subuh", adhanName: "fajr", audioUrlField: "murottal_audio_url_fajr" },
   { name: "Dzuhur", adhanName: "dhuhr", audioUrlField: "murottal_audio_url_dhuhr" },
   { name: "Ashar", adhanName: "asr", audioUrlField: "murottal_audio_url_asr" },
   { name: "Maghrib", adhanName: "maghrib", audioUrlField: "murottal_audio_url_maghrib" },
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
 ];
-
-const ADHAN_DURATION_SECONDS = 90; // Durasi adzan sekitar 1.5 menit
 
 const MurottalPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -138,6 +136,7 @@ const MurottalPlayer: React.FC = () => {
       };
 
       // --- Logic for Imsak Beep (Ramadan Mode) ---
+      // Imsak sekarang hanya menggunakan beep Adzan
       if (settings.is_ramadan_mode_active && settings.adhan_beep_audio_url) {
         const imsakTime = dayjs(prayerTimes.fajr).subtract(10, 'minute');
         const imsakEventName = "Imsak Beep";
@@ -196,7 +195,7 @@ const MurottalPlayer: React.FC = () => {
         ];
 
         for (const iqomahConfig of iqomahPrayers) {
-          const iqomahTime = iqomahConfig.adhanTime.add(ADHAN_DURATION_SECONDS, 'second'); // Iqomah starts after Adhan ends
+          const iqomahTime = iqomahConfig.adhanTime.add(settings.iqomah_countdown_duration, 'second'); // Iqomah starts after Adhan ends
           const iqomahBeepEventName = `${iqomahConfig.name} Iqomah Beep`;
           // Trigger 1 second before to ensure it plays exactly at the time
           if (now.isBetween(iqomahTime.subtract(1, 'second'), iqomahTime.add(1, 'second'), null, '[]') && playAudio(settings.iqomah_beep_audio_url, iqomahBeepEventName)) {
@@ -209,22 +208,15 @@ const MurottalPlayer: React.FC = () => {
       if (settings.murottal_active) {
         const preAdhanDurationMs = settings.murottal_pre_adhan_duration * 60 * 1000;
 
-        for (const config of PRAYER_CONFIGS) {
+        for (const config of PRAYER_CONFIGS) { // PRAYER_CONFIGS tidak lagi mengandung Imsak
           let prayerTime: dayjs.Dayjs | null = null;
           let audioUrl: string | null = null;
 
-          if (config.name === "Imsak") {
-            if (!settings.is_ramadan_mode_active) continue;
-            const fajrTime = dayjs(prayerTimes.fajr);
-            prayerTime = fajrTime.subtract(10, 'minute');
-            audioUrl = settings[config.audioUrlField];
-          } else {
-            const adhanTime = prayerTimes[config.adhanName];
-            if (!adhanTime) continue;
-            prayerTime = dayjs(adhanTime);
-            audioUrl = settings[config.audioUrlField];
-          }
-
+          const adhanTime = prayerTimes[config.adhanName];
+          if (!adhanTime) continue;
+          prayerTime = dayjs(adhanTime);
+          audioUrl = settings[config.audioUrlField];
+          
           if (!prayerTime || !audioUrl) continue;
 
           const timeUntilPrayer = prayerTime.diff(now);
