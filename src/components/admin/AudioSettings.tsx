@@ -25,6 +25,7 @@ const formSchema = z.object({
   murottalAudioUrlImsak: z.string().nullable().optional(),
   tarhimAudioUrl: z.string().nullable().optional(),
   khutbahDurationMinutes: z.coerce.number().int().min(1, "Durasi khutbah harus lebih dari 0 menit.").default(45),
+  isMasterAudioActive: z.boolean().default(true), // New field for master audio switch
 });
 
 type AudioSettingsFormValues = z.infer<typeof formSchema>;
@@ -55,6 +56,7 @@ const AudioSettings: React.FC = () => {
       murottalAudioUrlImsak: null,
       tarhimAudioUrl: null,
       khutbahDurationMinutes: 45,
+      isMasterAudioActive: true, // Default to true
     },
   });
 
@@ -64,7 +66,7 @@ const AudioSettings: React.FC = () => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, tarhim_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url, khutbah_duration_minutes")
+        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, tarhim_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url, khutbah_duration_minutes, is_master_audio_active")
         .eq("id", 1)
         .single();
 
@@ -85,6 +87,7 @@ const AudioSettings: React.FC = () => {
         setValue("murottalAudioUrlImsak", data.murottal_audio_url_imsak);
         setValue("tarhimAudioUrl", data.tarhim_audio_url);
         setValue("khutbahDurationMinutes", data.khutbah_duration_minutes || 45);
+        setValue("isMasterAudioActive", data.is_master_audio_active ?? true); // Set new field, default to true if null
       }
     };
     fetchSettings();
@@ -179,6 +182,7 @@ const AudioSettings: React.FC = () => {
           murottal_audio_url_imsak: values.murottalAudioUrlImsak,
           tarhim_audio_url: values.tarhimAudioUrl,
           khutbah_duration_minutes: values.khutbahDurationMinutes,
+          is_master_audio_active: values.isMasterAudioActive, // Save new field
         },
         { onConflict: "id" }
       );
@@ -200,6 +204,17 @@ const AudioSettings: React.FC = () => {
       <CardContent>
         <p className="text-gray-400 mb-4">Atur status audio, durasi hitung mundur Iqomah, dan audio murottal per waktu sholat.</p>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Master Audio Switch */}
+          <div className="flex items-center justify-between space-x-2 border-b border-gray-700 pb-6 mb-6">
+            <Label htmlFor="master-audio-active" className="text-gray-300 text-lg font-bold">Aktifkan Semua Audio (Master Switch)</Label>
+            <Switch
+              id="master-audio-active"
+              checked={form.watch("isMasterAudioActive")}
+              onCheckedChange={(checked) => setValue("isMasterAudioActive", checked)}
+              className="data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-gray-600"
+            />
+          </div>
+
           <div className="flex items-center justify-between space-x-2">
             <Label htmlFor="murottal-active" className="text-gray-300 text-lg">Aktifkan Murottal Otomatis</Label>
             <Switch
