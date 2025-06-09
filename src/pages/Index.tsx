@@ -310,7 +310,7 @@ const Index = () => {
                   {masjidName}
                 </h1>
                 {masjidAddress && (
-                  <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-gray-300 text-left mt-1 text-outline-black">
+                  <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-gray-300 text-left mt-2 text-outline-black">
                     {masjidAddress}
                   </p>
                 )}
