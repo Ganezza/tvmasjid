@@ -24,7 +24,11 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
 
 const TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER = 5; // Tarhim typically plays 5 minutes before Fajr/Isha
 
-const MurottalPlayer: React.FC = () => {
+interface MurottalPlayerProps {
+  isAudioEnabled: boolean;
+}
+
+const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
@@ -84,7 +88,7 @@ const MurottalPlayer: React.FC = () => {
   }, [fetchSettingsAndPrayerTimes]);
 
   useEffect(() => {
-    if (!settings || !prayerTimes) {
+    if (!settings || !prayerTimes || !isAudioEnabled) { // Only run if audio is enabled
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
@@ -155,7 +159,7 @@ const MurottalPlayer: React.FC = () => {
 
           // Play Murottal if within pre-adhan duration, not yet played today,
           // and no Tarhim is currently playing or about to play.
-          if (timeUntilPrayer > 0 && timeUntilPrayer <= preAdhanDurationMs && !playedTodayRef.current.has(config.name)) {
+          if (timeUntilPrayer > 0 && timeUntilPrayer <= 1000 && !playedTodayRef.current.has(config.name)) { // Changed to 1 second before
             if (audioRef.current && audioRef.current.src !== audioUrl) {
               console.log(`Playing murottal for ${config.name}. Time until prayer: ${dayjs.duration(timeUntilPrayer).format("H:mm:ss")}`);
               audioRef.current.src = audioUrl;
@@ -179,7 +183,7 @@ const MurottalPlayer: React.FC = () => {
         audioRef.current.src = ""; // Hapus sumber saat unmount
       }
     };
-  }, [settings, prayerTimes]);
+  }, [settings, prayerTimes, isAudioEnabled]); // Add isAudioEnabled to dependencies
 
   // Elemen audio tersembunyi untuk pemutaran
   return (
