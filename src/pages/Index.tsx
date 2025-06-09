@@ -100,7 +100,7 @@ const Index = () => {
           }
         }
         
-        setNextPrayerName(foundNextNextPrayer?.name || null);
+        setNextPrayerName(foundNextPrayer?.name || null); // Corrected from foundNextNextPrayer
         setNextPrayerTime(foundNextPrayer?.time || null);
       }
     } catch (err) {
@@ -219,7 +219,7 @@ const Index = () => {
   return (
     <>
       <AppBackground>
-        <MurottalPlayer /> {/* Removed hasUserInteracted prop */}
+        <MurottalPlayer />
 
         {/* Overlays */}
         {showPrayerOverlay && (
