@@ -35,7 +35,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
       console.log("Fetching app settings for prayer times...");
       const { data, error: fetchError } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method, is_ramadan_mode_active")
+        .select("latitude, longitude, calculation_method, is_ramadan_mode_active, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset")
         .eq("id", 1)
         .single();
 
@@ -53,7 +53,15 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
       const ramadanModeStatus = data?.is_ramadan_mode_active || false; // Ambil status mode Ramadan
       setIsRamadanModeActive(ramadanModeStatus); // Set state mode Ramadan
 
-      console.log("Settings fetched:", { latitude, longitude, calculationMethod, ramadanModeStatus });
+      // Get offsets, default to 0 if null
+      const fajrOffset = data?.fajr_offset ?? 0;
+      const dhuhrOffset = data?.dhuhr_offset ?? 0;
+      const asrOffset = data?.asr_offset ?? 0;
+      const maghribOffset = data?.maghrib_offset ?? 0;
+      const ishaOffset = data?.isha_offset ?? 0;
+      const imsakOffset = data?.imsak_offset ?? 0;
+
+      console.log("Settings fetched:", { latitude, longitude, calculationMethod, ramadanModeStatus, fajrOffset, dhuhrOffset, asrOffset, maghribOffset, ishaOffset, imsakOffset });
 
       const coordinates = new Adhan.Coordinates(latitude, longitude);
       const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod]();
@@ -61,29 +69,38 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
       const today = dayjs(); // Use dayjs for current day check
       const adhanTimes = new Adhan.PrayerTimes(coordinates, today.toDate(), params);
 
-      // Calculate Imsak manually as 10 minutes before Fajr
-      const imsakTime = dayjs(adhanTimes.fajr).subtract(10, 'minute').format("HH:mm");
-      console.log("Manually calculated Imsak time (10 mins before Fajr):", imsakTime);
+      // Apply offsets to Adhan times
+      const adjustedFajr = dayjs(adhanTimes.fajr).add(fajrOffset, 'minute');
+      const adjustedDhuhr = dayjs(adhanTimes.dhuhr).add(dhuhrOffset, 'minute');
+      const adjustedAsr = dayjs(adhanTimes.asr).add(asrOffset, 'minute');
+      const adjustedMaghrib = dayjs(adhanTimes.maghrib).add(maghribOffset, 'minute');
+      const adjustedIsha = dayjs(adhanTimes.isha).add(ishaOffset, 'minute');
+      const adjustedSunrise = dayjs(adhanTimes.sunrise); // Sunrise typically doesn't have an offset
+
+      // Calculate Imsak manually as 10 minutes before Fajr, then apply its own offset
+      const calculatedImsakTime = dayjs(adhanTimes.fajr).subtract(10, 'minute').add(imsakOffset, 'minute');
+      const imsakTimeFormatted = calculatedImsakTime.format("HH:mm");
+      console.log("Manually calculated Imsak time (10 mins before Fajr + offset):", imsakTimeFormatted);
 
       const isFriday = today.day() === 5; // 0 for Sunday, 5 for Friday
 
       const basePrayerTimes: PrayerTime[] = [
-        { name: "Subuh", time: dayjs(adhanTimes.fajr).format("HH:mm") },
-        { name: "Syuruq", time: dayjs(adhanTimes.sunrise).format("HH:mm") },
-        { name: isFriday ? "Jum'at" : "Dzuhur", time: dayjs(adhanTimes.dhuhr).format("HH:mm") },
-        { name: "Ashar", time: dayjs(adhanTimes.asr).format("HH:mm") },
-        { name: "Maghrib", time: dayjs(adhanTimes.maghrib).format("HH:mm") },
-        { name: "Isya", time: dayjs(adhanTimes.isha).format("HH:mm") },
+        { name: "Subuh", time: adjustedFajr.format("HH:mm") },
+        { name: "Syuruq", time: adjustedSunrise.format("HH:mm") },
+        { name: isFriday ? "Jum'at" : "Dzuhur", time: adjustedDhuhr.format("HH:mm") },
+        { name: "Ashar", time: adjustedAsr.format("HH:mm") },
+        { name: "Maghrib", time: adjustedMaghrib.format("HH:mm") },
+        { name: "Isya", time: adjustedIsha.format("HH:mm") },
       ];
 
       let finalPrayerTimes: PrayerTime[] = [];
       if (ramadanModeStatus) {
         // Jika mode Ramadan aktif, tambahkan Imsak di awal untuk perhitungan internal
-        finalPrayerTimes.push({ name: "Imsak", time: imsakTime });
+        finalPrayerTimes.push({ name: "Imsak", time: imsakTimeFormatted });
       }
       finalPrayerTimes = finalPrayerTimes.concat(basePrayerTimes);
       
-      console.log("Calculated prayer times:", finalPrayerTimes);
+      console.log("Calculated prayer times (with offsets):", finalPrayerTimes);
       setPrayerTimes(finalPrayerTimes);
       setIsLoading(false);
     } catch (err: any) {
@@ -227,7 +244,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-3xl md:text-4xl lg:text-5xl xl:text-6xl"> {/* Increased font sizes here */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
             {prayersToDisplay.map((prayer) => (
               <div
                 key={prayer.name}
@@ -243,8 +260,8 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
               </div>
             ))}
           </div>
-          {!hideCountdown && ( // Conditionally render countdown
-            <div className="mt-6 text-yellow-300 font-semibold text-4xl md:text-5xl lg:text-6xl xl:text-7xl"> {/* Increased font sizes here */}
+          {!hideCountdown && (
+            <div className="mt-6 text-yellow-300 font-semibold text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
               {nextPrayer ? (
                 nextPrayer.name === "Imsak" ? (
                   <>
