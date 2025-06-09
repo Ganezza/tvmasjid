@@ -16,7 +16,7 @@ const formSchema = z.object({
   tarhimActive: z.boolean().default(false),
   iqomahCountdownDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(300), // in seconds
   murottalPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(10), // in minutes
-  tarhimPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(5), // New field: Tarhim pre-adhan duration in minutes
+  tarhimPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(300), // Changed default to 300 seconds (5 minutes)
   murottalAudioUrlFajr: z.string().nullable().optional(),
   murottalAudioUrlDhuhr: z.string().nullable().optional(),
   murottalAudioUrlAsr: z.string().nullable().optional(),
@@ -46,7 +46,7 @@ const AudioSettings: React.FC = () => {
       tarhimActive: false,
       iqomahCountdownDuration: 300,
       murottalPreAdhanDuration: 10,
-      tarhimPreAdhanDuration: 5, // Default value for new field
+      tarhimPreAdhanDuration: 300, // Default value for new field in seconds
       murottalAudioUrlFajr: null,
       murottalAudioUrlDhuhr: null,
       murottalAudioUrlAsr: null,
@@ -76,7 +76,7 @@ const AudioSettings: React.FC = () => {
         setValue("tarhimActive", data.tarhim_active);
         setValue("iqomahCountdownDuration", data.iqomah_countdown_duration);
         setValue("murottalPreAdhanDuration", data.murottal_pre_adhan_duration || 10);
-        setValue("tarhimPreAdhanDuration", data.tarhim_pre_adhan_duration || 5); // Set new field
+        setValue("tarhimPreAdhanDuration", data.tarhim_pre_adhan_duration || 300); // Set new field, default 300 seconds
         setValue("murottalAudioUrlFajr", data.murottal_audio_url_fajr);
         setValue("murottalAudioUrlDhuhr", data.murottal_audio_url_dhuhr);
         setValue("murottalAudioUrlAsr", data.murottal_audio_url_asr);
@@ -304,13 +304,13 @@ const AudioSettings: React.FC = () => {
           <div className="border-t border-gray-700 pt-6">
             <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Tarhim</h3>
             <div>
-              <Label htmlFor="tarhimPreAdhanDuration" className="text-gray-300">Putar Tarhim Sebelum Adzan (menit)</Label>
+              <Label htmlFor="tarhimPreAdhanDuration" className="text-gray-300">Putar Tarhim Sebelum Adzan (detik)</Label>
               <Input
                 id="tarhimPreAdhanDuration"
                 type="number"
                 {...register("tarhimPreAdhanDuration")}
                 className="bg-gray-700 border-gray-600 text-white mt-1"
-                placeholder="Contoh: 5 (untuk 5 menit sebelum adzan)"
+                placeholder="Contoh: 314 (untuk 5 menit 14 detik)"
               />
               {errors.tarhimPreAdhanDuration && <p className="text-red-400 text-sm mt-1">{errors.tarhimPreAdhanDuration.message}</p>}
             </div>
