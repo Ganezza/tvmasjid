@@ -213,8 +213,8 @@ const MurottalPlayer: React.FC = () => {
         const imsakEventName = "Imsak Beep";
         console.log(`MurottalPlayer: Imsak Time: ${imsakTime.format('HH:mm:ss')}, Current Time: ${now.format('HH:mm:ss')}, Played Today: ${playedTodayRef.current.has(imsakEventName)}`);
         
-        // Trigger Imsak beep if current time is at or after imsakTime and within the first 5 seconds, AND hasn't played today
-        if (now.isSameOrAfter(imsakTime) && now.isBefore(imsakTime.add(5, 'second')) && !playedTodayRef.current.has(imsakEventName)) {
+        // Trigger Imsak beep if current time is at or after imsakTime AND hasn't played today
+        if (now.isSameOrAfter(imsakTime) && !playedTodayRef.current.has(imsakEventName)) {
           console.log(`MurottalPlayer: *** Imsak Beep condition MET! Attempting to play. ***`);
           if (await playAudio(settings.imsak_beep_audio_url, imsakEventName)) {
             console.log(`MurottalPlayer: Imsak Beep successfully triggered.`);
