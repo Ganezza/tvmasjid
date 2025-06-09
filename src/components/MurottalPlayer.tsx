@@ -15,14 +15,15 @@ interface PrayerTimeConfig {
   name: string;
   adhanName: keyof Adhan.PrayerTimes;
   audioUrlField: string;
+  offsetField: string; // New field for offset
 }
 
 const PRAYER_CONFIGS: PrayerTimeConfig[] = [
-  { name: "Subuh", adhanName: "fajr", audioUrlField: "murottal_audio_url_fajr" },
-  { name: "Dzuhur", adhanName: "dhuhr", audioUrlField: "murottal_audio_url_dhuhr" },
-  { name: "Ashar", adhanName: "asr", audioUrlField: "murottal_audio_url_asr" },
-  { name: "Maghrib", adhanName: "maghrib", audioUrlField: "murottal_audio_url_maghrib" },
-  { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
+  { name: "Subuh", adhanName: "fajr", audioUrlField: "murottal_audio_url_fajr", offsetField: "fajr_offset" },
+  { name: "Dzuhur", adhanName: "dhuhr", audioUrlField: "murottal_audio_url_dhuhr", offsetField: "dhuhr_offset" },
+  { name: "Ashar", adhanName: "asr", audioUrlField: "murottal_audio_url_asr", offsetField: "asr_offset" },
+  { name: "Maghrib", adhanName: "maghrib", audioUrlField: "murottal_audio_url_maghrib", offsetField: "maghrib_offset" },
+  { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha", offsetField: "isha_offset" },
 ];
 
 const ADHAN_DURATION_SECONDS = 120; // Durasi adzan sekitar 2 menit
@@ -40,7 +41,7 @@ const MurottalPlayer: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url, iqomah_countdown_duration, imsak_beep_audio_url") // Added iqomah_countdown_duration
+        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url, iqomah_countdown_duration, imsak_beep_audio_url, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset") // Added all offset fields
         .eq("id", 1)
         .single();
 
@@ -65,16 +66,65 @@ const MurottalPlayer: React.FC = () => {
             isMasterAudioActive: data.is_master_audio_active,
             adhanBeepAudioUrl: data.adhan_beep_audio_url,
             iqomahBeepAudioUrl: data.iqomah_beep_audio_url,
-            iqomahCountdownDuration: data.iqomah_countdown_duration, // Log new field
-            imsakBeepAudioUrl: data.imsak_beep_audio_url 
+            iqomahCountdownDuration: data.iqomah_countdown_duration,
+            imsakBeepAudioUrl: data.imsak_beep_audio_url,
+            fajrOffset: data.fajr_offset, // Log new fields
+            dhuhrOffset: data.dhuhr_offset,
+            asrOffset: data.asr_offset,
+            maghribOffset: data.maghrib_offset,
+            ishaOffset: data.isha_offset,
+            imsakOffset: data.imsak_offset,
         });
 
         if (data.murottal_active || data.tarhim_active || data.adhan_beep_audio_url || data.iqomah_beep_audio_url || data.imsak_beep_audio_url) {
           const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
           const params = Adhan.CalculationMethod[data.calculation_method as keyof typeof Adhan.CalculationMethod]();
           const today = new Date();
-          setPrayerTimes(new Adhan.PrayerTimes(coordinates, today, params));
-          console.log("MurottalPlayer: Prayer times calculated.");
+          
+          // Calculate raw prayer times
+          const rawPrayerTimes = new Adhan.PrayerTimes(coordinates, today, params);
+
+          // Apply offsets to prayer times
+          const adjustedPrayerTimes = {
+            fajr: dayjs(rawPrayerTimes.fajr).add(data.fajr_offset ?? 0, 'minute').toDate(),
+            sunrise: dayjs(rawPrayerTimes.sunrise).toDate(), // Sunrise typically no offset
+            dhuhr: dayjs(rawPrayerTimes.dhuhr).add(data.dhuhr_offset ?? 0, 'minute').toDate(),
+            asr: dayjs(rawPrayerTimes.asr).add(data.asr_offset ?? 0, 'minute').toDate(),
+            maghrib: dayjs(rawPrayerTimes.maghrib).add(data.maghrib_offset ?? 0, 'minute').toDate(),
+            isha: dayjs(rawPrayerTimes.isha).add(data.isha_offset ?? 0, 'minute').toDate(),
+            // Add other prayer times if needed, ensuring they are Date objects
+            // nextPrayer: rawPrayerTimes.nextPrayer(), // This returns a string, not a Date
+            // currentPrayer: rawPrayerTimes.currentPrayer(), // This returns a string, not a Date
+          };
+          
+          // Manually create a PrayerTimes-like object with adjusted times
+          // This is a simplified representation, as Adhan.PrayerTimes constructor expects raw times
+          // But for simple time access, this object is sufficient.
+          const finalPrayerTimes = {
+            fajr: adjustedPrayerTimes.fajr,
+            sunrise: adjustedPrayerTimes.sunrise,
+            dhuhr: adjustedPrayerTimes.dhuhr,
+            asr: adjustedPrayerTimes.asr,
+            maghrib: adjustedPrayerTimes.maghrib,
+            isha: adjustedPrayerTimes.isha,
+            // Add placeholder for nextPrayer/currentPrayer if Adhan library functions are not used
+            nextPrayer: () => "", // Placeholder
+            currentPrayer: () => "", // Placeholder
+            timeForPrayer: (prayer: Adhan.Prayer) => {
+              switch (prayer) {
+                case Adhan.Prayer.Fajr: return adjustedPrayerTimes.fajr;
+                case Adhan.Prayer.Dhuhr: return adjustedPrayerTimes.dhuhr;
+                case Adhan.Prayer.Asr: return adjustedPrayerTimes.asr;
+                case Adhan.Prayer.Maghrib: return adjustedPrayerTimes.maghrib;
+                case Adhan.Prayer.Isha: return adjustedPrayerTimes.isha;
+                case Adhan.Prayer.Sunrise: return adjustedPrayerTimes.sunrise;
+                default: return new Date(); // Fallback
+              }
+            }
+          } as unknown as Adhan.PrayerTimes; // Cast to Adhan.PrayerTimes for type compatibility
+
+          setPrayerTimes(finalPrayerTimes);
+          console.log("MurottalPlayer: Prayer times calculated and offsets applied.");
         } else {
           setPrayerTimes(null);
           console.log("MurottalPlayer: All audio features inactive. Skipping prayer time calculation.");
@@ -211,7 +261,8 @@ const MurottalPlayer: React.FC = () => {
       // --- Logic for Imsak Beep (Ramadan Mode) ---
       console.log(`MurottalPlayer: Checking Imsak Beep. Ramadan Active: ${settings.is_ramadan_mode_active}, URL: ${!!settings.imsak_beep_audio_url}`);
       if (settings.is_ramadan_mode_active && settings.imsak_beep_audio_url) {
-        const imsakTime = dayjs(prayerTimes.fajr).subtract(10, 'minute');
+        // Use the adjusted Fajr time from prayerTimes, then subtract 10 mins and add imsak_offset
+        const imsakTime = dayjs(prayerTimes.fajr).subtract(10, 'minute').add(settings.imsak_offset ?? 0, 'minute');
         const imsakEventName = "Imsak Beep";
         console.log(`MurottalPlayer: Imsak Time: ${imsakTime.format('HH:mm:ss')}, Current Time: ${now.format('HH:mm:ss')}, Played Today: ${playedTodayRef.current.has(imsakEventName)}`);
         
