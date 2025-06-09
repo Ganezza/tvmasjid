@@ -58,21 +58,21 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
       const coordinates = new Adhan.Coordinates(latitude, longitude);
       const params = Adhan.CalculationMethod[calculationMethod as keyof typeof Adhan.CalculationMethod]();
       
-      const today = new Date();
-      console.log("Calculating prayer times for today:", today);
-      const times = new Adhan.PrayerTimes(coordinates, today, params);
+      const today = dayjs(); // Use dayjs for current day check
+      const adhanTimes = new Adhan.PrayerTimes(coordinates, today.toDate(), params);
 
       // Calculate Imsak manually as 10 minutes before Fajr
-      const imsakTime = dayjs(times.fajr).subtract(10, 'minute').format("HH:mm");
+      const imsakTime = dayjs(adhanTimes.fajr).subtract(10, 'minute').format("HH:mm");
       console.log("Manually calculated Imsak time (10 mins before Fajr):", imsakTime);
 
+      const isFriday = today.day() === 5; // 0 for Sunday, 5 for Friday
+
       const basePrayerTimes: PrayerTime[] = [
-        { name: "Subuh", time: dayjs(times.fajr).format("HH:mm") },
-        { name: "Syuruq", time: dayjs(times.sunrise).format("HH:mm") },
-        { name: "Dzuhur", time: dayjs(times.dhuhr).format("HH:mm") },
-        { name: "Ashar", time: dayjs(times.asr).format("HH:mm") },
-        { name: "Maghrib", time: dayjs(times.maghrib).format("HH:mm") },
-        { name: "Isya", time: dayjs(times.isha).format("HH:mm") },
+        { name: "Subuh", time: dayjs(adhanTimes.fajr).format("HH:mm") },
+        { name: isFriday ? "Jumat" : "Dzuhur", time: dayjs(adhanTimes.dhuhr).format("HH:mm") }, // Conditional name
+        { name: "Ashar", time: dayjs(adhanTimes.asr).format("HH:mm") },
+        { name: "Maghrib", time: dayjs(adhanTimes.maghrib).format("HH:mm") },
+        { name: "Isya", time: dayjs(adhanTimes.isha).format("HH:mm") },
       ];
 
       let finalPrayerTimes: PrayerTime[] = [];
