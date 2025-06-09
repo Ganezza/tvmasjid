@@ -227,7 +227,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-2xl md:text-3xl lg:text-4xl xl:text-5xl">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-3xl md:text-4xl lg:text-5xl xl:text-6xl"> {/* Increased font sizes here */}
             {prayersToDisplay.map((prayer) => (
               <div
                 key={prayer.name}
@@ -244,7 +244,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
             ))}
           </div>
           {!hideCountdown && ( // Conditionally render countdown
-            <div className="mt-6 text-yellow-300 font-semibold text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
+            <div className="mt-6 text-yellow-300 font-semibold text-4xl md:text-5xl lg:text-6xl xl:text-7xl"> {/* Increased font sizes here */}
               {nextPrayer ? (
                 nextPrayer.name === "Imsak" ? (
                   <>
