@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
+import React, { useState, useEffect, createContext, useContext, useRef } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -16,7 +16,16 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Gunakan ref untuk memastikan listener hanya diatur sekali
+  const isListenerSetup = useRef(false);
+
   useEffect(() => {
+    if (isListenerSetup.current) {
+      return; // Mencegah eksekusi ulang jika sudah diatur
+    }
+
+    isListenerSetup.current = true;
+
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -26,14 +35,15 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     getInitialSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      // The 'session' object here is already the latest session.
-      // No need to call supabase.auth.getSession() again inside this callback.
       setSession(session);
-      setIsLoading(false);
+      setIsLoading(false); // Pastikan status loading diperbarui
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+      isListenerSetup.current = false; // Reset ref saat komponen dilepas
+    };
+  }, []); // Array dependensi kosong untuk hanya berjalan sekali
 
   useEffect(() => {
     if (!isLoading) {
