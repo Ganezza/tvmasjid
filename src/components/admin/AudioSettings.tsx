@@ -26,6 +26,8 @@ const formSchema = z.object({
   tarhimAudioUrl: z.string().nullable().optional(),
   khutbahDurationMinutes: z.coerce.number().int().min(1, "Durasi khutbah harus lebih dari 0 menit.").default(45),
   isMasterAudioActive: z.boolean().default(true), // New field for master audio switch
+  adhanBeepAudioUrl: z.string().nullable().optional(), // New field for Adhan beep
+  iqomahBeepAudioUrl: z.string().nullable().optional(), // New field for Iqomah beep
 });
 
 type AudioSettingsFormValues = z.infer<typeof formSchema>;
@@ -57,6 +59,8 @@ const AudioSettings: React.FC = () => {
       tarhimAudioUrl: null,
       khutbahDurationMinutes: 45,
       isMasterAudioActive: true, // Default to true
+      adhanBeepAudioUrl: null, // Default for new field
+      iqomahBeepAudioUrl: null, // Default for new field
     },
   });
 
@@ -66,7 +70,7 @@ const AudioSettings: React.FC = () => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, tarhim_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url, khutbah_duration_minutes, is_master_audio_active")
+        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, tarhim_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url, khutbah_duration_minutes, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url")
         .eq("id", 1)
         .single();
 
@@ -88,6 +92,8 @@ const AudioSettings: React.FC = () => {
         setValue("tarhimAudioUrl", data.tarhim_audio_url);
         setValue("khutbahDurationMinutes", data.khutbah_duration_minutes || 45);
         setValue("isMasterAudioActive", data.is_master_audio_active ?? true); // Set new field, default to true if null
+        setValue("adhanBeepAudioUrl", data.adhan_beep_audio_url); // Set new field
+        setValue("iqomahBeepAudioUrl", data.iqomah_beep_audio_url); // Set new field
       }
     };
     fetchSettings();
@@ -101,9 +107,9 @@ const AudioSettings: React.FC = () => {
 
     const fileExtension = file.name.split('.').pop();
     const fileName = `${uuidv4()}.${fileExtension}`;
-    const filePath = `murottal/${fileName}`; // Path inside the 'audio' bucket
+    const filePath = `audio/${fileName}`; // Path inside the 'audio' bucket
 
-    const uploadToastId = toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim')}...`);
+    const uploadToastId = toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim').replace('adhanBeepAudioUrl', 'Adzan Beep').replace('iqomahBeepAudioUrl', 'Iqomah Beep')}...`);
 
     try {
       const { data, error } = await supabase.storage
@@ -183,6 +189,8 @@ const AudioSettings: React.FC = () => {
           tarhim_audio_url: values.tarhimAudioUrl,
           khutbah_duration_minutes: values.khutbahDurationMinutes,
           is_master_audio_active: values.isMasterAudioActive, // Save new field
+          adhan_beep_audio_url: values.adhanBeepAudioUrl, // Save new field
+          iqomah_beep_audio_url: values.iqomahBeepAudioUrl, // Save new field
         },
         { onConflict: "id" }
       );
@@ -344,6 +352,59 @@ const AudioSettings: React.FC = () => {
                 placeholder="Contoh: 45"
               />
               {errors.khutbahDurationMinutes && <p className="text-red-400 text-sm mt-1">{errors.khutbahDurationMinutes.message}</p>}
+            </div>
+          </div>
+
+          {/* New Beep Audio Settings */}
+          <div className="border-t border-gray-700 pt-6">
+            <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Audio Beep</h3>
+            <div>
+              <Label htmlFor="adhanBeepAudioUrl" className="text-gray-300">Audio Beep Adzan (Opsional)</Label>
+              <Input
+                id="adhanBeepAudioUrl"
+                type="file"
+                accept="audio/*"
+                onChange={(e) => handleAudioUpload(e, "adhanBeepAudioUrl")}
+                className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
+              />
+              {form.watch("adhanBeepAudioUrl") && (
+                <div className="mt-2 flex items-center space-x-2">
+                  <audio controls src={form.watch("adhanBeepAudioUrl") as string} className="w-full max-w-xs" />
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => handleRemoveAudio("adhanBeepAudioUrl")}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              )}
+              {errors.adhanBeepAudioUrl && <p className="text-red-400 text-sm mt-1">{errors.adhanBeepAudioUrl.message}</p>}
+            </div>
+            <div className="mt-4">
+              <Label htmlFor="iqomahBeepAudioUrl" className="text-gray-300">Audio Beep Iqomah (Opsional)</Label>
+              <Input
+                id="iqomahBeepAudioUrl"
+                type="file"
+                accept="audio/*"
+                onChange={(e) => handleAudioUpload(e, "iqomahBeepAudioUrl")}
+                className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
+              />
+              {form.watch("iqomahBeepAudioUrl") && (
+                <div className="mt-2 flex items-center space-x-2">
+                  <audio controls src={form.watch("iqomahBeepAudioUrl") as string} className="w-full max-w-xs" />
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => handleRemoveAudio("iqomahBeepAudioUrl")}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              )}
+              {errors.iqomahBeepAudioUrl && <p className="text-red-400 text-sm mt-1">{errors.iqomahBeepAudioUrl.message}</p>}
             </div>
           </div>
 
