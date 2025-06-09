@@ -156,8 +156,8 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
       prayer_name: values.prayer_name,
       imam_name: values.imam_name,
       muezzin_name: values.muezzin_name || null,
-      khatib_name: values.prayer_name === "Tarawih" ? (values.khatib_name || null) : null, // Only save if Tarawih
-      bilal_name: values.prayer_name === "Tarawih" ? (values.bilal_name || null) : null,   // Only save if Tarawih
+      khatib_name: values.prayer_name === "Jumat" ? (values.khatib_name || null) : null, // Only save if Jumat
+      bilal_name: values.prayer_name === "Jumat" ? (values.bilal_name || null) : null,   // Only save if Jumat
       display_order: values.display_order,
     };
 
@@ -307,7 +307,7 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
                 {errors.muezzin_name && <p className="text-red-400 text-sm mt-1">{errors.muezzin_name.message}</p>}
               </div>
 
-              {selectedPrayerName === "Tarawih" && (
+              {selectedPrayerName === "Jumat" && ( // Conditional fields for Jumat
                 <>
                   <div>
                     <Label htmlFor="khatib_name" className="text-gray-300">Nama Khatib (Opsional)</Label>
@@ -329,6 +329,11 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
                     />
                     {errors.bilal_name && <p className="text-red-400 text-sm mt-1">{errors.bilal_name.message}</p>}
                   </div>
+                </>
+              )}
+              {selectedPrayerName === "Tarawih" && ( // Keep Tarawih specific fields if any
+                <>
+                  {/* Add Tarawih specific fields here if needed, e.g., for a different Khatib/Bilal for Tarawih */}
                 </>
               )}
 

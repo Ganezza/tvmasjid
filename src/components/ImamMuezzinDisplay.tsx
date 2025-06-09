@@ -10,6 +10,8 @@ interface Schedule {
   prayer_name: string;
   imam_name: string;
   muezzin_name?: string | null;
+  khatib_name?: string | null; // Added new field
+  bilal_name?: string | null;  // Added new field
   display_order: number;
 }
 
@@ -207,6 +209,16 @@ const ImamMuezzinDisplay: React.FC = () => {
       {currentSchedule.muezzin_name && (
         <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
           Muadzin: <span className="font-medium">{currentSchedule.muezzin_name}</span>
+        </p>
+      )}
+      {currentSchedule.khatib_name && ( // Display Khatib if available
+        <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
+          Khatib: <span className="font-medium">{currentSchedule.khatib_name}</span>
+        </p>
+      )}
+      {currentSchedule.bilal_name && ( // Display Bilal if available
+        <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
+          Bilal: <span className="font-medium">{currentSchedule.bilal_name}</span>
         </p>
       )}
     </div>
