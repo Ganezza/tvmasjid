@@ -16,6 +16,7 @@ const formSchema = z.object({
   tarhimActive: z.boolean().default(false),
   iqomahCountdownDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(300), // in seconds
   murottalPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(10), // in minutes
+  tarhimPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(5), // New field: Tarhim pre-adhan duration in minutes
   murottalAudioUrlFajr: z.string().nullable().optional(),
   murottalAudioUrlDhuhr: z.string().nullable().optional(),
   murottalAudioUrlAsr: z.string().nullable().optional(),
@@ -23,7 +24,7 @@ const formSchema = z.object({
   murottalAudioUrlIsha: z.string().nullable().optional(),
   murottalAudioUrlImsak: z.string().nullable().optional(),
   tarhimAudioUrl: z.string().nullable().optional(),
-  khutbahDurationMinutes: z.coerce.number().int().min(1, "Durasi khutbah harus lebih dari 0 menit.").default(45), // New field
+  khutbahDurationMinutes: z.coerce.number().int().min(1, "Durasi khutbah harus lebih dari 0 menit.").default(45),
 });
 
 type AudioSettingsFormValues = z.infer<typeof formSchema>;
@@ -45,6 +46,7 @@ const AudioSettings: React.FC = () => {
       tarhimActive: false,
       iqomahCountdownDuration: 300,
       murottalPreAdhanDuration: 10,
+      tarhimPreAdhanDuration: 5, // Default value for new field
       murottalAudioUrlFajr: null,
       murottalAudioUrlDhuhr: null,
       murottalAudioUrlAsr: null,
@@ -52,7 +54,7 @@ const AudioSettings: React.FC = () => {
       murottalAudioUrlIsha: null,
       murottalAudioUrlImsak: null,
       tarhimAudioUrl: null,
-      khutbahDurationMinutes: 45, // Default value
+      khutbahDurationMinutes: 45,
     },
   });
 
@@ -62,7 +64,7 @@ const AudioSettings: React.FC = () => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url, khutbah_duration_minutes") // Fetch new field
+        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, tarhim_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url, khutbah_duration_minutes")
         .eq("id", 1)
         .single();
 
@@ -74,6 +76,7 @@ const AudioSettings: React.FC = () => {
         setValue("tarhimActive", data.tarhim_active);
         setValue("iqomahCountdownDuration", data.iqomah_countdown_duration);
         setValue("murottalPreAdhanDuration", data.murottal_pre_adhan_duration || 10);
+        setValue("tarhimPreAdhanDuration", data.tarhim_pre_adhan_duration || 5); // Set new field
         setValue("murottalAudioUrlFajr", data.murottal_audio_url_fajr);
         setValue("murottalAudioUrlDhuhr", data.murottal_audio_url_dhuhr);
         setValue("murottalAudioUrlAsr", data.murottal_audio_url_asr);
@@ -81,7 +84,7 @@ const AudioSettings: React.FC = () => {
         setValue("murottalAudioUrlIsha", data.murottal_audio_url_isha);
         setValue("murottalAudioUrlImsak", data.murottal_audio_url_imsak);
         setValue("tarhimAudioUrl", data.tarhim_audio_url);
-        setValue("khutbahDurationMinutes", data.khutbah_duration_minutes || 45); // Set new field
+        setValue("khutbahDurationMinutes", data.khutbah_duration_minutes || 45);
       }
     };
     fetchSettings();
@@ -167,6 +170,7 @@ const AudioSettings: React.FC = () => {
           tarhim_active: values.tarhimActive,
           iqomah_countdown_duration: values.iqomahCountdownDuration,
           murottal_pre_adhan_duration: values.murottalPreAdhanDuration,
+          tarhim_pre_adhan_duration: values.tarhimPreAdhanDuration, // Save new field
           murottal_audio_url_fajr: values.murottalAudioUrlFajr,
           murottal_audio_url_dhuhr: values.murottalAudioUrlDhuhr,
           murottal_audio_url_asr: values.murottalAudioUrlAsr,
@@ -174,7 +178,7 @@ const AudioSettings: React.FC = () => {
           murottal_audio_url_isha: values.murottalAudioUrlIsha,
           murottal_audio_url_imsak: values.murottalAudioUrlImsak,
           tarhim_audio_url: values.tarhimAudioUrl,
-          khutbah_duration_minutes: values.khutbahDurationMinutes, // Save new field
+          khutbah_duration_minutes: values.khutbahDurationMinutes,
         },
         { onConflict: "id" }
       );
@@ -296,7 +300,23 @@ const AudioSettings: React.FC = () => {
             </div>
           </div>
 
-          {/* New Khutbah Duration Setting */}
+          {/* New Tarhim Duration Setting */}
+          <div className="border-t border-gray-700 pt-6">
+            <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Tarhim</h3>
+            <div>
+              <Label htmlFor="tarhimPreAdhanDuration" className="text-gray-300">Putar Tarhim Sebelum Adzan (menit)</Label>
+              <Input
+                id="tarhimPreAdhanDuration"
+                type="number"
+                {...register("tarhimPreAdhanDuration")}
+                className="bg-gray-700 border-gray-600 text-white mt-1"
+                placeholder="Contoh: 5 (untuk 5 menit sebelum adzan)"
+              />
+              {errors.tarhimPreAdhanDuration && <p className="text-red-400 text-sm mt-1">{errors.tarhimPreAdhanDuration.message}</p>}
+            </div>
+          </div>
+
+          {/* Khutbah Duration Setting */}
           <div className="border-t border-gray-700 pt-6">
             <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Khutbah Jumat</h3>
             <div>
