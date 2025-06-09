@@ -22,7 +22,7 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
 ];
 
-const TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER = 15; // Tarhim typically plays 15 minutes before Fajr/Isha
+const TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER = 5; // Tarhim typically plays 5 minutes before Fajr/Isha
 
 const MurottalPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
