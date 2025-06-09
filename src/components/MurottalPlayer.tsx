@@ -111,8 +111,14 @@ const MurottalPlayer: React.FC = () => {
       return;
     }
 
-    const playAudio = (url: string, eventName: string, isMurottal: boolean = false) => {
-      if (!audioRef.current) return false;
+    const playAudio = async (url: string, eventName: string, isMurottal: boolean = false) => {
+      if (!audioRef.current || !url) return false;
+
+      // If the requested audio is already playing, do nothing
+      if (audioRef.current.src === url && !audioRef.current.paused) {
+        console.log(`MurottalPlayer: Audio for ${eventName} is already playing.`);
+        return true;
+      }
 
       // If current audio is murottal and a non-murottal audio is about to play, pause and store murottal info
       const isCurrentAudioMurottal = PRAYER_CONFIGS.some(config => audioRef.current?.src === settings[config.audioUrlField]);
@@ -123,26 +129,30 @@ const MurottalPlayer: React.FC = () => {
           currentTime: audioRef.current.currentTime
         });
         console.log(`MurottalPlayer: Pausing current murottal (${audioRef.current.src}) at ${audioRef.current.currentTime}s to play ${eventName}.`);
+        audioRef.current.pause(); // Explicitly pause
       } else if (isMurottal && pausedMurottalInfo) {
         // If we are trying to play murottal and there's paused info, clear it
         // This handles cases where murottal might be resumed by other means or manually
         setPausedMurottalInfo(null);
       }
 
-      if (audioRef.current.src !== url || audioRef.current.paused) {
-        audioRef.current.pause();
-        audioRef.current.src = url;
-        audioRef.current.load();
-        audioRef.current.play().then(() => {
-          playedTodayRef.current.add(eventName);
-          console.log(`MurottalPlayer: Audio for ${eventName} started playing.`);
-        }).catch(e => console.error(`MurottalPlayer: Error playing audio for ${eventName}:`, e));
+      // Set new source and play
+      audioRef.current.src = url;
+      audioRef.current.load(); // Ensure the new source is loaded
+
+      try {
+        await audioRef.current.play();
+        playedTodayRef.current.add(eventName);
+        console.log(`MurottalPlayer: Audio for ${eventName} started playing.`);
         return true;
-      } else if (audioRef.current.src === url && !audioRef.current.paused) {
-          console.log(`MurottalPlayer: Audio for ${eventName} is already playing.`);
-          return true;
+      } catch (e: any) {
+        if (e.name === 'AbortError') {
+          console.warn(`MurottalPlayer: Playback of ${eventName} aborted. This is expected if a higher priority audio takes over quickly.`);
+        } else {
+          console.error(`MurottalPlayer: Error playing audio for ${eventName}:`, e);
+        }
+        return false;
       }
-      return false;
     };
 
     const handleAudioEnded = () => {
@@ -181,7 +191,7 @@ const MurottalPlayer: React.FC = () => {
       audioRef.current.addEventListener('ended', handleAudioEnded);
     }
 
-    const checkAndPlayAudioLoop = () => {
+    const checkAndPlayAudioLoop = async () => { // Made async
       const now = dayjs();
       const todayDate = now.format("YYYY-MM-DD");
 
@@ -195,8 +205,10 @@ const MurottalPlayer: React.FC = () => {
       if (settings.is_ramadan_mode_active && settings.imsak_beep_audio_url) {
         const imsakTime = dayjs(prayerTimes.fajr).subtract(10, 'minute');
         const imsakEventName = "Imsak Beep";
-        if (now.isBetween(imsakTime.subtract(1, 'second'), imsakTime.add(1, 'second'), null, '[]') && playAudio(settings.imsak_beep_audio_url, imsakEventName)) {
-          return;
+        if (now.isBetween(imsakTime.subtract(1, 'second'), imsakTime.add(1, 'second'), null, '[]')) {
+          if (await playAudio(settings.imsak_beep_audio_url, imsakEventName)) {
+            return; // Successfully started Imsak beep, stop checking other audio
+          }
         }
       }
 
@@ -212,8 +224,10 @@ const MurottalPlayer: React.FC = () => {
           const tarhimStartTime = tarhimConfig.adhanTime.subtract(tarhimPreAdhanDurationMs, 'millisecond');
           const tarhimEndTime = tarhimConfig.adhanTime; 
           
-          if (now.isBetween(tarhimStartTime, tarhimEndTime, null, '[)') && playAudio(settings.tarhim_audio_url, tarhimConfig.name)) {
-            return;
+          if (now.isBetween(tarhimStartTime, tarhimEndTime, null, '[)')) {
+            if (await playAudio(settings.tarhim_audio_url, tarhimConfig.name)) {
+              return; // Successfully started Tarhim, stop checking other audio
+            }
           }
         }
       }
@@ -231,8 +245,10 @@ const MurottalPlayer: React.FC = () => {
         for (const adhanConfig of adhanPrayers) {
           const adhanTime = adhanConfig.adhanTime;
           const adhanBeepEventName = `${adhanConfig.name} Adhan Beep`;
-          if (now.isBetween(adhanTime.subtract(1, 'second'), adhanTime.add(1, 'second'), null, '[]') && playAudio(settings.adhan_beep_audio_url, adhanBeepEventName)) {
-            return;
+          if (now.isBetween(adhanTime.subtract(1, 'second'), adhanTime.add(1, 'second'), null, '[]')) {
+            if (await playAudio(settings.adhan_beep_audio_url, adhanBeepEventName)) {
+              return;
+            }
           }
         }
       }
@@ -250,8 +266,10 @@ const MurottalPlayer: React.FC = () => {
         for (const iqomahConfig of iqomahPrayers) {
           const iqomahTime = iqomahConfig.adhanTime.add(ADHAN_DURATION_SECONDS, 'second');
           const iqomahBeepEventName = `${iqomahConfig.name} Iqomah Beep`;
-          if (now.isBetween(iqomahTime.subtract(1, 'second'), iqomahTime.add(1, 'second'), null, '[]') && playAudio(settings.iqomah_beep_audio_url, iqomahBeepEventName)) {
-            return;
+          if (now.isBetween(iqomahTime.subtract(1, 'second'), iqomahTime.add(1, 'second'), null, '[]')) {
+            if (await playAudio(settings.iqomah_beep_audio_url, iqomahBeepEventName)) {
+              return;
+            }
           }
         }
       }
@@ -273,8 +291,10 @@ const MurottalPlayer: React.FC = () => {
 
           const timeUntilPrayer = prayerTime.diff(now);
 
-          if (timeUntilPrayer > 0 && timeUntilPrayer <= preAdhanDurationMs && playAudio(audioUrl, `Murottal ${config.name}`, true)) {
-            return;
+          if (timeUntilPrayer > 0 && timeUntilPrayer <= preAdhanDurationMs) {
+            if (await playAudio(audioUrl, `Murottal ${config.name}`, true)) {
+              return;
+            }
           }
         }
       }
