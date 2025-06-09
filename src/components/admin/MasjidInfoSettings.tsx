@@ -16,6 +16,7 @@ const formSchema = z.object({
   masjidName: z.string().min(1, "Nama masjid tidak boleh kosong.").max(100, "Nama masjid terlalu panjang.").optional().nullable(),
   masjidLogoUrl: z.string().nullable().optional(), // No longer strictly a URL for input, but will store URL
   masjidAddress: z.string().min(1, "Alamat masjid tidak boleh kosong.").max(255, "Alamat terlalu panjang.").optional().nullable(),
+  masjidNameColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Format warna heksadesimal tidak valid (contoh: #RRGGBB atau #RGB).").nullable().optional(),
 });
 
 type MasjidInfoSettingsFormValues = z.infer<typeof formSchema>;
@@ -27,6 +28,7 @@ const MasjidInfoSettings: React.FC = () => {
       masjidName: "",
       masjidLogoUrl: "",
       masjidAddress: "",
+      masjidNameColor: "#34D399", // Default to green-400
     },
   });
 
@@ -37,7 +39,7 @@ const MasjidInfoSettings: React.FC = () => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("masjid_name, masjid_logo_url, masjid_address")
+        .select("masjid_name, masjid_logo_url, masjid_address, masjid_name_color")
         .eq("id", 1) // Assuming a single row for app settings
         .single();
 
@@ -49,6 +51,7 @@ const MasjidInfoSettings: React.FC = () => {
         setValue("masjidLogoUrl", data.masjid_logo_url || "");
         setCurrentLogoUrl(data.masjid_logo_url);
         setValue("masjidAddress", data.masjid_address || "");
+        setValue("masjidNameColor", data.masjid_name_color || "#34D399");
       }
     };
     fetchSettings();
@@ -104,6 +107,7 @@ const MasjidInfoSettings: React.FC = () => {
           masjid_name: values.masjidName || null,
           masjid_logo_url: values.masjidLogoUrl || null,
           masjid_address: values.masjidAddress || null,
+          masjid_name_color: values.masjidNameColor || null,
         },
         { onConflict: "id" } // Upsert based on 'id'
       );
@@ -160,6 +164,26 @@ const MasjidInfoSettings: React.FC = () => {
               placeholder="Contoh: Jl. Raya No. 1, Kota Jakarta"
             />
             {errors.masjidAddress && <p className="text-red-400 text-sm mt-1">{errors.masjidAddress.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="masjidNameColor" className="text-gray-300">Warna Font Nama Masjid (Hex)</Label>
+            <Input
+              id="masjidNameColor"
+              type="text"
+              {...register("masjidNameColor")}
+              className="bg-gray-700 border-gray-600 text-white mt-1"
+              placeholder="Contoh: #FFFFFF atau #34D399"
+            />
+            {errors.masjidNameColor && <p className="text-red-400 text-sm mt-1">{errors.masjidNameColor.message}</p>}
+            {form.watch("masjidNameColor") && (
+              <div className="mt-2 flex items-center space-x-2">
+                <div 
+                  className="w-8 h-8 rounded-full border border-gray-600" 
+                  style={{ backgroundColor: form.watch("masjidNameColor") || "#34D399" }}
+                ></div>
+                <span className="text-gray-400 text-sm">Pratinjau Warna</span>
+              </div>
+            )}
           </div>
           <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
             {isSubmitting ? "Menyimpan..." : "Simpan Informasi Masjid"}
