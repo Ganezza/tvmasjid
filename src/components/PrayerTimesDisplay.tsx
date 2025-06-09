@@ -14,7 +14,11 @@ interface PrayerTime {
   time: string; // e.g., "04:30"
 }
 
-const PrayerTimesDisplay: React.FC = () => {
+interface PrayerTimesDisplayProps {
+  hideCountdown?: boolean; // New prop
+}
+
+const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown = false }) => {
   const [currentTime, setCurrentTime] = useState(dayjs());
   const [prayerTimes, setPrayerTimes] = useState<PrayerTime[]>([]);
   const [nextPrayer, setNextPrayer] = useState<PrayerTime | null>(null);
@@ -35,7 +39,7 @@ const PrayerTimesDisplay: React.FC = () => {
         .eq("id", 1)
         .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
+      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
         console.error("Error fetching prayer time settings from Supabase:", fetchError);
         setError(`Gagal memuat pengaturan waktu sholat: ${fetchError.message || "Pastikan pengaturan sudah disimpan."}`);
         toast.error("Gagal memuat pengaturan waktu sholat.");
@@ -230,27 +234,29 @@ const PrayerTimesDisplay: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="mt-6 text-yellow-300 font-semibold text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
-            {nextPrayer ? (
-              nextPrayer.name === "Imsak" ? (
-                <>
-                  Waktu Imsak:{" "}
-                  <span className="text-blue-400">{nextPrayer.time}</span>
-                  <br />
-                  Menuju Subuh: <span className="text-red-400">{countdown}</span>
-                </>
+          {!hideCountdown && ( // Conditionally render countdown
+            <div className="mt-6 text-yellow-300 font-semibold text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
+              {nextPrayer ? (
+                nextPrayer.name === "Imsak" ? (
+                  <>
+                    Waktu Imsak:{" "}
+                    <span className="text-blue-400">{nextPrayer.time}</span>
+                    <br />
+                    Menuju Subuh: <span className="text-red-400">{countdown}</span>
+                  </>
+                ) : (
+                  <>
+                    Waktu Sholat Berikutnya:{" "}
+                    <span className="text-blue-400">{nextPrayer.name}</span>
+                    <br />
+                    Hitung Mundur: <span className="text-red-400">{countdown}</span>
+                  </>
+                )
               ) : (
-                <>
-                  Waktu Sholat Berikutnya:{" "}
-                  <span className="text-blue-400">{nextPrayer.name}</span>
-                  <br />
-                  Hitung Mundur: <span className="text-red-400">{countdown}</span>
-                </>
-              )
-            ) : (
-              "Mencari waktu sholat berikutnya..."
-            )}
-          </div>
+                "Mencari waktu sholat berikutnya..."
+              )}
+            </div>
+          )}
         </>
       )}
     </div>
