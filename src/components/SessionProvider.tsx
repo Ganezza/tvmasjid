@@ -17,15 +17,17 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const location = useLocation();
 
   useEffect(() => {
-    const getSession = async () => {
+    const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setIsLoading(false);
     };
 
-    getSession();
+    getInitialSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // The 'session' object here is already the latest session.
+      // No need to call supabase.auth.getSession() again inside this callback.
       setSession(session);
       setIsLoading(false);
     });
