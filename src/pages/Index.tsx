@@ -66,19 +66,21 @@ const Index = () => {
 
         const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
         const params = Adhan.CalculationMethod[data.calculation_method as keyof typeof Adhan.CalculationMethod]();
-        const today = new Date();
-        const times = new Adhan.PrayerTimes(coordinates, today, params);
+        const today = dayjs(); // Use dayjs for current day check
+        const times = new Adhan.PrayerTimes(coordinates, today.toDate(), params);
+
+        const isFriday = today.day() === 5; // 0 for Sunday, 5 for Friday
 
         const prayerTimesList = [
           { name: "Fajr", time: dayjs(times.fajr) },
-          { name: "Dhuhr", time: dayjs(times.dhuhr) },
+          { name: isFriday ? "Jumat" : "Dhuhr", time: dayjs(times.dhuhr) }, // Conditional name
           { name: "Asr", time: dayjs(times.asr) },
           { name: "Maghrib", time: dayjs(times.maghrib) },
           { name: "Isha", time: dayjs(times.isha) },
         ];
 
         // Set Jumuah Dhuhr time if today is Friday
-        if (dayjs().day() === 5) { // Friday
+        if (isFriday) {
           setJumuahDhuhrTime(dayjs(times.dhuhr));
         } else {
           setJumuahDhuhrTime(null);
@@ -100,7 +102,7 @@ const Index = () => {
           }
         }
         
-        setNextPrayerName(foundNextPrayer?.name || null); // Corrected from foundNextNextPrayer
+        setNextPrayerName(foundNextPrayer?.name || null);
         setNextPrayerTime(foundNextPrayer?.time || null);
       }
     } catch (err) {
