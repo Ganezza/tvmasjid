@@ -126,6 +126,11 @@ const PrayerCountdownOverlay: React.FC<PrayerCountdownOverlayProps> = ({
           {countdownDisplay}
         </p>
       )}
+      {displayPhase === "iqomah" && (
+        <p className="text-3xl md:text-4xl lg:text-5xl font-semibold mt-8 text-red-400 text-outline-black text-center">
+          GUNAKAN WAKTU INI UNTUK BERDO'A DAN SHOLAT SUNNAH
+        </p>
+      )}
     </div>
   );
 };
