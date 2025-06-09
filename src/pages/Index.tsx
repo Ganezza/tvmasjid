@@ -39,6 +39,7 @@ const Index = () => {
   const [masjidName, setMasjidName] = useState<string>("Masjid Digital TV");
   const [masjidLogoUrl, setMasjidLogoUrl] = useState<string | null>(null);
   const [masjidAddress, setMasjidAddress] = useState<string | null>(null);
+  const [masjidNameColor, setMasjidNameColor] = useState<string>("#34D399"); // New state for masjid name color
 
   const [nextPrayerName, setNextPrayerName] = useState<string | null>(null);
   const [nextPrayerTime, setNextPrayerTime] = useState<dayjs.Dayjs | null>(null);
@@ -59,7 +60,7 @@ const Index = () => {
       console.log("Index: Fetching masjid info and settings...");
       const { data, error } = await supabase
         .from("app_settings")
-        .select("masjid_name, masjid_logo_url, masjid_address, latitude, longitude, calculation_method, iqomah_countdown_duration, khutbah_duration_minutes, is_ramadan_mode_active")
+        .select("masjid_name, masjid_logo_url, masjid_address, latitude, longitude, calculation_method, iqomah_countdown_duration, khutbah_duration_minutes, is_ramadan_mode_active, masjid_name_color")
         .eq("id", 1)
         .single();
 
@@ -73,6 +74,7 @@ const Index = () => {
         setIqomahCountdownDuration(data.iqomah_countdown_duration || 300);
         setKhutbahDurationMinutes(data.khutbah_duration_minutes || 45);
         setIsRamadanModeActive(data.is_ramadan_mode_active || false);
+        setMasjidNameColor(data.masjid_name_color || "#34D399"); // Set new color state
         console.log("Index: Settings fetched:", data);
 
         const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
@@ -306,7 +308,10 @@ const Index = () => {
                 <img src={masjidLogoUrl} alt="Masjid Logo" className="h-28 md:h-36 lg:h-48 object-contain" />
               )}
               <div>
-                <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-green-400 drop-shadow-lg text-left text-outline-black">
+                <h1 
+                  className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold drop-shadow-lg text-left text-outline-black"
+                  style={{ color: masjidNameColor }} // Apply the dynamic color here
+                >
                   {masjidName}
                 </h1>
                 {masjidAddress && (
