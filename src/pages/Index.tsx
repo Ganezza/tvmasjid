@@ -15,6 +15,7 @@ import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
 import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import DarkScreenOverlay from "@/components/DarkScreenOverlay";
+import AudioPermissionOverlay from "@/components/AudioPermissionOverlay"; // Import new component
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -41,6 +42,7 @@ const Index = () => {
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false); // New state for audio permission
 
   // New state to hold Jumuah Dhuhr time
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
@@ -211,98 +213,111 @@ const Index = () => {
   }, [clickCount, navigate]);
 
   const handleSecretShortcutClick = () => {
-    setClickCount((prev) => prev + 1);
+    // Only increment click count if audio permission has been granted
+    // This prevents accidental admin panel access before app is fully interactive
+    if (hasUserInteracted) {
+      setClickCount((prev) => prev + 1);
+    } else {
+      // If user clicks before granting audio permission, grant it
+      setHasUserInteracted(true);
+    }
   };
 
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay;
 
   return (
-    <AppBackground>
-      <MurottalPlayer isAudioEnabled={true} /> {/* Audio is now always enabled */}
-
-      {/* Overlays */}
-      {showPrayerOverlay && (
-        <PrayerCountdownOverlay
-          nextPrayerName={nextPrayerName}
-          nextPrayerTime={nextPrayerTime}
-          iqomahCountdownDuration={iqomahCountdownDuration}
-          onClose={handlePrayerOrKhutbahEnd}
-          isJumuah={false}
-        />
-      )}
-      {showJumuahOverlay && jumuahDhuhrTime && (
-        <JumuahInfoOverlay
-          jumuahDhuhrTime={jumuahDhuhrTime}
-          khutbahDurationMinutes={khutbahDurationMinutes}
-          onClose={handlePrayerOrKhutbahEnd}
-        />
+    <>
+      {!hasUserInteracted && (
+        <AudioPermissionOverlay onGrantPermission={() => setHasUserInteracted(true)} />
       )}
 
-      {/* Dark Screen Overlay */}
-      {isScreenDarkened && <DarkScreenOverlay />}
+      <AppBackground>
+        <MurottalPlayer hasUserInteracted={hasUserInteracted} /> {/* Pass new prop */}
 
-      {/* Main Content (hidden when overlay is active or screen is darkened) */}
-      <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened ? 'hidden' : ''}`}>
-        {/* Header Section */}
-        <div className="w-full flex justify-between items-center p-4">
-          <div className="flex items-center gap-4">
-            {masjidLogoUrl && (
-              <img src={masjidLogoUrl} alt="Masjid Logo" className="h-24 md:h-32 lg:h-40 object-contain" />
-            )}
-            <div>
-              <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-green-400 drop-shadow-lg text-left text-outline-black">
-                {masjidName}
-              </h1>
-              {masjidAddress && (
-                <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-gray-300 text-left mt-1 text-outline-black">
-                  {masjidAddress}
-                </p>
+        {/* Overlays */}
+        {showPrayerOverlay && (
+          <PrayerCountdownOverlay
+            nextPrayerName={nextPrayerName}
+            nextPrayerTime={nextPrayerTime}
+            iqomahCountdownDuration={iqomahCountdownDuration}
+            onClose={handlePrayerOrKhutbahEnd}
+            isJumuah={false}
+          />
+        )}
+        {showJumuahOverlay && jumuahDhuhrTime && (
+          <JumuahInfoOverlay
+            jumuahDhuhrTime={jumuahDhuhrTime}
+            khutbahDurationMinutes={khutbahDurationMinutes}
+            onClose={handlePrayerOrKhutbahEnd}
+          />
+        )}
+
+        {/* Dark Screen Overlay */}
+        {isScreenDarkened && <DarkScreenOverlay />}
+
+        {/* Main Content (hidden when overlay is active or screen is darkened, or when audio permission overlay is active) */}
+        <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened || !hasUserInteracted ? 'hidden' : ''}`}>
+          {/* Header Section */}
+          <div className="w-full flex justify-between items-center p-4">
+            <div className="flex items-center gap-4">
+              {masjidLogoUrl && (
+                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-24 md:h-32 lg:h-40 object-contain" />
               )}
+              <div>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-green-400 drop-shadow-lg text-left text-outline-black">
+                  {masjidName}
+                </h1>
+                {masjidAddress && (
+                  <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-gray-300 text-left mt-1 text-outline-black">
+                    {masjidAddress}
+                  </p>
+                )}
+              </div>
+            </div>
+            <HijriCalendarDisplay />
+          </div>
+
+          {/* Main Content Area - Using Grid for better layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-4 md:py-6">
+            {/* Prayer Times Display - Now full width */}
+            <div className="col-span-full">
+              <PrayerTimesDisplay hideCountdown={isOverlayActive} />
+            </div>
+
+            {/* Left Column (FinancialDisplay) */}
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
+              <FinancialDisplay />
+            </div>
+
+            {/* Middle Column (ImamMuezzinDisplay and NotificationStudyDisplay) */}
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
+              <ImamMuezzinDisplay />
+              <NotificationStudyDisplay />
+            </div>
+
+            {/* Right Column (Info Slides, Islamic Holiday Countdown, Tarawih) */}
+            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
+              <InfoSlides />
+              <IslamicHolidayCountdown />
+              <TarawihScheduleDisplay />
             </div>
           </div>
-          <HijriCalendarDisplay />
-        </div>
 
-        {/* Main Content Area - Using Grid for better layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-4 md:py-6">
-          {/* Prayer Times Display - Now full width */}
-          <div className="col-span-full">
-            <PrayerTimesDisplay hideCountdown={isOverlayActive} />
-          </div>
-
-          {/* Left Column (FinancialDisplay) */}
-          <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
-            <FinancialDisplay />
-          </div>
-
-          {/* Middle Column (ImamMuezzinDisplay and NotificationStudyDisplay) */}
-          <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
-            <ImamMuezzinDisplay />
-            <NotificationStudyDisplay />
-          </div>
-
-          {/* Right Column (Info Slides, Islamic Holiday Countdown, Tarawih) */}
-          <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
-            <InfoSlides />
-            <IslamicHolidayCountdown />
-            <TarawihScheduleDisplay />
+          {/* Footer Section - Running Text and MadeWithDyad */}
+          <div className="w-full">
+            <RunningText />
+            <MadeWithDyad />
           </div>
         </div>
 
-        {/* Footer Section - Running Text and MadeWithDyad */}
-        <div className="w-full">
-          <RunningText />
-          <MadeWithDyad />
-        </div>
-      </div>
-
-      {/* Secret Shortcut Area (Bottom Right Corner) */}
-      <div
-        className="absolute bottom-0 right-0 w-24 h-24 cursor-pointer z-50"
-        onClick={handleSecretShortcutClick}
-        aria-label="Secret shortcut to admin panel"
-      />
-    </AppBackground>
+        {/* Secret Shortcut Area (Bottom Right Corner) */}
+        <div
+          className="absolute bottom-0 right-0 w-24 h-24 cursor-pointer z-50"
+          onClick={handleSecretShortcutClick}
+          aria-label="Secret shortcut to admin panel"
+        />
+      </AppBackground>
+    </>
   );
 };
 
