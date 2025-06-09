@@ -24,6 +24,8 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
 ];
 
+const ADHAN_DURATION_SECONDS = 90; // Durasi adzan sekitar 1.5 menit
+
 const MurottalPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
@@ -36,7 +38,7 @@ const MurottalPlayer: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url")
+        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url, imsak_beep_audio_url")
         .eq("id", 1)
         .single();
 
@@ -60,10 +62,11 @@ const MurottalPlayer: React.FC = () => {
             tarhimAudioUrlExists: !!data.tarhim_audio_url,
             isMasterAudioActive: data.is_master_audio_active,
             adhanBeepAudioUrl: data.adhan_beep_audio_url,
-            iqomahBeepAudioUrl: data.iqomah_beep_audio_url
+            iqomahBeepAudioUrl: data.iqomah_beep_audio_url,
+            imsakBeepAudioUrl: data.imsak_beep_audio_url // Log new field
         });
 
-        if (data.murottal_active || data.tarhim_active || data.adhan_beep_audio_url || data.iqomah_beep_audio_url) {
+        if (data.murottal_active || data.tarhim_active || data.adhan_beep_audio_url || data.iqomah_beep_audio_url || data.imsak_beep_audio_url) {
           const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
           const params = Adhan.CalculationMethod[data.calculation_method as keyof typeof Adhan.CalculationMethod]();
           const today = new Date();
@@ -136,12 +139,11 @@ const MurottalPlayer: React.FC = () => {
       };
 
       // --- Logic for Imsak Beep (Ramadan Mode) ---
-      // Imsak sekarang hanya menggunakan beep Adzan
-      if (settings.is_ramadan_mode_active && settings.adhan_beep_audio_url) {
+      if (settings.is_ramadan_mode_active && settings.imsak_beep_audio_url) { // Use imsak_beep_audio_url
         const imsakTime = dayjs(prayerTimes.fajr).subtract(10, 'minute');
         const imsakEventName = "Imsak Beep";
         // Trigger 1 second before to ensure it plays exactly at the time
-        if (now.isBetween(imsakTime.subtract(1, 'second'), imsakTime.add(1, 'second'), null, '[]') && playAudio(settings.adhan_beep_audio_url, imsakEventName)) {
+        if (now.isBetween(imsakTime.subtract(1, 'second'), imsakTime.add(1, 'second'), null, '[]') && playAudio(settings.imsak_beep_audio_url, imsakEventName)) {
           return;
         }
       }
@@ -195,7 +197,8 @@ const MurottalPlayer: React.FC = () => {
         ];
 
         for (const iqomahConfig of iqomahPrayers) {
-          const iqomahTime = iqomahConfig.adhanTime.add(settings.iqomah_countdown_duration, 'second'); // Iqomah starts after Adhan ends
+          // Iqomah beep should play at the exact start of iqomah countdown
+          const iqomahTime = iqomahConfig.adhanTime.add(ADHAN_DURATION_SECONDS, 'second'); // Iqomah starts after Adhan ends
           const iqomahBeepEventName = `${iqomahConfig.name} Iqomah Beep`;
           // Trigger 1 second before to ensure it plays exactly at the time
           if (now.isBetween(iqomahTime.subtract(1, 'second'), iqomahTime.add(1, 'second'), null, '[]') && playAudio(settings.iqomah_beep_audio_url, iqomahBeepEventName)) {
