@@ -24,11 +24,7 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
 
 const TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER = 5; // Tarhim typically plays 5 minutes before Fajr/Isha
 
-interface MurottalPlayerProps {
-  isAudioEnabled: boolean;
-}
-
-const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
+const MurottalPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
@@ -88,7 +84,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
   }, [fetchSettingsAndPrayerTimes]);
 
   useEffect(() => {
-    if (!settings || !prayerTimes || !isAudioEnabled) { // Only run if audio is enabled
+    if (!settings || !prayerTimes) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
@@ -159,7 +155,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
 
           // Play Murottal if within pre-adhan duration, not yet played today,
           // and no Tarhim is currently playing or about to play.
-          if (timeUntilPrayer > 0 && timeUntilPrayer <= 1000 && !playedTodayRef.current.has(config.name)) { // Changed to 1 second before
+          if (timeUntilPrayer > 0 && timeUntilPrayer <= preAdhanDurationMs && !playedTodayRef.current.has(config.name)) {
             if (audioRef.current && audioRef.current.src !== audioUrl) {
               console.log(`Playing murottal for ${config.name}. Time until prayer: ${dayjs.duration(timeUntilPrayer).format("H:mm:ss")}`);
               audioRef.current.src = audioUrl;
@@ -183,7 +179,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
         audioRef.current.src = ""; // Hapus sumber saat unmount
       }
     };
-  }, [settings, prayerTimes, isAudioEnabled]); // Add isAudioEnabled to dependencies
+  }, [settings, prayerTimes]);
 
   // Elemen audio tersembunyi untuk pemutaran
   return (

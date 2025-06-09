@@ -12,7 +12,7 @@ import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
 import AppBackground from "@/components/AppBackground";
 import MurottalPlayer from "@/components/MurottalPlayer";
 import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
-import AudioEnablerOverlay from "@/components/AudioEnablerOverlay"; // Import the new component
+// import AudioEnablerOverlay from "@/components/AudioEnablerOverlay"; // Import the new component
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -24,7 +24,7 @@ const Index = () => {
   const [masjidName, setMasjidName] = useState<string>("Masjid Digital TV");
   const [masjidLogoUrl, setMasjidLogoUrl] = useState<string | null>(null);
   const [masjidAddress, setMasjidAddress] = useState<string | null>(null);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false); // New state for audio permission
+  // const [isAudioEnabled, setIsAudioEnabled] = useState(false); // New state for audio permission
 
   const fetchMasjidInfo = useCallback(async () => {
     try {
@@ -92,15 +92,15 @@ const Index = () => {
     setClickCount((prev) => prev + 1);
   };
 
-  const handleEnableAudio = () => {
-    setIsAudioEnabled(true);
-    toast.success("Suara diaktifkan!");
-  };
+  // const handleEnableAudio = () => {
+  //   setIsAudioEnabled(true);
+  //   toast.success("Suara diaktifkan!");
+  // };
 
   return (
     <AppBackground>
-      {!isAudioEnabled && <AudioEnablerOverlay onEnable={handleEnableAudio} />}
-      <MurottalPlayer isAudioEnabled={isAudioEnabled} /> {/* Pass prop */}
+      {/* {!isAudioEnabled && <AudioEnablerOverlay onEnable={handleEnableAudio} />} */}
+      <MurottalPlayer /> {/* Pass prop */}
 
       {/* Header Section */}
       <div className="w-full flex justify-between items-center p-4">
