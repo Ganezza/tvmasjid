@@ -15,6 +15,12 @@ const formSchema = z.object({
   latitude: z.coerce.number().min(-90).max(90).default(-6.2088), // Default to Jakarta's approximate latitude
   longitude: z.coerce.number().min(-180).max(180).default(106.8456), // Default to Jakarta's approximate longitude
   calculationMethod: z.string().default("MuslimWorldLeague"),
+  fajrOffset: z.coerce.number().int().default(0),
+  dhuhrOffset: z.coerce.number().int().default(0),
+  asrOffset: z.coerce.number().int().default(0),
+  maghribOffset: z.coerce.number().int().default(0),
+  ishaOffset: z.coerce.number().int().default(0),
+  imsakOffset: z.coerce.number().int().default(0),
 });
 
 type PrayerTimeSettingsFormValues = z.infer<typeof formSchema>;
@@ -41,6 +47,12 @@ const PrayerTimeSettings: React.FC = () => {
       latitude: -6.2088,
       longitude: 106.8456,
       calculationMethod: "MuslimWorldLeague",
+      fajrOffset: 0,
+      dhuhrOffset: 0,
+      asrOffset: 0,
+      maghribOffset: 0,
+      ishaOffset: 0,
+      imsakOffset: 0,
     },
   });
 
@@ -50,7 +62,7 @@ const PrayerTimeSettings: React.FC = () => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method")
+        .select("latitude, longitude, calculation_method, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset")
         .eq("id", 1) // Assuming a single row for app settings
         .single();
 
@@ -61,6 +73,12 @@ const PrayerTimeSettings: React.FC = () => {
         setValue("latitude", data.latitude);
         setValue("longitude", data.longitude);
         setValue("calculationMethod", data.calculation_method);
+        setValue("fajrOffset", data.fajr_offset ?? 0);
+        setValue("dhuhrOffset", data.dhuhr_offset ?? 0);
+        setValue("asrOffset", data.asr_offset ?? 0);
+        setValue("maghribOffset", data.maghrib_offset ?? 0);
+        setValue("ishaOffset", data.isha_offset ?? 0);
+        setValue("imsakOffset", data.imsak_offset ?? 0);
       }
     };
     fetchSettings();
@@ -75,6 +93,12 @@ const PrayerTimeSettings: React.FC = () => {
           latitude: values.latitude,
           longitude: values.longitude,
           calculation_method: values.calculationMethod,
+          fajr_offset: values.fajrOffset,
+          dhuhr_offset: values.dhuhrOffset,
+          asr_offset: values.asrOffset,
+          maghrib_offset: values.maghribOffset,
+          isha_offset: values.ishaOffset,
+          imsak_offset: values.imsakOffset,
         },
         { onConflict: "id" } // Upsert based on 'id'
       );
@@ -137,6 +161,74 @@ const PrayerTimeSettings: React.FC = () => {
             </Select>
             {errors.calculationMethod && <p className="text-red-400 text-sm mt-1">{errors.calculationMethod.message}</p>}
           </div>
+
+          <div className="border-t border-gray-700 pt-6 mt-6">
+            <h3 className="text-xl font-semibold text-blue-300 mb-4">Koreksi Waktu Sholat (Menit)</h3>
+            <p className="text-gray-400 text-sm mb-4">Masukkan nilai positif untuk mempercepat, negatif untuk memperlambat. Contoh: +1 atau -2.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="fajrOffset" className="text-gray-300">Subuh</Label>
+                <Input
+                  id="fajrOffset"
+                  type="number"
+                  {...register("fajrOffset")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                />
+                {errors.fajrOffset && <p className="text-red-400 text-sm mt-1">{errors.fajrOffset.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="imsakOffset" className="text-gray-300">Imsak</Label>
+                <Input
+                  id="imsakOffset"
+                  type="number"
+                  {...register("imsakOffset")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                />
+                {errors.imsakOffset && <p className="text-red-400 text-sm mt-1">{errors.imsakOffset.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="dhuhrOffset" className="text-gray-300">Dzuhur</Label>
+                <Input
+                  id="dhuhrOffset"
+                  type="number"
+                  {...register("dhuhrOffset")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                />
+                {errors.dhuhrOffset && <p className="text-red-400 text-sm mt-1">{errors.dhuhrOffset.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="asrOffset" className="text-gray-300">Ashar</Label>
+                <Input
+                  id="asrOffset"
+                  type="number"
+                  {...register("asrOffset")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                />
+                {errors.asrOffset && <p className="text-red-400 text-sm mt-1">{errors.asrOffset.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="maghribOffset" className="text-gray-300">Maghrib</Label>
+                <Input
+                  id="maghribOffset"
+                  type="number"
+                  {...register("maghribOffset")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                />
+                {errors.maghribOffset && <p className="text-red-400 text-sm mt-1">{errors.maghribOffset.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="ishaOffset" className="text-gray-300">Isya</Label>
+                <Input
+                  id="ishaOffset"
+                  type="number"
+                  {...register("ishaOffset")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                />
+                {errors.ishaOffset && <p className="text-red-400 text-sm mt-1">{errors.ishaOffset.message}</p>}
+              </div>
+            </div>
+          </div>
+
           <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
             {isSubmitting ? "Menyimpan..." : "Simpan Pengaturan"}
           </Button>
