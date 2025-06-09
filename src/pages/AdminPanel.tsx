@@ -11,18 +11,29 @@ import RamadanModeSettings from "@/components/admin/RamadanModeSettings";
 import DisplaySettings from "@/components/admin/DisplaySettings";
 import AudioSettings from "@/components/admin/AudioSettings";
 import MasjidInfoSettings from "@/components/admin/MasjidInfoSettings";
-import IslamicHolidaySettings from "@/components/admin/IslamicHolidaySettings"; // Import the new component
+import IslamicHolidaySettings from "@/components/admin/IslamicHolidaySettings";
+import { signOutAndClearSession } from "@/lib/auth"; // Import the new utility
 
 const AdminPanel = () => {
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOutAndClearSession();
+    navigate("/login"); // Redirect to login page after logout
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Admin Panel Masjid TV</h1>
-        <Button onClick={() => navigate("/")} className="bg-blue-600 hover:bg-blue-700 text-white">
-          Kembali ke Display
-        </Button>
+        <div className="flex space-x-4">
+          <Button onClick={() => navigate("/")} className="bg-blue-600 hover:bg-blue-700 text-white">
+            Kembali ke Display
+          </Button>
+          <Button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white">
+            Logout
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
