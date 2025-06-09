@@ -13,7 +13,7 @@ interface PrayerCountdownOverlayProps {
   isJumuah: boolean; // New prop to disable for Jumuah
 }
 
-const ADHAN_DURATION_SECONDS = 90; // 1.5 minutes
+const ADHAN_DURATION_SECONDS = 120; // Changed from 90 to 120 seconds (2 minutes)
 const PRE_ADHAN_COUNTDOWN_SECONDS = 30;
 
 const PrayerCountdownOverlay: React.FC<PrayerCountdownOverlayProps> = ({
