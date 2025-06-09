@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter"; // Import the plugin
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
 
 dayjs.extend(duration);
+dayjs.extend(isSameOrAfter); // Extend dayjs with the plugin
 
 interface IslamicHoliday {
   id: string;
