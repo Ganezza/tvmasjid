@@ -32,6 +32,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
   const [playedToday, setPlayedToday] = useState<Set<string>>(new Set()); // To track which murottal has played today
   const [lastCheckedDay, setLastCheckedDay] = useState<string | null>(null); // To reset playedToday set daily
+  const [currentPlayingAudioUrl, setCurrentPlayingAudioUrl] = useState<string | null>(null); // New state to track currently playing audio URL
 
   const fetchSettingsAndPrayerTimes = useCallback(async () => {
     try {
@@ -89,6 +90,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
+        setCurrentPlayingAudioUrl(null); // Reset current playing state
       }
       return;
     }
@@ -126,13 +128,17 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
         const timeUntilPrayer = prayerTime.diff(now);
 
         // Check if it's time to play murottal
-        // Play if within the pre-adhan duration, and hasn't been played for this prayer today
+        // Play if within the pre-adhan duration, hasn't been played for this prayer today,
+        // AND it's not already playing this specific audio.
         if (timeUntilPrayer > 0 && timeUntilPrayer <= preAdhanDurationMs && !playedToday.has(config.name)) {
-          console.log(`Playing murottal for ${config.name}. Time until prayer: ${dayjs.duration(timeUntilPrayer).format("H:mm:ss")}`);
-          if (audioRef.current) {
+          if (audioRef.current && audioRef.current.src !== audioUrl) { // Only change src if different
+            console.log(`Playing murottal for ${config.name}. Time until prayer: ${dayjs.duration(timeUntilPrayer).format("H:mm:ss")}`);
             audioRef.current.src = audioUrl;
-            audioRef.current.play().catch(e => console.error("Error playing audio:", e));
-            setPlayedToday(prev => new Set(prev).add(config.name)); // Mark as played for today
+            audioRef.current.load(); // Ensure it loads the new source
+            audioRef.current.play().then(() => {
+                setCurrentPlayingAudioUrl(audioUrl); // Set the URL of the audio that successfully started playing
+                setPlayedToday(prev => new Set(prev).add(config.name)); // Mark as played for today
+            }).catch(e => console.error("Error playing audio:", e));
           }
         }
       }
@@ -145,9 +151,10 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = ""; // Clear source on unmount
+        setCurrentPlayingAudioUrl(null); // Reset current playing state on unmount
       }
     };
-  }, [settings, prayerTimes, playedToday, lastCheckedDay, isAudioEnabledByUser]);
+  }, [settings, prayerTimes, playedToday, lastCheckedDay, isAudioEnabledByUser, currentPlayingAudioUrl]); // Add currentPlayingAudioUrl to dependencies
 
   // Hidden audio element for playback
   return (
@@ -155,6 +162,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = ""; // Clear source after playing
+        setCurrentPlayingAudioUrl(null); // Clear current playing state after audio ends
       }
     }} />
   );
