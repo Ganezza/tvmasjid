@@ -22,11 +22,11 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
 ];
 
-interface MurottalPlayerProps {
-  isAudioEnabledByUser: boolean;
-}
+// interface MurottalPlayerProps {
+//   isAudioEnabledByUser: boolean; // Removed
+// }
 
-const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser }) => {
+const MurottalPlayer: React.FC = () => { // Removed props
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
@@ -87,7 +87,8 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
   }, [fetchSettingsAndPrayerTimes]);
 
   useEffect(() => {
-    if (!settings || !settings.murottal_active || !prayerTimes || !isAudioEnabledByUser) {
+    // Removed isAudioEnabledByUser from this condition
+    if (!settings || !settings.murottal_active || !prayerTimes) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
@@ -152,7 +153,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser })
         audioRef.current.src = ""; // Hapus sumber saat unmount
       }
     };
-  }, [settings, prayerTimes, isAudioEnabledByUser]); // Dependensi sekarang hanya props/state yang tidak berubah dalam logika efek ini
+  }, [settings, prayerTimes]); // Removed isAudioEnabledByUser from dependencies
 
   // Elemen audio tersembunyi untuk pemutaran
   return (
