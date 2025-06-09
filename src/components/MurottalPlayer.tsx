@@ -22,7 +22,11 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
 ];
 
-const MurottalPlayer: React.FC = () => {
+interface MurottalPlayerProps {
+  isAudioEnabledByUser: boolean;
+}
+
+const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabledByUser }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
@@ -81,7 +85,7 @@ const MurottalPlayer: React.FC = () => {
   }, [fetchSettingsAndPrayerTimes]);
 
   useEffect(() => {
-    if (!settings || !settings.murottal_active || !prayerTimes) {
+    if (!settings || !settings.murottal_active || !prayerTimes || !isAudioEnabledByUser) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
@@ -143,7 +147,7 @@ const MurottalPlayer: React.FC = () => {
         audioRef.current.src = ""; // Clear source on unmount
       }
     };
-  }, [settings, prayerTimes, playedToday, lastCheckedDay]);
+  }, [settings, prayerTimes, playedToday, lastCheckedDay, isAudioEnabledByUser]);
 
   // Hidden audio element for playback
   return (

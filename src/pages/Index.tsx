@@ -11,7 +11,8 @@ import FinancialDisplay from "@/components/FinancialDisplay";
 import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
 import AppBackground from "@/components/AppBackground";
 import MurottalPlayer from "@/components/MurottalPlayer";
-import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown"; // Import the new component
+import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
+import AudioEnablerOverlay from "@/components/AudioEnablerOverlay"; // Import the new component
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ const Index = () => {
   const [masjidName, setMasjidName] = useState<string>("Masjid Digital TV");
   const [masjidLogoUrl, setMasjidLogoUrl] = useState<string | null>(null);
   const [masjidAddress, setMasjidAddress] = useState<string | null>(null);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false); // New state for audio permission
 
   const fetchMasjidInfo = useCallback(async () => {
     try {
@@ -90,9 +92,15 @@ const Index = () => {
     setClickCount((prev) => prev + 1);
   };
 
+  const handleEnableAudio = () => {
+    setIsAudioEnabled(true);
+    toast.success("Suara diaktifkan!");
+  };
+
   return (
     <AppBackground>
-      <MurottalPlayer />
+      {!isAudioEnabled && <AudioEnablerOverlay onEnable={handleEnableAudio} />} {/* Conditional overlay */}
+      <MurottalPlayer isAudioEnabledByUser={isAudioEnabled} /> {/* Pass prop */}
 
       {/* Header Section */}
       <div className="w-full flex justify-between items-center p-4">
@@ -135,7 +143,7 @@ const Index = () => {
         {/* Right Column (Info Slides, Islamic Holiday Countdown, Tarawih) */}
         <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
           <InfoSlides />
-          <IslamicHolidayCountdown /> {/* New component added here */}
+          <IslamicHolidayCountdown />
           <TarawihScheduleDisplay />
         </div>
       </div>
