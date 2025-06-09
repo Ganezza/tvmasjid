@@ -22,6 +22,7 @@ const formSchema = z.object({
   murottalAudioUrlMaghrib: z.string().nullable().optional(),
   murottalAudioUrlIsha: z.string().nullable().optional(),
   murottalAudioUrlImsak: z.string().nullable().optional(),
+  tarhimAudioUrl: z.string().nullable().optional(), // New field for Tarhim audio
 });
 
 type AudioSettingsFormValues = z.infer<typeof formSchema>;
@@ -49,6 +50,7 @@ const AudioSettings: React.FC = () => {
       murottalAudioUrlMaghrib: null,
       murottalAudioUrlIsha: null,
       murottalAudioUrlImsak: null,
+      tarhimAudioUrl: null, // Initialize new field
     },
   });
 
@@ -58,7 +60,7 @@ const AudioSettings: React.FC = () => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak")
+        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url") // Fetch new field
         .eq("id", 1)
         .single();
 
@@ -76,6 +78,7 @@ const AudioSettings: React.FC = () => {
         setValue("murottalAudioUrlMaghrib", data.murottal_audio_url_maghrib);
         setValue("murottalAudioUrlIsha", data.murottal_audio_url_isha);
         setValue("murottalAudioUrlImsak", data.murottal_audio_url_imsak);
+        setValue("tarhimAudioUrl", data.tarhim_audio_url); // Set new field
       }
     };
     fetchSettings();
@@ -91,7 +94,7 @@ const AudioSettings: React.FC = () => {
     const fileName = `${uuidv4()}.${fileExtension}`;
     const filePath = `murottal/${fileName}`; // Path inside the 'audio' bucket
 
-    const uploadToastId = toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '')}...`);
+    const uploadToastId = toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim')}...`);
 
     try {
       const { data, error } = await supabase.storage
@@ -167,6 +170,7 @@ const AudioSettings: React.FC = () => {
           murottal_audio_url_maghrib: values.murottalAudioUrlMaghrib,
           murottal_audio_url_isha: values.murottalAudioUrlIsha,
           murottal_audio_url_imsak: values.murottalAudioUrlImsak,
+          tarhim_audio_url: values.tarhimAudioUrl, // Save new field
         },
         { onConflict: "id" }
       );
@@ -259,6 +263,32 @@ const AudioSettings: React.FC = () => {
                   {errors[field.name as keyof AudioSettingsFormValues] && <p className="text-red-400 text-sm mt-1">{(errors[field.name as keyof AudioSettingsFormValues] as any).message}</p>}
                 </div>
               ))}
+
+              {/* New Tarhim Audio Upload Field */}
+              <div>
+                <Label htmlFor="tarhimAudioUrl" className="text-gray-300">Audio Tarhim (Opsional)</Label>
+                <Input
+                  id="tarhimAudioUrl"
+                  type="file"
+                  accept="audio/*"
+                  onChange={(e) => handleAudioUpload(e, "tarhimAudioUrl")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
+                />
+                {form.watch("tarhimAudioUrl") && (
+                  <div className="mt-2 flex items-center space-x-2">
+                    <audio controls src={form.watch("tarhimAudioUrl") as string} className="w-full max-w-xs" />
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={() => handleRemoveAudio("tarhimAudioUrl")}
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Hapus
+                    </Button>
+                  </div>
+                )}
+                {errors.tarhimAudioUrl && <p className="text-red-400 text-sm mt-1">{errors.tarhimAudioUrl.message}</p>}
+              </div>
             </div>
           </div>
 
