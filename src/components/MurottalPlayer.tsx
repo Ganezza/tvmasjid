@@ -40,7 +40,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
     try {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration") // Fetch new field
+        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration")
         .eq("id", 1)
         .single();
 
@@ -59,7 +59,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
             tarhimActive: data.tarhim_active,
             tarhimAudioUrl: data.tarhim_audio_url,
             murottalPreAdhanDuration: data.murottal_pre_adhan_duration,
-            tarhimPreAdhanDuration: data.tarhim_pre_adhan_duration, // Log new field
+            tarhimPreAdhanDuration: data.tarhim_pre_adhan_duration,
             isRamadanModeActive: data.is_ramadan_mode_active,
             tarhimAudioUrlExists: !!data.tarhim_audio_url
         });
@@ -127,7 +127,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
 
       // --- Logic for Tarhim ---
       if (settings.tarhim_active && settings.tarhim_audio_url) {
-        const tarhimPreAdhanDurationMs = (settings.tarhim_pre_adhan_duration || 5) * 60 * 1000; // Use configurable duration
+        const tarhimPreAdhanDurationMs = (settings.tarhim_pre_adhan_duration || 300) * 1000; // Use configurable duration in seconds
 
         const tarhimPrayers = [
           { name: "Tarhim Subuh", adhanTime: dayjs(prayerTimes.fajr) },
