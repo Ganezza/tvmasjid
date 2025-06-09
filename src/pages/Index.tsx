@@ -14,8 +14,7 @@ import MurottalPlayer from "@/components/MurottalPlayer";
 import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
 import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
-import AudioEnablerOverlay from "@/components/AudioEnablerOverlay";
-import DarkScreenOverlay from "@/components/DarkScreenOverlay"; // Import the new component
+import DarkScreenOverlay from "@/components/DarkScreenOverlay";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -41,8 +40,7 @@ const Index = () => {
 
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
-  const [isScreenDarkened, setIsScreenDarkened] = useState(false); // New state for screen darkening
+  const [isScreenDarkened, setIsScreenDarkened] = useState(false);
 
   // New state to hold Jumuah Dhuhr time
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
@@ -216,16 +214,11 @@ const Index = () => {
     setClickCount((prev) => prev + 1);
   };
 
-  const handleEnableAudio = () => {
-    setIsAudioEnabled(true);
-  };
-
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay;
 
   return (
     <AppBackground>
-      {!isAudioEnabled && <AudioEnablerOverlay onEnable={handleEnableAudio} />}
-      <MurottalPlayer isAudioEnabled={isAudioEnabled} />
+      <MurottalPlayer isAudioEnabled={true} /> {/* Audio is now always enabled */}
 
       {/* Overlays */}
       {showPrayerOverlay && (
@@ -233,7 +226,7 @@ const Index = () => {
           nextPrayerName={nextPrayerName}
           nextPrayerTime={nextPrayerTime}
           iqomahCountdownDuration={iqomahCountdownDuration}
-          onClose={handlePrayerOrKhutbahEnd} // Use the new handler
+          onClose={handlePrayerOrKhutbahEnd}
           isJumuah={false}
         />
       )}
@@ -241,15 +234,15 @@ const Index = () => {
         <JumuahInfoOverlay
           jumuahDhuhrTime={jumuahDhuhrTime}
           khutbahDurationMinutes={khutbahDurationMinutes}
-          onClose={handlePrayerOrKhutbahEnd} // Use the new handler
+          onClose={handlePrayerOrKhutbahEnd}
         />
       )}
 
       {/* Dark Screen Overlay */}
       {isScreenDarkened && <DarkScreenOverlay />}
 
-      {/* Main Content (hidden when overlay is active, audio not enabled, or screen is darkened) */}
-      <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || !isAudioEnabled || isScreenDarkened ? 'hidden' : ''}`}>
+      {/* Main Content (hidden when overlay is active or screen is darkened) */}
+      <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened ? 'hidden' : ''}`}>
         {/* Header Section */}
         <div className="w-full flex justify-between items-center p-4">
           <div className="flex items-center gap-4">

@@ -26,11 +26,7 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
 
 const TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER = 5; // Tarhim typically plays 5 minutes before Fajr/Isha
 
-interface MurottalPlayerProps {
-  isAudioEnabled: boolean; // New prop
-}
-
-const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
+const MurottalPlayer: React.FC = () => { // Removed isAudioEnabled prop
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
@@ -90,7 +86,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
   }, [fetchSettingsAndPrayerTimes]);
 
   useEffect(() => {
-    if (!isAudioEnabled || !settings || !prayerTimes) { // Only proceed if audio is enabled
+    if (!settings || !prayerTimes) { // Removed isAudioEnabled check
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
@@ -189,7 +185,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
         audioRef.current.src = "";
       }
     };
-  }, [isAudioEnabled, settings, prayerTimes]); // Add isAudioEnabled to dependencies
+  }, [settings, prayerTimes]); // Removed isAudioEnabled from dependencies
 
   return (
     <audio ref={audioRef} onEnded={() => {
