@@ -24,11 +24,7 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha" },
 ];
 
-interface MurottalPlayerProps {
-  hasUserInteracted: boolean; // New prop
-}
-
-const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) => {
+const MurottalPlayer: React.FC = () => { // Removed hasUserInteracted prop
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<any | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<Adhan.PrayerTimes | null>(null);
@@ -40,7 +36,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
     try {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration")
+        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active")
         .eq("id", 1)
         .single();
 
@@ -61,7 +57,8 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
             murottalPreAdhanDuration: data.murottal_pre_adhan_duration,
             tarhimPreAdhanDuration: data.tarhim_pre_adhan_duration,
             isRamadanModeActive: data.is_ramadan_mode_active,
-            tarhimAudioUrlExists: !!data.tarhim_audio_url
+            tarhimAudioUrlExists: !!data.tarhim_audio_url,
+            isMasterAudioActive: data.is_master_audio_active
         });
 
         if (data.murottal_active || data.tarhim_active) {
@@ -100,12 +97,12 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
   }, [fetchSettingsAndPrayerTimes]);
 
   useEffect(() => {
-    if (!settings || !prayerTimes) {
+    if (!settings || !prayerTimes || !settings.is_master_audio_active) { // Check master audio switch
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
       }
-      console.log("MurottalPlayer: Settings or prayerTimes not available. Audio player inactive.");
+      console.log("MurottalPlayer: Settings, prayerTimes, or master audio not available/active. Audio player inactive.");
       return;
     }
 
@@ -117,12 +114,6 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
         playedTodayRef.current = new Set();
         lastCheckedDayRef.current = todayDate;
         console.log(`MurottalPlayer: New day detected (${todayDate}). Resetting played audio list.`);
-      }
-
-      // Only attempt to play audio if user has interacted
-      if (!hasUserInteracted) {
-        console.log("MurottalPlayer: User has not interacted yet. Skipping audio playback attempts.");
-        return;
       }
 
       // --- Logic for Tarhim ---
@@ -149,6 +140,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
           if (now.isBetween(tarhimStartTime, tarhimEndTime, null, '[)') && !playedTodayRef.current.has(tarhimConfig.name)) {
             if (audioRef.current && audioRef.current.src !== settings.tarhim_audio_url) {
               console.log(`MurottalPlayer: Attempting to play ${tarhimConfig.name} audio.`);
+              audioRef.current.pause(); // Stop any current murottal
               audioRef.current.src = settings.tarhim_audio_url;
               audioRef.current.load();
               audioRef.current.play().then(() => {
@@ -166,7 +158,15 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
       }
 
       // --- Logic for Murottal (only if Tarhim is not playing) ---
-      if (settings.murottal_active) {
+      // Check if tarhim is currently playing or about to play
+      const isTarhimActiveNow = settings.tarhim_active && settings.tarhim_audio_url &&
+        tarhimPrayers.some(tarhimConfig => {
+          const tarhimStartTime = tarhimConfig.adhanTime.subtract((settings.tarhim_pre_adhan_duration || 300) * 1000, 'millisecond');
+          const tarhimEndTime = tarhimConfig.adhanTime;
+          return now.isBetween(tarhimStartTime, tarhimEndTime, null, '[)');
+        });
+
+      if (settings.murottal_active && !isTarhimActiveNow) { // Only play murottal if tarhim is not active
         const preAdhanDurationMs = settings.murottal_pre_adhan_duration * 60 * 1000;
 
         for (const config of PRAYER_CONFIGS) {
@@ -214,7 +214,12 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
           }
         }
       } else {
-        console.log("MurottalPlayer: Murottal is inactive.");
+        console.log("MurottalPlayer: Murottal is inactive or Tarhim is currently active.");
+        if (audioRef.current && audioRef.current.src && !isTarhimActiveNow) {
+          audioRef.current.pause();
+          audioRef.current.src = "";
+          console.log("MurottalPlayer: Paused and cleared audio because Murottal is inactive or Tarhim is active.");
+        }
       }
     };
 
@@ -228,7 +233,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ hasUserInteracted }) =>
       }
       console.log("MurottalPlayer: Cleanup. Audio player stopped.");
     };
-  }, [settings, prayerTimes, hasUserInteracted]); // Add hasUserInteracted to dependencies
+  }, [settings, prayerTimes]); // Removed hasUserInteracted from dependencies
 
   return (
     <audio ref={audioRef} onEnded={() => {

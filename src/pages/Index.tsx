@@ -15,7 +15,6 @@ import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
 import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import DarkScreenOverlay from "@/components/DarkScreenOverlay";
-import AudioPermissionOverlay from "@/components/AudioPermissionOverlay"; // Import new component
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -42,7 +41,6 @@ const Index = () => {
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false); // New state for audio permission
 
   // New state to hold Jumuah Dhuhr time
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
@@ -102,7 +100,7 @@ const Index = () => {
           }
         }
         
-        setNextPrayerName(foundNextPrayer?.name || null);
+        setNextPrayerName(foundNextNextPrayer?.name || null);
         setNextPrayerTime(foundNextPrayer?.time || null);
       }
     } catch (err) {
@@ -213,26 +211,15 @@ const Index = () => {
   }, [clickCount, navigate]);
 
   const handleSecretShortcutClick = () => {
-    // Only increment click count if audio permission has been granted
-    // This prevents accidental admin panel access before app is fully interactive
-    if (hasUserInteracted) {
-      setClickCount((prev) => prev + 1);
-    } else {
-      // If user clicks before granting audio permission, grant it
-      setHasUserInteracted(true);
-    }
+    setClickCount((prev) => prev + 1);
   };
 
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay;
 
   return (
     <>
-      {!hasUserInteracted && (
-        <AudioPermissionOverlay onGrantPermission={() => setHasUserInteracted(true)} />
-      )}
-
       <AppBackground>
-        <MurottalPlayer hasUserInteracted={hasUserInteracted} /> {/* Pass new prop */}
+        <MurottalPlayer /> {/* Removed hasUserInteracted prop */}
 
         {/* Overlays */}
         {showPrayerOverlay && (
@@ -255,8 +242,8 @@ const Index = () => {
         {/* Dark Screen Overlay */}
         {isScreenDarkened && <DarkScreenOverlay />}
 
-        {/* Main Content (hidden when overlay is active or screen is darkened, or when audio permission overlay is active) */}
-        <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened || !hasUserInteracted ? 'hidden' : ''}`}>
+        {/* Main Content (hidden when overlay is active or screen is darkened) */}
+        <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened ? 'hidden' : ''}`}>
           {/* Header Section */}
           <div className="w-full flex justify-between items-center p-4">
             <div className="flex items-center gap-4">
