@@ -40,7 +40,7 @@ const MurottalPlayer: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url, imsak_beep_audio_url")
+        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url, iqomah_countdown_duration, imsak_beep_audio_url") // Added iqomah_countdown_duration
         .eq("id", 1)
         .single();
 
@@ -65,6 +65,7 @@ const MurottalPlayer: React.FC = () => {
             isMasterAudioActive: data.is_master_audio_active,
             adhanBeepAudioUrl: data.adhan_beep_audio_url,
             iqomahBeepAudioUrl: data.iqomah_beep_audio_url,
+            iqomahCountdownDuration: data.iqomah_countdown_duration, // Log new field
             imsakBeepAudioUrl: data.imsak_beep_audio_url 
         });
 
@@ -199,6 +200,7 @@ const MurottalPlayer: React.FC = () => {
     const checkAndPlayAudioLoop = async () => { // Made async
       const now = dayjs();
       const todayDate = now.format("YYYY-MM-DD");
+      const isFriday = now.day() === 5; // 0 for Sunday, 5 for Friday
 
       if (lastCheckedDayRef.current !== todayDate) {
         playedTodayRef.current = new Set();
@@ -284,11 +286,21 @@ const MurottalPlayer: React.FC = () => {
         ];
 
         for (const iqomahConfig of iqomahPrayers) {
-          const iqomahTime = iqomahConfig.adhanTime.add(ADHAN_DURATION_SECONDS, 'second'); // Use ADHAN_DURATION_SECONDS
+          // Skip Iqomah beep for Jumuah (Dhuhr on Friday)
+          if (isFriday && iqomahConfig.name === "Dzuhur") {
+            console.log("MurottalPlayer: Skipping Iqomah beep for Jumuah (Dhuhr on Friday).");
+            continue; 
+          }
+
+          const adhanEndTime = iqomahConfig.adhanTime.add(ADHAN_DURATION_SECONDS, 'second');
+          const iqomahEndTime = adhanEndTime.add(settings.iqomah_countdown_duration, 'second'); // End of Iqomah countdown
           const iqomahBeepEventName = `${iqomahConfig.name} Iqomah Beep`;
-          console.log(`MurottalPlayer: Iqomah Beep ${iqomahConfig.name} Time: ${iqomahTime.format('HH:mm:ss')}, Current: ${now.format('HH:mm:ss')}`);
-          if (now.isBetween(iqomahTime.subtract(1, 'second'), iqomahTime.add(1, 'second'), null, '[]')) {
-            console.log(`MurottalPlayer: Condition met for Iqomah Beep ${iqomahConfig.name}. Attempting to play.`);
+          
+          console.log(`MurottalPlayer: Iqomah Beep ${iqomahConfig.name} End Time: ${iqomahEndTime.format('HH:mm:ss')}, Current: ${now.format('HH:mm:ss')}`);
+          
+          // Trigger beep at the very end of the countdown
+          if (now.isBetween(iqomahEndTime.subtract(1, 'second'), iqomahEndTime.add(1, 'second'), null, '[]')) {
+            console.log(`MurottalPlayer: Condition met for Iqomah Beep ${iqomahConfig.name} (at end of countdown). Attempting to play.`);
             if (await playAudio(settings.iqomah_beep_audio_url, iqomahBeepEventName)) {
               return;
             }
