@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Trash2, Edit, PlusCircle } from "lucide-react";
+import { RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
 
 interface Schedule {
   id: string;
@@ -62,6 +63,7 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null); // Ref for Supabase channel
 
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
@@ -98,16 +100,23 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
   useEffect(() => {
     fetchSchedules();
 
-    const channel = supabase
-      .channel('imam_muezzin_schedules_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'imam_muezzin_schedules' }, (payload) => {
-        console.log('Schedule change received!', payload);
-        fetchSchedules(); // Re-fetch all schedules on any change
-      })
-      .subscribe();
+    if (!channelRef.current) { // Only subscribe if no channel exists
+      channelRef.current = supabase
+        .channel('imam_muezzin_schedules_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'imam_muezzin_schedules' }, (payload) => {
+          console.log('Schedule change received!', payload);
+          fetchSchedules(); // Re-fetch all schedules on any change
+        })
+        .subscribe();
+      console.log("ImamMuezzinScheduleSettings: Subscribed to channel 'imam_muezzin_schedules_changes'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) { // Only unsubscribe if a channel exists
+        supabase.removeChannel(channelRef.current);
+        console.log("ImamMuezzinScheduleSettings: Unsubscribed from channel 'imam_muezzin_schedules_changes'.");
+        channelRef.current = null; // Clear the ref
+      }
     };
   }, [fetchSchedules]);
 
