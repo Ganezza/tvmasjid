@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 // Define schema for form validation
 const formSchema = z.object({
@@ -25,6 +26,7 @@ const RunningTextSettings: React.FC = () => {
   });
 
   const { handleSubmit, register, setValue, formState: { isSubmitting, errors } } = form;
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -42,6 +44,25 @@ const RunningTextSettings: React.FC = () => {
       }
     };
     fetchSettings();
+
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('running_text_settings_changes') // Unique channel name
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+          console.log('Running text settings change received!', payload);
+          fetchSettings(); // Re-fetch if settings change
+        })
+        .subscribe();
+      console.log("RunningTextSettings: Subscribed to channel 'running_text_settings_changes'.");
+    }
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        console.log("RunningTextSettings: Unsubscribed from channel 'running_text_settings_changes'.");
+        channelRef.current = null;
+      }
+    };
   }, [setValue]);
 
   const onSubmit = async (values: RunningTextSettingsFormValues) => {
