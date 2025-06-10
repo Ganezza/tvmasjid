@@ -46,6 +46,7 @@ const AppBackground: React.FC<AppBackgroundProps> = ({ children }) => {
       .subscribe();
     console.log("AppBackground: Subscribed to channel 'display_settings_changes'.");
 
+    // Cleanup function
     return () => {
       supabase.removeChannel(channel);
       console.log("AppBackground: Unsubscribed from channel 'display_settings_changes'.");
