@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique file names
 const formSchema = z.object({
   backgroundImageUrl: z.string().nullable().optional(), // No longer strictly a URL for input, but will store URL
   backgroundColor: z.string().min(1, "Warna latar belakang tidak boleh kosong.").default("#0A0A0A"),
+  screensaverIdleMinutes: z.coerce.number().int().min(1, "Durasi screensaver harus minimal 1 menit.").default(5),
 });
 
 type DisplaySettingsFormValues = z.infer<typeof formSchema>;
@@ -23,6 +24,7 @@ const DisplaySettings: React.FC = () => {
     defaultValues: {
       backgroundImageUrl: null,
       backgroundColor: "#0A0A0A",
+      screensaverIdleMinutes: 5,
     },
   });
 
@@ -33,7 +35,7 @@ const DisplaySettings: React.FC = () => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("background_image_url, background_color")
+        .select("background_image_url, background_color, screensaver_idle_minutes")
         .eq("id", 1)
         .single();
 
@@ -44,6 +46,7 @@ const DisplaySettings: React.FC = () => {
         setValue("backgroundImageUrl", data.background_image_url);
         setCurrentImageUrl(data.background_image_url);
         setValue("backgroundColor", data.background_color || "#0A0A0A");
+        setValue("screensaverIdleMinutes", data.screensaver_idle_minutes || 5);
       }
     };
     fetchSettings();
@@ -98,6 +101,7 @@ const DisplaySettings: React.FC = () => {
           id: 1,
           background_image_url: values.backgroundImageUrl || null,
           background_color: values.backgroundColor,
+          screensaver_idle_minutes: values.screensaverIdleMinutes,
         },
         { onConflict: "id" }
       );
@@ -146,6 +150,17 @@ const DisplaySettings: React.FC = () => {
               placeholder="Contoh: #0A0A0A atau black"
             />
             {errors.backgroundColor && <p className="text-red-400 text-sm mt-1">{errors.backgroundColor.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="screensaverIdleMinutes" className="text-gray-300">Durasi Idle Screensaver (menit)</Label>
+            <Input
+              id="screensaverIdleMinutes"
+              type="number"
+              {...register("screensaverIdleMinutes")}
+              className="bg-gray-700 border-gray-600 text-white mt-1"
+              placeholder="Contoh: 5"
+            />
+            {errors.screensaverIdleMinutes && <p className="text-red-400 text-sm mt-1">{errors.screensaverIdleMinutes.message}</p>}
           </div>
           <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
             {isSubmitting ? "Menyimpan..." : "Simpan Pengaturan Tampilan"}
