@@ -15,31 +15,34 @@ import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
 import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import DarkScreenOverlay from "@/components/DarkScreenOverlay";
-import ImsakOverlay from "@/components/ImsakOverlay"; // Import ImsakOverlay
+import ImsakOverlay from "@/components/ImsakOverlay";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
-import isBetween from "dayjs/plugin/isBetween"; // Import isBetween plugin
+import isBetween from "dayjs/plugin/isBetween";
 import * as Adhan from "adhan";
+import { Settings } from "lucide-react"; // Import ikon Settings
+import { Button } from "@/components/ui/button"; // Import komponen Button
 
 dayjs.extend(duration);
-dayjs.extend(isBetween); // Extend dayjs with isBetween plugin
+dayjs.extend(isBetween);
 
-const ADHAN_DURATION_SECONDS = 120; // Diperbarui menjadi 120 detik (2 menit)
-const ADHAN_JUMUAH_DURATION_SECONDS = 120; // Diperbarui menjadi 120 detik (2 menit)
-const PRE_ADHAN_COUNTDOWN_SECONDS = 30; // 30 detik sebelum adzan untuk overlay sholat biasa
-const IMSAK_OVERLAY_DURATION_SECONDS = 10; // Durasi overlay Imsak (10 detik)
+const ADHAN_DURATION_SECONDS = 120;
+const ADHAN_JUMUAH_DURATION_SECONDS = 120;
+const PRE_ADHAN_COUNTDOWN_SECONDS = 30;
+const IMSAK_OVERLAY_DURATION_SECONDS = 10;
 
 const Index = () => {
   const navigate = useNavigate();
-  const [clickCount, setClickCount] = useState(0);
-  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Menghapus state clickCount dan clickTimerRef karena tidak lagi diperlukan
+  // const [clickCount, setClickCount] = useState(0);
+  // const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [masjidName, setMasjidName] = useState<string>("Masjid Digital TV");
   const [masjidLogoUrl, setMasjidLogoUrl] = useState<string | null>(null);
   const [masjidAddress, setMasjidAddress] = useState<string | null>(null);
-  const [masjidNameColor, setMasjidNameColor] = useState<string>("#34D399"); // New state for masjid name color
+  const [masjidNameColor, setMasjidNameColor] = useState<string>("#34D399");
 
   const [nextPrayerName, setNextPrayerName] = useState<string | null>(null);
   const [nextPrayerTime, setNextPrayerTime] = useState<dayjs.Dayjs | null>(null);
@@ -49,18 +52,18 @@ const Index = () => {
 
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
-  const [showImsakOverlay, setShowImsakOverlay] = useState(false); // New state for Imsak overlay
+  const [showImsakOverlay, setShowImsakOverlay] = useState(false);
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
 
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
-  const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null); // New state for Imsak time
+  const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
 
   const fetchMasjidInfoAndSettings = useCallback(async () => {
     try {
       console.log("Index: Fetching masjid info and settings...");
       const { data, error } = await supabase
         .from("app_settings")
-        .select("masjid_name, masjid_logo_url, masjid_address, latitude, longitude, calculation_method, iqomah_countdown_duration, khutbah_duration_minutes, is_ramadan_mode_active, masjid_name_color, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset") // Select all offset fields
+        .select("masjid_name, masjid_logo_url, masjid_address, latitude, longitude, calculation_method, iqomah_countdown_duration, khutbah_duration_minutes, is_ramadan_mode_active, masjid_name_color, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset")
         .eq("id", 1)
         .single();
 
@@ -74,7 +77,7 @@ const Index = () => {
         setIqomahCountdownDuration(data.iqomah_countdown_duration || 300);
         setKhutbahDurationMinutes(data.khutbah_duration_minutes || 45);
         setIsRamadanModeActive(data.is_ramadan_mode_active || false);
-        setMasjidNameColor(data.masjid_name_color || "#34D399"); // Set new color state
+        setMasjidNameColor(data.masjid_name_color || "#34D399");
         console.log("Index: Settings fetched:", data);
 
         const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
@@ -82,7 +85,6 @@ const Index = () => {
         const today = dayjs();
         const times = new Adhan.PrayerTimes(coordinates, today.toDate(), params);
 
-        // Apply offsets to Adhan times
         const adjustedFajr = dayjs(times.fajr).add(data.fajr_offset ?? 0, 'minute');
         const adjustedDhuhr = dayjs(times.dhuhr).add(data.dhuhr_offset ?? 0, 'minute');
         const adjustedAsr = dayjs(times.asr).add(data.asr_offset ?? 0, 'minute');
@@ -94,22 +96,20 @@ const Index = () => {
 
         const prayerTimesList = [
           { name: "Subuh", time: adjustedFajr },
-          { name: "Syuruq", time: dayjs(times.sunrise) }, // Sunrise typically no offset
+          { name: "Syuruq", time: dayjs(times.sunrise) },
           { name: isFriday ? "Jum'at" : "Dzuhur", time: adjustedDhuhr },
           { name: "Ashar", time: adjustedAsr },
           { name: "Maghrib", time: adjustedMaghrib },
           { name: "Isya", time: adjustedIsha },
         ];
 
-        // Set Jumuah Dhuhr time if today is Friday
         if (isFriday) {
-          setJumuahDhuhrTime(adjustedDhuhr); // Use adjusted Dhuhr for Jumuah
+          setJumuahDhuhrTime(adjustedDhuhr);
           console.log("Index: Jumuah Dhuhr Time set:", adjustedDhuhr.format('HH:mm:ss'));
         } else {
           setJumuahDhuhrTime(null);
         }
 
-        // Set Imsak time if Ramadan mode is active
         if (data.is_ramadan_mode_active) {
           setImsakTime(calculatedImsakTime);
           console.log("Index: Imsak Time set (Ramadan mode active):", calculatedImsakTime.format('HH:mm:ss'));
@@ -122,10 +122,9 @@ const Index = () => {
         const now = dayjs();
 
         for (const prayer of prayerTimesList) {
-          if (prayer.name === "Syuruq") continue; // Syuruq is not a prayer with Adhan/Iqomah
+          if (prayer.name === "Syuruq") continue;
 
           let prayerDateTime = prayer.time;
-          // If the prayer time for today has already passed, consider it for tomorrow
           if (prayerDateTime.isBefore(now)) {
             prayerDateTime = prayerDateTime.add(1, 'day');
           }
@@ -162,53 +161,45 @@ const Index = () => {
     };
   }, [fetchMasjidInfoAndSettings]);
 
-  // Function to handle the end of prayer/khutbah and trigger screen darkening
   const handlePrayerOrKhutbahEnd = useCallback(() => {
     console.log("Index: handlePrayerOrKhutbahEnd called.");
     setShowPrayerOverlay(false);
     setShowJumuahOverlay(false);
-    // Imsak overlay does not trigger screen darkening, it just closes itself
-    // setShowImsakOverlay(false); // This is handled by ImsakOverlay's internal onClose
 
-    // Only darken screen for regular prayers and Jumuah
-    if (nextPrayerName !== "Imsak") { // Ensure Imsak doesn't trigger darkening
+    if (nextPrayerName !== "Imsak") {
       setIsScreenDarkened(true);
       console.log("Index: Screen darkened for prayer/khutbah. Will revert in 5 minutes.");
       setTimeout(() => {
         setIsScreenDarkened(false);
         console.log("Index: Screen reverted to normal after prayer/khutbah.");
-      }, 5 * 60 * 1000); // 5 minutes
+      }, 5 * 60 * 1000);
     }
-  }, [nextPrayerName]); // Add nextPrayerName to dependencies
+  }, [nextPrayerName]);
 
-  // Logic to control overlay visibility
   useEffect(() => {
     const updateOverlayVisibility = () => {
       const now = dayjs();
       const isFriday = now.day() === 5;
 
-      // Reset all overlays first
       setShowPrayerOverlay(false);
       setShowJumuahOverlay(false);
       setShowImsakOverlay(false);
-      setIsScreenDarkened(false); // Reset darkening state
+      setIsScreenDarkened(false);
 
       console.log(`Index: updateOverlayVisibility - Current Time: ${now.format('HH:mm:ss')}`);
 
-      // Imsak Overlay logic (highest priority if Ramadan mode is active)
       if (isRamadanModeActive && imsakTime) {
         const imsakEndTime = imsakTime.add(IMSAK_OVERLAY_DURATION_SECONDS, 'second');
         console.log(`Index: Checking Imsak Overlay. Imsak Time: ${imsakTime.format('HH:mm:ss')}, End Time: ${imsakEndTime.format('HH:mm:ss')}`);
         if (now.isBetween(imsakTime, imsakEndTime, null, '[)')) {
           setShowImsakOverlay(true);
           console.log("Index: Imsak Overlay is active.");
-          return; // Stop further checks if Imsak overlay is active
+          return;
         }
       }
 
-      // Jumuah Overlay logic (next priority, only on Friday)
       if (isFriday && jumuahDhuhrTime) {
-        const PRE_ADHAN_JUMUAH_SECONDS_LOCAL = 300; // 5 minutes
+        const PRE_ADHAN_JUMUAH_SECONDS_LOCAL = 300;
         const adhanEndTime = jumuahDhuhrTime.add(ADHAN_JUMUAH_DURATION_SECONDS, 'second');
         const preAdhanStartTime = jumuahDhuhrTime.subtract(PRE_ADHAN_JUMUAH_SECONDS_LOCAL, 'second');
         const khutbahEndTime = adhanEndTime.add(khutbahDurationMinutes, 'minute');
@@ -217,11 +208,10 @@ const Index = () => {
         if (now.isBetween(preAdhanStartTime, khutbahEndTime, null, '[)')) {
           setShowJumuahOverlay(true);
           console.log("Index: Jumuah Overlay is active.");
-          return; // Stop further checks if Jumuah overlay is active
+          return;
         }
       }
 
-      // Prayer Countdown Overlay logic (lowest priority, only if no other overlay is active)
       if (nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
         const overlayStartTime = nextPrayerTime.subtract(PRE_ADHAN_COUNTDOWN_SECONDS, 'second');
         const overlayEndTime = nextPrayerTime.add(ADHAN_DURATION_SECONDS + iqomahCountdownDuration, 'second');
@@ -230,43 +220,45 @@ const Index = () => {
         if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
           setShowPrayerOverlay(true);
           console.log("Index: Prayer Countdown Overlay is active.");
-          return; // Stop further checks if Prayer overlay is active
+          return;
         }
       }
       console.log("Index: No overlay is active.");
     };
 
     const interval = setInterval(updateOverlayVisibility, 1000);
-    updateOverlayVisibility(); // Initial call
+    updateOverlayVisibility();
 
     return () => clearInterval(interval);
   }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive]);
 
-  useEffect(() => {
-    if (clickCount >= 5) {
-      navigate("/admin");
-      setClickCount(0);
-    }
+  // Menghapus useEffect untuk clickCount karena tidak lagi diperlukan
+  // useEffect(() => {
+  //   if (clickCount >= 5) {
+  //     navigate("/admin");
+  //     setClickCount(0);
+  //   }
 
-    if (clickCount > 0) {
-      if (clickTimerRef.current) {
-        clearTimeout(clickTimerRef.current);
-      }
-      clickTimerRef.current = setTimeout(() => {
-        setClickCount(0);
-      }, 1000);
-    }
+  //   if (clickCount > 0) {
+  //     if (clickTimerRef.current) {
+  //       clearTimeout(clickTimerRef.current);
+  //     }
+  //     clickTimerRef.current = setTimeout(() => {
+  //       setClickCount(0);
+  //     }, 1000);
+  //   }
 
-    return () => {
-      if (clickTimerRef.current) {
-        clearTimeout(clickTimerRef.current);
-      }
-    };
-  }, [clickCount, navigate]);
+  //   return () => {
+  //     if (clickTimerRef.current) {
+  //       clearTimeout(clickTimerRef.current);
+  //     }
+  //   };
+  // }, [clickCount, navigate]);
 
-  const handleSecretShortcutClick = () => {
-    setClickCount((prev) => prev + 1);
-  };
+  // Menghapus handleSecretShortcutClick karena tidak lagi diperlukan
+  // const handleSecretShortcutClick = () => {
+  //   setClickCount((prev) => prev + 1);
+  // };
 
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay || showImsakOverlay;
 
@@ -282,7 +274,6 @@ const Index = () => {
             onClose={() => {
               setShowImsakOverlay(false);
               console.log("Index: ImsakOverlay closed.");
-              // Imsak overlay does NOT trigger screen darkening
             }}
           />
         )}
@@ -291,7 +282,7 @@ const Index = () => {
             nextPrayerName={nextPrayerName}
             nextPrayerTime={nextPrayerTime}
             iqomahCountdownDuration={iqomahCountdownDuration}
-            onClose={handlePrayerOrKhutbahEnd} // This will trigger darkening for regular prayers
+            onClose={handlePrayerOrKhutbahEnd}
             isJumuah={false}
           />
         )}
@@ -299,7 +290,7 @@ const Index = () => {
           <JumuahInfoOverlay
             jumuahDhuhrTime={jumuahDhuhrTime}
             khutbahDurationMinutes={khutbahDurationMinutes}
-            onClose={handlePrayerOrKhutbahEnd} // This will trigger darkening for Jumuah
+            onClose={handlePrayerOrKhutbahEnd}
           />
         )}
 
@@ -317,7 +308,7 @@ const Index = () => {
               <div>
                 <h1 
                   className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold drop-shadow-lg text-left text-outline-black"
-                  style={{ color: masjidNameColor }} // Apply the dynamic color here
+                  style={{ color: masjidNameColor }}
                 >
                   {masjidName}
                 </h1>
@@ -364,12 +355,20 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Secret Shortcut Area (Bottom Right Corner) */}
+        {/* Tombol Ikon Pengaturan (Sudut Kiri Bawah) */}
         <div
-          className="absolute bottom-0 right-0 w-24 h-24 cursor-pointer z-50"
-          onClick={handleSecretShortcutClick}
-          aria-label="Secret shortcut to admin panel"
-        />
+          className="absolute bottom-4 left-4 z-50"
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/admin")}
+            className="text-gray-400 hover:text-gray-200"
+            aria-label="Go to Admin Panel"
+          >
+            <Settings className="h-8 w-8" />
+          </Button>
+        </div>
       </AppBackground>
     </>
   );
