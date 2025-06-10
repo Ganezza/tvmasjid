@@ -25,6 +25,7 @@ import isBetween from "dayjs/plugin/isBetween";
 import * as Adhan from "adhan";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
 
 dayjs.extend(duration);
 dayjs.extend(isBetween);
@@ -59,6 +60,7 @@ const Index = () => {
   const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
 
   const activityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const settingsChannelRef = useRef<RealtimeChannel | null>(null); // Ref for Supabase channel
 
   const resetActivityTimer = useCallback(() => {
     if (activityTimerRef.current) {
@@ -185,16 +187,23 @@ const Index = () => {
   useEffect(() => {
     fetchMasjidInfoAndSettings();
 
-    const channel = supabase
-      .channel('masjid_info_and_settings_changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('Index: Masjid info and settings change received!', payload);
-        fetchMasjidInfoAndSettings();
-      })
-      .subscribe();
+    if (!settingsChannelRef.current) {
+      settingsChannelRef.current = supabase
+        .channel('masjid_info_and_settings_changes')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+          console.log('Index: Masjid info and settings change received!', payload);
+          fetchMasjidInfoAndSettings();
+        })
+        .subscribe();
+      console.log("Index: Subscribed to channel 'masjid_info_and_settings_changes'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (settingsChannelRef.current) {
+        supabase.removeChannel(settingsChannelRef.current);
+        console.log("Index: Unsubscribed from channel 'masjid_info_and_settings_changes'.");
+        settingsChannelRef.current = null;
+      }
     };
   }, [fetchMasjidInfoAndSettings]);
 
