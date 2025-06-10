@@ -65,10 +65,16 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const protectedRoutes = ["/admin"];
       const isProtectedRoute = protectedRoutes.includes(location.pathname);
 
-      if (isProtectedRoute && !session) {
-        console.log("SessionProvider: Redirecting to /login (protected route, no session).");
-        navigate("/login");
-      } else if (session && location.pathname === "/login") {
+      // --- START TEMPORARY BYPASS FOR DEVELOPMENT ---
+      // If you want to bypass login for /admin, comment out the following 'if' block:
+      // if (isProtectedRoute && !session) {
+      //   console.log("SessionProvider: Redirecting to /login (protected route, no session).");
+      //   navigate("/login");
+      // } 
+      // --- END TEMPORARY BYPASS FOR DEVELOPMENT ---
+      
+      // Keep this part to redirect authenticated users from login page
+      if (session && location.pathname === "/login") {
         console.log("SessionProvider: Redirecting to / (session exists, on login page).");
         navigate("/");
       }
