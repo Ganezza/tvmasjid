@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { RealtimeChannel } from "@supabase/supabase-js";
 
 // Import Swiper styles
 import "swiper/css";
@@ -22,7 +21,6 @@ const InfoSlides: React.FC = () => {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchSlides = useCallback(async () => {
     setIsLoading(true);
@@ -50,28 +48,25 @@ const InfoSlides: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchSlides();
+    fetchSlides(); // Initial fetch on mount
 
-    // Set up real-time listener for info_slides changes
-    if (!channelRef.current) {
-      channelRef.current = supabase
-        .channel('info_slides_changes_display')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'info_slides' }, (payload) => {
-          console.log('Info slides change received for display!', payload);
-          fetchSlides(); // Re-fetch if slides change
-        })
-        .subscribe();
-      console.log("InfoSlides: Subscribed to channel 'info_slides_changes_display'.");
-    }
+    // Setup Realtime Channel
+    const channel = supabase
+      .channel('info_slides_changes_display') // Unique channel name
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'info_slides' }, (payload) => {
+        console.log('Info slides change received!', payload);
+        fetchSlides(); // Re-fetch data on change
+      })
+      .subscribe();
 
+    console.log("InfoSlides: Subscribed to channel 'info_slides_changes_display'.");
+
+    // Cleanup function
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        console.log("InfoSlides: Unsubscribed from channel 'info_slides_changes_display'.");
-        channelRef.current = null;
-      }
+      supabase.removeChannel(channel);
+      console.log("InfoSlides: Unsubscribed from channel 'info_slides_changes_display'.");
     };
-  }, [fetchSlides]);
+  }, [fetchSlides]); // `fetchSlides` is a stable `useCallback` with no dependencies, so this `useEffect` will only run on mount/unmount.
 
   if (isLoading) {
     return (
