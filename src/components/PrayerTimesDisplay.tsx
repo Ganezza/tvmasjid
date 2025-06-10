@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import { supabase } from "@/lib/supabase";
 import * as Adhan from "adhan";
 import { toast } from "sonner";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 dayjs.extend(duration);
 dayjs.extend(isBetween);
@@ -27,6 +28,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRamadanModeActive, setIsRamadanModeActive] = useState(false); // State untuk mode Ramadan
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchAndCalculatePrayerTimes = useCallback(async () => {
     setIsLoading(true);
@@ -114,16 +116,23 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
   useEffect(() => {
     fetchAndCalculatePrayerTimes();
 
-    const channel = supabase
-      .channel('app_settings_changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('App settings change received for PrayerTimesDisplay!', payload);
-        fetchAndCalculatePrayerTimes();
-      })
-      .subscribe();
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('app_settings_changes_prayer_times') // Unique channel name
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+          console.log('App settings change received for PrayerTimesDisplay!', payload);
+          fetchAndCalculatePrayerTimes();
+        })
+        .subscribe();
+      console.log("PrayerTimesDisplay: Subscribed to channel 'app_settings_changes_prayer_times'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        console.log("PrayerTimesDisplay: Unsubscribed from channel 'app_settings_changes_prayer_times'.");
+        channelRef.current = null;
+      }
     };
   }, [fetchAndCalculatePrayerTimes]);
 
