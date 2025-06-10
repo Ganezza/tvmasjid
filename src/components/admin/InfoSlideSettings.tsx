@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Trash2, Edit, PlusCircle } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique file names
+import { RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
 
 interface Slide {
   id: string;
@@ -35,6 +36,7 @@ const InfoSlideSettings: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSlide, setEditingSlide] = useState<Slide | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null); // State for image preview
+  const channelRef = useRef<RealtimeChannel | null>(null); // Ref for Supabase channel
 
   const form = useForm<SlideFormValues>({
     resolver: zodResolver(slideFormSchema),
@@ -65,16 +67,23 @@ const InfoSlideSettings: React.FC = () => {
   useEffect(() => {
     fetchSlides();
 
-    const channel = supabase
-      .channel('info_slides_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'info_slides' }, (payload) => {
-        console.log('Info slides change received!', payload);
-        fetchSlides();
-      })
-      .subscribe();
+    if (!channelRef.current) { // Only subscribe if no channel exists
+      channelRef.current = supabase
+        .channel('info_slides_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'info_slides' }, (payload) => {
+          console.log('Info slides change received!', payload);
+          fetchSlides();
+        })
+        .subscribe();
+      console.log("InfoSlideSettings: Subscribed to channel 'info_slides_changes'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) { // Only unsubscribe if a channel exists
+        supabase.removeChannel(channelRef.current);
+        console.log("InfoSlideSettings: Unsubscribed from channel 'info_slides_changes'.");
+        channelRef.current = null; // Clear the ref
+      }
     };
   }, [fetchSlides]);
 
