@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,6 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface NotificationStudy {
   id: string;
@@ -51,7 +50,6 @@ const NotificationStudySettings: React.FC = () => {
   const [items, setItems] = useState<NotificationStudy[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<NotificationStudy | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const form = useForm<NotificationStudyFormValues>({
     resolver: zodResolver(notificationStudyFormSchema),
@@ -85,25 +83,22 @@ const NotificationStudySettings: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchItems();
+    fetchItems(); // Initial fetch on mount
 
-    if (!channelRef.current) {
-      channelRef.current = supabase
-        .channel('notifications_and_studies_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications_and_studies' }, (payload) => {
-          console.log('Notification/Study change received!', payload);
-          fetchItems(); // Re-fetch all items on any change
-        })
-        .subscribe();
-      console.log("NotificationStudySettings: Subscribed to channel 'notifications_and_studies_changes'.");
-    }
+    // Setup Realtime Channel
+    const channel = supabase
+      .channel('notifications_and_studies_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications_and_studies' }, (payload) => {
+        console.log('Notification/Study change received!', payload);
+        fetchItems(); // Re-fetch all items on any change
+      })
+      .subscribe();
+    console.log("NotificationStudySettings: Subscribed to channel 'notifications_and_studies_changes'.");
 
+    // Cleanup function
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        console.log("NotificationStudySettings: Unsubscribed from channel 'notifications_and_studies_changes'.");
-        channelRef.current = null;
-      }
+      supabase.removeChannel(channel);
+      console.log("NotificationStudySettings: Unsubscribed from channel 'notifications_and_studies_changes'.");
     };
   }, [fetchItems]);
 

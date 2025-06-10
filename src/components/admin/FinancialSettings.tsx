@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { Trash2, Edit, PlusCircle } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface FinancialRecord {
   id: string;
@@ -42,7 +41,6 @@ const FinancialSettings: React.FC = () => {
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<FinancialRecord | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const form = useForm<FinancialRecordFormValues>({
     resolver: zodResolver(financialRecordFormSchema),
@@ -74,25 +72,22 @@ const FinancialSettings: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchRecords();
+    fetchRecords(); // Initial fetch on mount
 
-    if (!channelRef.current) {
-      channelRef.current = supabase
-        .channel('financial_records_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_records' }, (payload) => {
-          console.log('Financial record change received!', payload);
-          fetchRecords(); // Re-fetch all records on any change
-        })
-        .subscribe();
-      console.log("FinancialSettings: Subscribed to channel 'financial_records_changes'.");
-    }
+    // Setup Realtime Channel
+    const channel = supabase
+      .channel('financial_records_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_records' }, (payload) => {
+        console.log('Financial record change received!', payload);
+        fetchRecords(); // Re-fetch all records on any change
+      })
+      .subscribe();
+    console.log("FinancialSettings: Subscribed to channel 'financial_records_changes'.");
 
+    // Cleanup function
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        console.log("FinancialSettings: Unsubscribed from channel 'financial_records_changes'.");
-        channelRef.current = null;
-      }
+      supabase.removeChannel(channel);
+      console.log("FinancialSettings: Unsubscribed from channel 'financial_records_changes'.");
     };
   }, [fetchRecords]);
 
