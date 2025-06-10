@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import dayjs from "dayjs";
 import { supabase } from "@/lib/supabase";
 import { CalculationMethod, PrayerTimes, Coordinates } from "adhan";
 import { toast } from "sonner";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface Schedule {
   id: string;
@@ -33,6 +34,8 @@ const ImamMuezzinDisplay: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nextPrayerInfo, setNextPrayerInfo] = useState<{ day: string; prayer: string } | null>(null); // State baru
+  const settingsChannelRef = useRef<RealtimeChannel | null>(null);
+  const schedulesChannelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchAndDisplaySchedule = useCallback(async () => {
     setIsLoading(true);
@@ -139,28 +142,42 @@ const ImamMuezzinDisplay: React.FC = () => {
     fetchAndDisplaySchedule(); // Initial fetch
 
     // Set up real-time listeners for relevant tables
-    const settingsChannel = supabase
-      .channel('imam_muezzin_display_settings_changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('App settings change received for ImamMuezzinDisplay!', payload);
-        fetchAndDisplaySchedule();
-      })
-      .subscribe();
+    if (!settingsChannelRef.current) {
+      settingsChannelRef.current = supabase
+        .channel('imam_muezzin_display_settings_changes')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+          console.log('App settings change received for ImamMuezzinDisplay!', payload);
+          fetchAndDisplaySchedule();
+        })
+        .subscribe();
+      console.log("ImamMuezzinDisplay: Subscribed to channel 'imam_muezzin_display_settings_changes'.");
+    }
 
-    const schedulesChannel = supabase
-      .channel('imam_muezzin_display_schedules_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'imam_muezzin_schedules' }, (payload) => {
-        console.log('Imam/Muezzin schedule change received for display!', payload);
-        fetchAndDisplaySchedule();
-      })
-      .subscribe();
+    if (!schedulesChannelRef.current) {
+      schedulesChannelRef.current = supabase
+        .channel('imam_muezzin_display_schedules_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'imam_muezzin_schedules' }, (payload) => {
+          console.log('Imam/Muezzin schedule change received for display!', payload);
+          fetchAndDisplaySchedule();
+        })
+        .subscribe();
+      console.log("ImamMuezzinDisplay: Subscribed to channel 'imam_muezzin_display_schedules_changes'.");
+    }
 
     // Update every minute to ensure next prayer is always accurate
     const interval = setInterval(fetchAndDisplaySchedule, 60 * 1000); 
 
     return () => {
-      supabase.removeChannel(settingsChannel);
-      supabase.removeChannel(schedulesChannel);
+      if (settingsChannelRef.current) {
+        supabase.removeChannel(settingsChannelRef.current);
+        console.log("ImamMuezzinDisplay: Unsubscribed from channel 'imam_muezzin_display_settings_changes'.");
+        settingsChannelRef.current = null;
+      }
+      if (schedulesChannelRef.current) {
+        supabase.removeChannel(schedulesChannelRef.current);
+        console.log("ImamMuezzinDisplay: Unsubscribed from channel 'imam_muezzin_display_schedules_changes'.");
+        schedulesChannelRef.current = null;
+      }
       clearInterval(interval);
     };
   }, [fetchAndDisplaySchedule]);
@@ -198,7 +215,7 @@ const ImamMuezzinDisplay: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center">
+    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/11 max-w-4xl text-center">
       <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 text-green-300">
         Sholat {currentSchedule.prayer_name} Berikutnya
       </h3>

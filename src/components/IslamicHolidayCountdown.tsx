@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter"; // Import the plugin
@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 dayjs.extend(duration);
 dayjs.extend(isSameOrAfter); // Extend dayjs with the plugin
@@ -22,6 +23,7 @@ const IslamicHolidayCountdown: React.FC = () => {
   const [countdown, setCountdown] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchNextHoliday = useCallback(async () => {
     setIsLoading(true);
@@ -59,16 +61,23 @@ const IslamicHolidayCountdown: React.FC = () => {
   useEffect(() => {
     fetchNextHoliday();
 
-    const channel = supabase
-      .channel('islamic_holidays_display_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'islamic_holidays' }, (payload) => {
-        console.log('Islamic holiday change received for display!', payload);
-        fetchNextHoliday(); // Re-fetch if holidays change
-      })
-      .subscribe();
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('islamic_holidays_display_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'islamic_holidays' }, (payload) => {
+          console.log('Islamic holiday change received for display!', payload);
+          fetchNextHoliday(); // Re-fetch if holidays change
+        })
+        .subscribe();
+      console.log("IslamicHolidayCountdown: Subscribed to channel 'islamic_holidays_display_changes'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        console.log("IslamicHolidayCountdown: Unsubscribed from channel 'islamic_holidays_display_changes'.");
+        channelRef.current = null;
+      }
     };
   }, [fetchNextHoliday]);
 

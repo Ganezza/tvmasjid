@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 // Import Swiper styles
 import "swiper/css";
@@ -21,6 +22,7 @@ const InfoSlides: React.FC = () => {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchSlides = useCallback(async () => {
     setIsLoading(true);
@@ -51,16 +53,23 @@ const InfoSlides: React.FC = () => {
     fetchSlides();
 
     // Set up real-time listener for info_slides changes
-    const channel = supabase
-      .channel('info_slides_changes_display')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'info_slides' }, (payload) => {
-        console.log('Info slides change received for display!', payload);
-        fetchSlides(); // Re-fetch if slides change
-      })
-      .subscribe();
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('info_slides_changes_display')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'info_slides' }, (payload) => {
+          console.log('Info slides change received for display!', payload);
+          fetchSlides(); // Re-fetch if slides change
+        })
+        .subscribe();
+      console.log("InfoSlides: Subscribed to channel 'info_slides_changes_display'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        console.log("InfoSlides: Unsubscribed from channel 'info_slides_changes_display'.");
+        channelRef.current = null;
+      }
     };
   }, [fetchSlides]);
 
