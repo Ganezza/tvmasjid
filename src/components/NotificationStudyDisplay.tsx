@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import { format } from "date-fns";
 import { id } from "date-fns/locale"; // Import Indonesian locale for date-fns
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
 
 // Import Swiper styles
 import "swiper/css";
@@ -27,7 +27,7 @@ const NotificationStudyDisplay: React.FC = () => {
   const [items, setItems] = useState<NotificationStudy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  const channelRef = React.useRef<RealtimeChannel | null>(null); // Use useRef for the channel
 
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
