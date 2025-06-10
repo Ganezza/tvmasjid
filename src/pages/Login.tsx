@@ -33,7 +33,7 @@ const Login: React.FC = () => {
             },
           }}
           theme="dark" // Gunakan tema gelap agar sesuai dengan estetika aplikasi Anda
-          redirectTo={window.location.origin} // Redirect ke halaman utama setelah login
+          // redirectTo={window.location.origin} // Baris ini dihapus
         />
       </div>
     </div>
