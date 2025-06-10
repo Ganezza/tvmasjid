@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import dayjs from "dayjs";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface Schedule {
   id: string;
@@ -24,6 +25,8 @@ const TarawihScheduleDisplay: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRamadanModeActive, setIsRamadanModeActive] = useState(false); // State untuk mode Ramadan
+  const settingsChannelRef = useRef<RealtimeChannel | null>(null);
+  const schedulesChannelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchTarawihSchedule = useCallback(async () => {
     setIsLoading(true);
@@ -86,25 +89,39 @@ const TarawihScheduleDisplay: React.FC = () => {
     fetchTarawihSchedule(); // Initial fetch
 
     // Set up real-time listeners for relevant tables
-    const settingsChannel = supabase
-      .channel('tarawih_display_settings_changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('App settings change received for TarawihDisplay!', payload);
-        fetchTarawihSchedule();
-      })
-      .subscribe();
+    if (!settingsChannelRef.current) {
+      settingsChannelRef.current = supabase
+        .channel('tarawih_display_settings_changes')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+          console.log('App settings change received for TarawihDisplay!', payload);
+          fetchTarawihSchedule();
+        })
+        .subscribe();
+      console.log("TarawihScheduleDisplay: Subscribed to channel 'tarawih_display_settings_changes'.");
+    }
 
-    const schedulesChannel = supabase
-      .channel('tarawih_display_schedules_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'imam_muezzin_schedules' }, (payload) => {
-        console.log('Imam/Muezzin schedule change received for Tarawih display!', payload);
-        fetchTarawihSchedule();
-      })
-      .subscribe();
+    if (!schedulesChannelRef.current) {
+      schedulesChannelRef.current = supabase
+        .channel('tarawih_display_schedules_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'imam_muezzin_schedules' }, (payload) => {
+          console.log('Imam/Muezzin schedule change received for Tarawih display!', payload);
+          fetchTarawihSchedule();
+        })
+        .subscribe();
+      console.log("TarawihScheduleDisplay: Subscribed to channel 'tarawih_display_schedules_changes'.");
+    }
 
     return () => {
-      supabase.removeChannel(settingsChannel);
-      supabase.removeChannel(schedulesChannel);
+      if (settingsChannelRef.current) {
+        supabase.removeChannel(settingsChannelRef.current);
+        console.log("TarawihScheduleDisplay: Unsubscribed from channel 'tarawih_display_settings_changes'.");
+        settingsChannelRef.current = null;
+      }
+      if (schedulesChannelRef.current) {
+        supabase.removeChannel(schedulesChannelRef.current);
+        console.log("TarawihScheduleDisplay: Unsubscribed from channel 'tarawih_display_schedules_changes'.");
+        schedulesChannelRef.current = null;
+      }
     };
   }, [fetchTarawihSchedule]);
 
