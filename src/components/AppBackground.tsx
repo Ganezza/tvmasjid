@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface AppBackgroundProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface AppBackgroundProps {
 const AppBackground: React.FC<AppBackgroundProps> = ({ children }) => {
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
   const [backgroundColor, setBackgroundColor] = useState<string>("#0A0A0A"); // Default dark background
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchDisplaySettings = useCallback(async () => {
     try {
@@ -34,17 +36,24 @@ const AppBackground: React.FC<AppBackgroundProps> = ({ children }) => {
   useEffect(() => {
     fetchDisplaySettings();
 
-    const channel = supabase
-      .channel('display_settings_changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('Display settings change received!', payload);
-        setBackgroundImageUrl(payload.new.background_image_url);
-        setBackgroundColor(payload.new.background_color || "#0A0A0A");
-      })
-      .subscribe();
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('display_settings_changes')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+          console.log('Display settings change received!', payload);
+          setBackgroundImageUrl(payload.new.background_image_url);
+          setBackgroundColor(payload.new.background_color || "#0A0A0A");
+        })
+        .subscribe();
+      console.log("AppBackground: Subscribed to channel 'display_settings_changes'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        console.log("AppBackground: Unsubscribed from channel 'display_settings_changes'.");
+        channelRef.current = null;
+      }
     };
   }, [fetchDisplaySettings]);
 
