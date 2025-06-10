@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import AutoScrollingFinancialRecords from "@/components/AutoScrollingFinancialRecords";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface FinancialRecord {
   id: string;
@@ -20,6 +21,7 @@ const FinancialDisplay: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFridayDate, setLastFridayDate] = useState<string>(""); // State untuk tanggal Jumat terakhir
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchFinancialSummary = useCallback(async () => {
     setIsLoading(true);
@@ -64,16 +66,23 @@ const FinancialDisplay: React.FC = () => {
     setLastFridayDate(format(lastFriday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')); // Replace Minggu with Ahad
 
     // Set up real-time listener for financial_records changes
-    const channel = supabase
-      .channel('financial_records_changes_display')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_records' }, (payload) => {
-        console.log('Financial record change received for display!', payload);
-        fetchFinancialSummary(); // Re-fetch all records on any change
-      })
-      .subscribe();
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('financial_records_changes_display')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_records' }, (payload) => {
+          console.log('Financial record change received for display!', payload);
+          fetchFinancialSummary(); // Re-fetch all records on any change
+        })
+        .subscribe();
+      console.log("FinancialDisplay: Subscribed to channel 'financial_records_changes_display'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        console.log("FinancialDisplay: Unsubscribed from channel 'financial_records_changes_display'.");
+        channelRef.current = null;
+      }
     };
   }, [fetchFinancialSummary]);
 

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import { format } from "date-fns";
 import { id } from "date-fns/locale"; // Import Indonesian locale for date-fns
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 // Import Swiper styles
 import "swiper/css";
@@ -26,6 +27,7 @@ const NotificationStudyDisplay: React.FC = () => {
   const [items, setItems] = useState<NotificationStudy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
@@ -70,16 +72,23 @@ const NotificationStudyDisplay: React.FC = () => {
     fetchItems();
 
     // Set up real-time listener for notifications_and_studies changes
-    const channel = supabase
-      .channel('notifications_and_studies_display_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications_and_studies' }, (payload) => {
-        console.log('Notification/Study change received for display!', payload);
-        fetchItems(); // Re-fetch if items change
-      })
-      .subscribe();
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('notifications_and_studies_display_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications_and_studies' }, (payload) => {
+          console.log('Notification/Study change received for display!', payload);
+          fetchItems(); // Re-fetch if items change
+        })
+        .subscribe();
+      console.log("NotificationStudyDisplay: Subscribed to channel 'notifications_and_studies_display_changes'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        console.log("NotificationStudyDisplay: Unsubscribed from channel 'notifications_and_studies_display_changes'.");
+        channelRef.current = null;
+      }
     };
   }, [fetchItems]);
 
