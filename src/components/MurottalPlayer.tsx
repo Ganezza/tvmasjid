@@ -6,6 +6,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter"; // Import isSameOrAfter
 import { supabase } from "@/lib/supabase";
 import * as Adhan from "adhan";
 import { toast } from "sonner";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 dayjs.extend(duration);
 dayjs.extend(isBetween);
@@ -36,6 +37,7 @@ const MurottalPlayer: React.FC = () => {
   
   const playedTodayRef = useRef<Set<string>>(new Set());
   const lastCheckedDayRef = useRef<string | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchSettingsAndPrayerTimes = useCallback(async () => {
     try {
@@ -141,16 +143,23 @@ const MurottalPlayer: React.FC = () => {
   useEffect(() => {
     fetchSettingsAndPrayerTimes();
 
-    const channel = supabase
-      .channel('murottal_settings_changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('MurottalPlayer: Murottal settings change received!', payload);
-        fetchSettingsAndPrayerTimes();
-      })
-      .subscribe();
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('murottal_settings_changes')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+          console.log('MurottalPlayer: Murottal settings change received!', payload);
+          fetchSettingsAndPrayerTimes();
+        })
+        .subscribe();
+      console.log("MurottalPlayer: Subscribed to channel 'murottal_settings_changes'.");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        console.log("MurottalPlayer: Unsubscribed from channel 'murottal_settings_changes'.");
+        channelRef.current = null;
+      }
     };
   }, [fetchSettingsAndPrayerTimes]);
 
