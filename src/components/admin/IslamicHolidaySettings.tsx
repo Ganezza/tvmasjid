@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,6 @@ import { Trash2, Edit, PlusCircle, Calendar as CalendarIcon, CloudDownload } fro
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface IslamicHoliday {
   id: string;
@@ -38,7 +37,6 @@ const IslamicHolidaySettings: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHoliday, setEditingHoliday] = useState<IslamicHoliday | null>(null);
   const [isSyncing, setIsSyncing] = useState(false); // New state for sync loading
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const form = useForm<HolidayFormValues>({
     resolver: zodResolver(holidayFormSchema),
@@ -70,23 +68,18 @@ const IslamicHolidaySettings: React.FC = () => {
   useEffect(() => {
     fetchHolidays();
 
-    if (!channelRef.current) {
-      channelRef.current = supabase
-        .channel('islamic_holidays_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'islamic_holidays' }, (payload) => {
-          console.log('Islamic holiday change received!', payload);
-          fetchHolidays(); // Re-fetch all holidays on any change
-        })
-        .subscribe();
-      console.log("IslamicHolidaySettings: Subscribed to channel 'islamic_holidays_changes'.");
-    }
+    const channel = supabase
+      .channel('islamic_holidays_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'islamic_holidays' }, (payload) => {
+        console.log('Islamic holiday change received!', payload);
+        fetchHolidays(); // Re-fetch all holidays on any change
+      })
+      .subscribe();
+    console.log("IslamicHolidaySettings: Subscribed to channel 'islamic_holidays_changes'.");
 
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        console.log("IslamicHolidaySettings: Unsubscribed from channel 'islamic_holidays_changes'.");
-        channelRef.current = null;
-      }
+      supabase.removeChannel(channel);
+      console.log("IslamicHolidaySettings: Unsubscribed from channel 'islamic_holidays_changes'.");
     };
   }, [fetchHolidays]);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -6,7 +6,6 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 const RunningText: React.FC = () => {
   const [text, setText] = useState<string>("Memuat teks berjalan...");
   const [error, setError] = useState<string | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchRunningText = useCallback(async () => {
     setError(null);
@@ -39,23 +38,18 @@ const RunningText: React.FC = () => {
     fetchRunningText();
 
     // Set up real-time listener for app_settings changes
-    if (!channelRef.current) {
-      channelRef.current = supabase
-        .channel('running_text_changes')
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-          console.log('Running text change received!', payload);
-          fetchRunningText(); // Re-fetch if settings change
-        })
-        .subscribe();
-      console.log("RunningText: Subscribed to channel 'running_text_changes'.");
-    }
+    const channel = supabase
+      .channel('running_text_changes')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+        console.log('Running text change received!', payload);
+        fetchRunningText(); // Re-fetch if settings change
+      })
+      .subscribe();
+    console.log("RunningText: Subscribed to channel 'running_text_changes'.");
 
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        console.log("RunningText: Unsubscribed from channel 'running_text_changes'.");
-        channelRef.current = null;
-      }
+      supabase.removeChannel(channel);
+      console.log("RunningText: Unsubscribed from channel 'running_text_changes'.");
     };
   }, [fetchRunningText]);
 
