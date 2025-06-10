@@ -1,16 +1,7 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { useNavigate, useLocation } from "react-router-dom";
-
-interface SessionContextType {
-  session: Session | null;
-  isLoading: boolean;
-}
-
-const SessionContext = createContext<SessionContextType | undefined>(undefined);
-
-export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+import { useNavigate, useLocation } => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -67,10 +58,10 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       // --- START TEMPORARY BYPASS FOR DEVELOPMENT ---
       // If you want to bypass login for /admin, comment out the following 'if' block:
-      // if (isProtectedRoute && !session) {
-      //   console.log("SessionProvider: Redirecting to /login (protected route, no session).");
-      //   navigate("/login");
-      // } 
+      if (isProtectedRoute && !session) {
+        console.log("SessionProvider: Redirecting to /login (protected route, no session).");
+        navigate("/login");
+      } 
       // --- END TEMPORARY BYPASS FOR DEVELOPMENT ---
       
       // Keep this part to redirect authenticated users from login page
