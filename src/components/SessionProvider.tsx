@@ -1,7 +1,16 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { useNavigate, useLocation } => {
+import { useNavigate, useLocation } from "react-router-dom"; // Baris ini yang diperbaiki
+
+interface SessionContextType {
+  session: Session | null;
+  isLoading: boolean;
+}
+
+const SessionContext = createContext<SessionContextType | undefined>(undefined);
+
+export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
