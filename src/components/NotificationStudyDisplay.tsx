@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -94,31 +94,31 @@ const NotificationStudyDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow"> {/* Reduced padding */}
-        <p className="text-xl">Memuat notifikasi & kajian...</p> {/* Reduced font size */}
+      <div className="w-full bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow">
+        <p className="text-xl">Memuat notifikasi & kajian...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="w-full bg-red-800 bg-opacity-70 p-4 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow"> {/* Reduced padding */}
-        <p className="text-xl font-bold">Error:</p> {/* Reduced font size */}
-        <p className="text-lg">{error}</p> {/* Reduced font size */}
+      <div className="w-full bg-red-800 bg-opacity-70 p-4 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow">
+        <p className="text-xl font-bold">Error:</p>
+        <p className="text-lg">{error}</p>
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="w-full bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow"> {/* Reduced padding */}
-        <p className="text-xl text-gray-400">Tidak ada notifikasi atau kajian untuk ditampilkan.</p> {/* Reduced font size */}
+      <div className="w-full bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow">
+        <p className="text-xl text-gray-400">Tidak ada notifikasi atau kajian untuk ditampilkan.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl overflow-hidden flex-grow flex flex-col"> {/* Reduced padding */}
+    <div className="w-full bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl overflow-hidden flex-grow flex flex-col">
       <Swiper
         spaceBetween={30}
         centeredSlides={true}
@@ -135,13 +135,13 @@ const NotificationStudyDisplay: React.FC = () => {
       >
         {items.map((item) => (
           <SwiperSlide key={item.id} className="relative flex flex-col items-center justify-center p-4 text-center h-full overflow-y-auto">
-            <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-yellow-300"> {/* Reduced font size and margin */}
+            <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-yellow-300">
               {item.type === "notification" ? "PENGUMUMAN" : item.type === "study" ? "JADWAL KAJIAN" : "ACARA KHUSUS"}
             </h3>
-            <h4 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-2 text-blue-300">{item.title}</h4> {/* Reduced font size and margin */}
-            <p className="text-xl md:text-2xl lg:text-3xl leading-relaxed text-gray-200 break-words">{item.content}</p> {/* Reduced font size */}
+            <h4 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-2 text-blue-300">{item.title}</h4>
+            <p className="text-xl md:text-2xl lg:text-3xl leading-relaxed text-gray-200 break-words">{item.content}</p>
             {(item.event_date || item.event_time) && (
-              <p className="text-lg md:text-xl lg:text-2xl text-green-300 mt-3"> {/* Reduced font size and margin */}
+              <p className="text-lg md:text-xl lg:text-2xl text-green-300 mt-3">
                 {item.event_date && format(new Date(item.event_date), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')}
                 {item.event_date && item.event_time && " Pukul "}
                 {item.event_time}
