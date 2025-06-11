@@ -137,7 +137,7 @@ const IslamicHolidayCountdown: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full text-center text-white">
+      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
         <p className="text-xl">Memuat hari besar Islam...</p>
       </div>
     );
@@ -145,7 +145,7 @@ const IslamicHolidayCountdown: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full text-center text-white">
+      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
         <p className="text-xl font-bold">Error:</p>
         <p className="text-lg">{error}</p>
       </div>
@@ -153,7 +153,7 @@ const IslamicHolidayCountdown: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full text-center">
+    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col">
       <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-yellow-300">
         Hari Besar Islam Mendatang
       </h3>

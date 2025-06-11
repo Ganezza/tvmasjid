@@ -127,15 +127,15 @@ const TarawihScheduleDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
-        <p className="text-xl">Memuat jadwal Tarawih...</p>
+      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white flex-grow flex flex-col">
+        <p className="text-2xl">Memuat jadwal Tarawih...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white">
+      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white flex-grow flex flex-col">
         <p className="text-xl font-bold">Error:</p>
         <p className="text-lg">{error}</p>
       </div>
@@ -148,7 +148,7 @@ const TarawihScheduleDisplay: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8">
+    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 flex-grow flex flex-col">
       <h3 className="text-3xl font-bold mb-3 text-yellow-300">
         Jadwal Sholat Tarawih
       </h3>
