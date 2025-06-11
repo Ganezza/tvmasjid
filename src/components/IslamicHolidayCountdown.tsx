@@ -135,40 +135,40 @@ const IslamicHolidayCountdown: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col"> {/* Reduced padding */}
-        <p className="text-base">Memuat hari besar Islam...</p> {/* Reduced font size */}
+      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
+        <p className="text-base">Memuat hari besar Islam...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col"> {/* Reduced padding */}
-        <p className="text-base font-bold">Error:</p> {/* Reduced font size */}
-        <p className="text-sm">{error}</p> {/* Reduced font size */}
+      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
+        <p className="text-base font-bold">Error:</p>
+        <p className="text-sm">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col"> {/* Reduced padding */}
-      <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 text-yellow-300"> {/* Reduced font sizes */}
+    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col">
+      <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 text-yellow-300">
         Hari Besar Islam Mendatang
       </h3>
       {nextHoliday ? (
         <>
-          <p className="text-xl md:text-2xl lg:text-3xl font-bold text-blue-200 mb-0.5"> {/* Reduced font sizes */}
+          <p className="text-xl md:text-2xl lg:text-3xl font-bold text-blue-200 mb-0.5">
             {nextHoliday.name}
           </p>
-          <p className="text-base md:text-lg lg:text-xl text-gray-300 mb-1.5"> {/* Reduced font sizes and margin */}
+          <p className="text-base md:text-lg lg:text-xl text-gray-300 mb-1.5">
             {format(new Date(nextHoliday.holiday_date), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')}
           </p>
-          <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-green-400"> {/* Reduced font sizes */}
+          <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-green-400">
             {countdown}
           </p>
         </>
       ) : (
-        <p className="text-base text-gray-400">Tidak ada hari besar Islam mendatang yang tercatat.</p> {/* Reduced font size */}
+        <p className="text-base text-gray-400">Tidak ada hari besar Islam mendatang yang tercatat.</p>
       )}
     </div>
   );
