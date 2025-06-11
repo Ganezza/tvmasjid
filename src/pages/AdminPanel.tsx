@@ -23,7 +23,7 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="h-screen overflow-y-auto bg-gray-900 text-white p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Admin Panel Masjid TV</h1>
         <div className="flex space-x-4">
