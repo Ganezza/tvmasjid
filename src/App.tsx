@@ -16,7 +16,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename="/tvmasjid/"> {/* Tambahkan basename di sini */}
+      <BrowserRouter basename="/masjid/"> {/* Mengganti basename di sini */}
         <SessionProvider>
           <Routes>
             <Route path="/" element={<Index />} />
