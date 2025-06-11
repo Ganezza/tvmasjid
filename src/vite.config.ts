@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
     import path from "path";
 
     export default defineConfig(() => ({
-      base: "/<YOUR_REPO_NAME>/", // Ganti dengan nama repositori Anda
+      base: "./", // Mengganti dengan base path relatif untuk Capacitor
       server: {
         host: "::",
         port: 8080,
