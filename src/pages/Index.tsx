@@ -318,10 +318,10 @@ const Index = () => {
         {isScreenDarkened && <DarkScreenOverlay />}
 
         <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened || isScreensaverActive ? 'hidden' : ''}`}>
-          <div className="w-full flex justify-between items-center p-2"> {/* Reduced padding */}
-            <div className="flex items-center gap-2"> {/* Reduced gap */}
+          <div className="w-full flex justify-between items-center p-2">
+            <div className="flex items-center gap-2">
               {masjidLogoUrl && (
-                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-20 md:h-28 lg:h-36 object-contain" /> {/* Reduced height */}
+                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-20 md:h-28 lg:h-36 object-contain" />
               )}
               <div>
                 <h1 
@@ -331,7 +331,7 @@ const Index = () => {
                   {masjidName}
                 </h1>
                 {masjidAddress && (
-                  <p className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-300 text-left mt-1 text-outline-black"> {/* Reduced font size and margin */}
+                  <p className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-300 text-left mt-1 text-outline-black">
                     {masjidAddress}
                   </p>
                 )}
@@ -340,21 +340,21 @@ const Index = () => {
             <HijriCalendarDisplay />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full px-2 py-2 md:py-4 flex-grow"> {/* Reduced gap and padding */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full px-2 py-2 md:py-4 flex-grow">
             <div className="col-span-full flex flex-col">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow"> {/* Reduced gap */}
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow">
               <FinancialDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow"> {/* Reduced gap */}
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow">
               <ImamMuezzinDisplay />
               <NotificationStudyDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-4 flex-grow"> {/* Reduced gap */}
+            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-4 flex-grow">
               <InfoSlides />
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
