@@ -27,7 +27,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
   const [currentPrayerName, setCurrentPrayerName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isRamadanModeActive, setIsRamadanModeActive] = useState(false); // State untuk mode Ramadan
+  const [isRamadanModeActive, setIsRamadanModeActive] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchAndCalculatePrayerTimes = useCallback(async () => {
@@ -52,10 +52,9 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
       let latitude = data?.latitude || -6.2088;
       let longitude = data?.longitude || 106.8456;
       let calculationMethod = data?.calculation_method || "MuslimWorldLeague";
-      const ramadanModeStatus = data?.is_ramadan_mode_active || false; // Ambil status mode Ramadan
-      setIsRamadanModeActive(ramadanModeStatus); // Set state mode Ramadan
+      const ramadanModeStatus = data?.is_ramadan_mode_active || false;
+      setIsRamadanModeActive(ramadanModeStatus);
 
-      // Get offsets, default to 0 if null
       const fajrOffset = data?.fajr_offset ?? 0;
       const dhuhrOffset = data?.dhuhr_offset ?? 0;
       const asrOffset = data?.asr_offset ?? 0;
@@ -241,23 +240,23 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
   const prayersToDisplay = prayerTimes.filter(prayer => !(isRamadanModeActive && prayer.name === "Imsak"));
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-8 rounded-xl shadow-2xl text-center min-h-[256px] md:min-h-[320px] flex flex-col justify-between flex-grow">
-      <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-blue-300">Jadwal Sholat</h2>
+    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl text-center min-h-[200px] md:min-h-[250px] flex flex-col justify-between flex-grow"> {/* Reduced min-h */}
+      <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-blue-300">Jadwal Sholat</h2> {/* Reduced font size */}
       {isLoading ? (
-        <p className="text-2xl text-white">Memuat waktu sholat...</p>
+        <p className="text-xl text-white">Memuat waktu sholat...</p> {/* Reduced font size */}
       ) : error ? (
-        <div className="bg-red-800 bg-opacity-70 p-4 rounded-lg text-white">
-          <p className="text-2xl font-bold">Error:</p>
-          <p className="text-xl">{error}</p>
-          <p className="text-lg mt-2">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+        <div className="bg-red-800 bg-opacity-70 p-3 rounded-lg text-white"> {/* Reduced padding */}
+          <p className="text-xl font-bold">Error:</p> {/* Reduced font size */}
+          <p className="text-lg">{error}</p> {/* Reduced font size */}
+          <p className="text-base mt-1">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p> {/* Reduced font size */}
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-2xl md:text-3xl lg:text-4xl xl:text-5xl"> {/* Reduced gap and font sizes */}
             {prayersToDisplay.map((prayer) => (
               <div
                 key={prayer.name}
-                className={`p-2 rounded-md ${
+                className={`p-1 rounded-md ${ /* Reduced padding */
                   nextPrayer?.name === prayer.name
                     ? "bg-blue-600 text-white font-bold scale-105 transition-all duration-300"
                     : currentPrayerName === prayer.name
@@ -270,7 +269,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
             ))}
           </div>
           {!hideCountdown && (
-            <div className="mt-6 text-yellow-300 font-semibold text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
+            <div className="mt-4 text-yellow-300 font-semibold text-3xl md:text-4xl lg:text-5xl xl:text-6xl"> {/* Reduced font sizes and margin */}
               {nextPrayer ? (
                 nextPrayer.name === "Imsak" ? (
                   <>
