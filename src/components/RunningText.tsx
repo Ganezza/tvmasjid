@@ -62,8 +62,8 @@ const RunningText: React.FC = () => {
   }
 
   return (
-    <div className="w-full bg-gray-800 bg-opacity-70 p-4 rounded-lg shadow-xl mt-auto overflow-hidden">
-      <p className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-200 whitespace-nowrap animate-marquee">
+    <div className="w-full bg-gray-800 bg-opacity-70 p-2 rounded-lg shadow-xl mt-auto overflow-hidden"> {/* Reduced padding */}
+      <p className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-200 whitespace-nowrap animate-marquee"> {/* Reduced font sizes */}
         {text}
       </p>
     </div>
