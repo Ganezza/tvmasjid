@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
     import path from "path";
 
     export default defineConfig(() => ({
-      base: "/MRLN/", // Ganti dengan nama repositori Anda
+      base: "/tvmasjid/", // Ganti dengan nama repositori Anda
       server: {
         host: "::",
         port: 8080,
