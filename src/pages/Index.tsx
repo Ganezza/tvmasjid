@@ -16,7 +16,7 @@ import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import DarkScreenOverlay from "@/components/DarkScreenOverlay";
 import ImsakOverlay from "@/components/ImsakOverlay";
-import Screensaver from "@/components/Screensaver"; // Import the new Screensaver component
+import Screensaver from "@/components/Screensaver";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -25,7 +25,7 @@ import isBetween from "dayjs/plugin/isBetween";
 import * as Adhan from "adhan";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 dayjs.extend(duration);
 dayjs.extend(isBetween);
@@ -48,19 +48,19 @@ const Index = () => {
   const [iqomahCountdownDuration, setIqomahCountdownDuration] = useState<number>(300);
   const [khutbahDurationMinutes, setKhutbahDurationMinutes] = useState<number>(45);
   const [isRamadanModeActive, setIsRamadanModeActive] = useState(false);
-  const [screensaverIdleMinutes, setScreensaverIdleMinutes] = useState<number>(5); // New state for screensaver idle time
+  const [screensaverIdleMinutes, setScreensaverIdleMinutes] = useState<number>(5);
 
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
   const [showImsakOverlay, setShowImsakOverlay] = useState(false);
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
-  const [isScreensaverActive, setIsScreensaverActive] = useState(false); // New state for screensaver active
+  const [isScreensaverActive, setIsScreensaverActive] = useState(false);
 
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
   const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
 
   const activityTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const settingsChannelRef = useRef<RealtimeChannel | null>(null); // Ref for Supabase channel
+  const settingsChannelRef = useRef<RealtimeChannel | null>(null);
 
   const resetActivityTimer = useCallback(() => {
     if (activityTimerRef.current) {
@@ -73,13 +73,13 @@ const Index = () => {
       }, screensaverIdleMinutes * 60 * 1000);
     }
     if (isScreensaverActive) {
-      setIsScreensaverActive(false); // Hide screensaver on activity
+      setIsScreensaverActive(false);
       console.log("Activity detected, screensaver deactivated.");
     }
   }, [screensaverIdleMinutes, isScreensaverActive]);
 
   useEffect(() => {
-    resetActivityTimer(); // Initial setup
+    resetActivityTimer();
 
     const events = ['mousemove', 'keydown', 'click', 'scroll'];
     events.forEach(event => {
@@ -116,7 +116,7 @@ const Index = () => {
         setKhutbahDurationMinutes(data.khutbah_duration_minutes || 45);
         setIsRamadanModeActive(data.is_ramadan_mode_active || false);
         setMasjidNameColor(data.masjid_name_color || "#34D399");
-        setScreensaverIdleMinutes(data.screensaver_idle_minutes || 5); // Set screensaver idle minutes
+        setScreensaverIdleMinutes(data.screensaver_idle_minutes || 5);
         console.log("Index: Settings fetched:", data);
 
         const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
@@ -227,29 +227,25 @@ const Index = () => {
       const now = dayjs();
       const isFriday = now.day() === 5;
 
-      // Reset all overlays and darkened screen state first
       setShowPrayerOverlay(false);
       setShowJumuahOverlay(false);
       setShowImsakOverlay(false);
       setIsScreenDarkened(false);
-      // Do NOT reset isScreensaverActive here, it's managed by activity timer
 
       console.log(`Index: updateOverlayVisibility - Current Time: ${now.format('HH:mm:ss')}`);
 
-      // Priority 1: Imsak Overlay (if Ramadan mode is active)
       if (isRamadanModeActive && imsakTime) {
         const imsakEndTime = imsakTime.add(IMSAK_OVERLAY_DURATION_SECONDS, 'second');
         console.log(`Index: Checking Imsak Overlay. Imsak Time: ${imsakTime.format('HH:mm:ss')}, End Time: ${imsakEndTime.format('HH:mm:ss')}`);
         if (now.isBetween(imsakTime, imsakEndTime, null, '[)')) {
           setShowImsakOverlay(true);
           console.log("Index: Imsak Overlay is active.");
-          return; // If Imsak overlay is active, no other overlays should show
+          return;
         }
       }
 
-      // Priority 2: Jumuah Overlay (if it's Friday and within Jumuah event window)
       if (isFriday && jumuahDhuhrTime) {
-        const PRE_ADHAN_JUMUAH_SECONDS_LOCAL = 300; // 5 minutes before Adhan
+        const PRE_ADHAN_JUMUAH_SECONDS_LOCAL = 300;
         const adhanEndTime = jumuahDhuhrTime.add(ADHAN_JUMUAH_DURATION_SECONDS, 'second');
         const preAdhanStartTime = jumuahDhuhrTime.subtract(PRE_ADHAN_JUMUAH_SECONDS_LOCAL, 'second');
         const khutbahEndTime = adhanEndTime.add(khutbahDurationMinutes, 'minute');
@@ -258,11 +254,10 @@ const Index = () => {
         if (now.isBetween(preAdhanStartTime, khutbahEndTime, null, '[)')) {
           setShowJumuahOverlay(true);
           console.log("Index: Jumuah Overlay is active.");
-          return; // If Jumuah overlay is active, no other overlays should show
+          return;
         }
       }
 
-      // Priority 3: Regular Prayer Countdown Overlay
       if (nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
         const overlayStartTime = nextPrayerTime.subtract(PRE_ADHAN_COUNTDOWN_SECONDS, 'second');
         const overlayEndTime = nextPrayerTime.add(ADHAN_DURATION_SECONDS + iqomahCountdownDuration, 'second');
@@ -271,14 +266,14 @@ const Index = () => {
         if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
           setShowPrayerOverlay(true);
           console.log("Index: Prayer Countdown Overlay is active.");
-          return; // If prayer overlay is active, no other overlays should show
+          return;
         }
       }
       console.log("Index: No prayer/Jumuah/Imsak overlay is active.");
     };
 
     const interval = setInterval(updateOverlayVisibility, 1000);
-    updateOverlayVisibility(); // Initial call
+    updateOverlayVisibility();
 
     return () => clearInterval(interval);
   }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive]);
@@ -290,12 +285,10 @@ const Index = () => {
       <AppBackground>
         <MurottalPlayer />
 
-        {/* Screensaver */}
         {isScreensaverActive && !isOverlayActive && !isScreenDarkened && (
           <Screensaver />
         )}
 
-        {/* Overlays (higher Z-index than screensaver) */}
         {showImsakOverlay && isRamadanModeActive && imsakTime && (
           <ImsakOverlay
             imsakTime={imsakTime}
@@ -322,26 +315,23 @@ const Index = () => {
           />
         )}
 
-        {/* Dark Screen Overlay */}
         {isScreenDarkened && <DarkScreenOverlay />}
 
-        {/* Main Content (hidden when any overlay is active or screen is darkened or screensaver is active) */}
         <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened || isScreensaverActive ? 'hidden' : ''}`}>
-          {/* Header Section */}
-          <div className="w-full flex justify-between items-center p-4">
-            <div className="flex items-center gap-4">
+          <div className="w-full flex justify-between items-center p-2"> {/* Reduced padding */}
+            <div className="flex items-center gap-2"> {/* Reduced gap */}
               {masjidLogoUrl && (
-                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-28 md:h-36 lg:h-48 object-contain" />
+                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-20 md:h-28 lg:h-36 object-contain" /> {/* Reduced height */}
               )}
               <div>
                 <h1 
-                  className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold drop-shadow-lg text-left text-outline-black"
+                  className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold drop-shadow-lg text-left text-outline-black"
                   style={{ color: masjidNameColor }}
                 >
                   {masjidName}
                 </h1>
                 {masjidAddress && (
-                  <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-gray-300 text-left mt-2 text-outline-black">
+                  <p className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-300 text-left mt-1 text-outline-black"> {/* Reduced font size and margin */}
                     {masjidAddress}
                   </p>
                 )}
@@ -350,40 +340,33 @@ const Index = () => {
             <HijriCalendarDisplay />
           </div>
 
-          {/* Main Content Area - Using Grid for better layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-4 md:py-6 flex-grow">
-            {/* Prayer Times Display - Now full width */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full px-2 py-2 md:py-4 flex-grow"> {/* Reduced gap and padding */}
             <div className="col-span-full flex flex-col">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
             </div>
 
-            {/* Left Column (FinancialDisplay) */}
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6 flex-grow">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow"> {/* Reduced gap */}
               <FinancialDisplay />
             </div>
 
-            {/* Middle Column (ImamMuezzinDisplay and NotificationStudyDisplay) */}
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6 flex-grow">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow"> {/* Reduced gap */}
               <ImamMuezzinDisplay />
               <NotificationStudyDisplay />
             </div>
 
-            {/* Right Column (Info Slides, Islamic Holiday Countdown, Tarawih) */}
-            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6 flex-grow">
+            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-4 flex-grow"> {/* Reduced gap */}
               <InfoSlides />
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
             </div>
           </div>
 
-          {/* Footer Section - Running Text and MadeWithDyad */}
           <div className="w-full">
             <RunningText />
             <MadeWithDyad />
           </div>
         </div>
 
-        {/* Tombol Ikon Pengaturan (Sudut Kiri Bawah) */}
         <div
           className="absolute bottom-4 left-4 z-50"
         >

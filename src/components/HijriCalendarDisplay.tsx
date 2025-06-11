@@ -13,7 +13,6 @@ const HijriCalendarDisplay: React.FC = () => {
       setCurrentDate(now);
       setCurrentTime(now.format("HH:mm:ss")); // Format jam, menit, detik
 
-      // Menggunakan Intl.DateTimeFormat untuk mendapatkan tanggal Hijriah
       try {
         const hijriFormatter = new Intl.DateTimeFormat("id-ID-u-ca-islamic", {
           day: "numeric",
@@ -27,20 +26,19 @@ const HijriCalendarDisplay: React.FC = () => {
       }
     };
 
-    const timer = setInterval(updateDatesAndTimes, 1000); // Update every second to keep time accurate
-    updateDatesAndTimes(); // Initial call
+    const timer = setInterval(updateDatesAndTimes, 1000);
+    updateDatesAndTimes();
 
     return () => clearInterval(timer);
   }, []);
 
-  // Format Gregorian date using Indonesian locale and replace 'Minggu' with 'Ahad'
   const gregorianDate = currentDate.locale('id').format("dddd, DD MMMM YYYY").replace('Minggu', 'Ahad');
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl text-center text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-gray-200">
+    <div className="bg-gray-800 bg-opacity-70 p-3 rounded-xl shadow-2xl text-center text-xl md:text-3xl lg:text-4xl xl:text-5xl font-semibold text-gray-200"> {/* Reduced padding and font sizes */}
       <p className="text-outline-black">{gregorianDate}</p>
       <p className="text-green-300 text-outline-black">{hijriDate}</p>
-      <p className="text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-bold mt-2 text-outline-black">{currentTime}</p>
+      <p className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mt-1 text-outline-black">{currentTime}</p> {/* Reduced font size and margin */}
     </div>
   );
 };
