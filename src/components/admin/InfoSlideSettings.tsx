@@ -186,6 +186,7 @@ const InfoSlideSettings: React.FC = () => {
         setValue("content", publicUrlData.publicUrl);
         setPreviewImageUrl(publicUrlData.publicUrl); // Set preview
         toast.success("Gambar slide berhasil diunggah!", { id: uploadToastId });
+        toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file gambar dioptimalkan (misal: format WebP, resolusi sesuai kebutuhan).");
       } else {
         throw new Error("Gagal mendapatkan URL publik gambar.");
       }

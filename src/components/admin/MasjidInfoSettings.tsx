@@ -89,6 +89,7 @@ const MasjidInfoSettings: React.FC = () => {
         setValue("masjidLogoUrl", publicUrlData.publicUrl);
         setCurrentLogoUrl(publicUrlData.publicUrl);
         toast.success("Logo masjid berhasil diunggah!", { id: uploadToastId });
+        toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file gambar dioptimalkan (misal: format WebP, resolusi sesuai kebutuhan).");
       } else {
         throw new Error("Gagal mendapatkan URL publik logo.");
       }
