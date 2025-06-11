@@ -97,6 +97,10 @@
 
   body {
     @apply bg-background text-foreground;
+    /* New styles for WebView zoom */
+    transform: scale(0.5);
+    transform-origin: 0 0;
+    width: 200%; /* Compensate for the scale to maintain layout */
   }
 }
 
