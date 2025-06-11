@@ -175,7 +175,7 @@ const Index = () => {
         }
         
         setNextPrayerName(foundNextPrayer?.name || null);
-        setNextPrayerTime(foundNextNextPrayer?.time || null);
+        setNextPrayerTime(foundNextPrayer?.time || null); // Corrected this line
         console.log("Index: Next prayer determined:", foundNextPrayer?.name, foundNextPrayer?.time?.format('HH:mm:ss'));
       }
     } catch (err) {
@@ -318,10 +318,10 @@ const Index = () => {
         {isScreenDarkened && <DarkScreenOverlay />}
 
         <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened || isScreensaverActive ? 'hidden' : ''}`}>
-          <div className="w-full flex justify-between items-center p-1"> {/* Reduced padding */}
-            <div className="flex items-center gap-1"> {/* Reduced gap */}
+          <div className="w-full flex justify-between items-center p-1">
+            <div className="flex items-center gap-1">
               {masjidLogoUrl && (
-                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 lg:h-32 object-contain" /> {/* Reduced height */}
+                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 lg:h-32 object-contain" />
               )}
               <div>
                 <h1 
@@ -331,7 +331,7 @@ const Index = () => {
                   {masjidName}
                 </h1>
                 {masjidAddress && (
-                  <p className="text-base md:text-lg lg:text-xl xl:text-2xl text-gray-300 text-left mt-0.5 text-outline-black"> {/* Reduced text size and margin */}
+                  <p className="text-base md:text-lg lg:text-xl xl:text-2xl text-gray-300 text-left mt-0.5 text-outline-black">
                     {masjidAddress}
                   </p>
                 )}
@@ -340,21 +340,21 @@ const Index = () => {
             <HijriCalendarDisplay />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 w-full px-1 py-1 md:py-2 flex-grow"> {/* Reduced gap and padding */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 w-full px-1 py-1 md:py-2 flex-grow">
             <div className="col-span-full flex flex-col min-h-0">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0"> {/* Reduced gap */}
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0">
               <FinancialDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0"> {/* Reduced gap */}
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0">
               <ImamMuezzinDisplay />
               <NotificationStudyDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0"> {/* Reduced gap */}
+            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0">
               <InfoSlides />
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
@@ -368,7 +368,7 @@ const Index = () => {
         </div>
 
         <div
-          className="absolute bottom-2 left-2 z-50" {/* Reduced position */}
+          className="absolute bottom-2 left-2 z-50"
         >
           <Button
             variant="ghost"
@@ -377,7 +377,7 @@ const Index = () => {
             className="text-gray-400 hover:text-gray-200"
             aria-label="Go to Admin Panel"
           >
-            <Settings className="h-6 w-6" /> {/* Reduced icon size */}
+            <Settings className="h-6 w-6" />
           </Button>
         </div>
       </AppBackground>
