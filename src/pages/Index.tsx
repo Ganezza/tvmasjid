@@ -175,7 +175,7 @@ const Index = () => {
         }
         
         setNextPrayerName(foundNextPrayer?.name || null);
-        setNextPrayerTime(foundNextPrayer?.time || null); // Corrected this line
+        setNextPrayerTime(foundNextPrayer?.time || null);
         console.log("Index: Next prayer determined:", foundNextPrayer?.name, foundNextPrayer?.time?.format('HH:mm:ss'));
       }
     } catch (err) {
@@ -318,20 +318,20 @@ const Index = () => {
         {isScreenDarkened && <DarkScreenOverlay />}
 
         <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened || isScreensaverActive ? 'hidden' : ''}`}>
-          <div className="w-full flex justify-between items-center p-1">
-            <div className="flex items-center gap-1">
+          <div className="w-full flex justify-between items-center p-0.5">
+            <div className="flex items-center gap-0.5">
               {masjidLogoUrl && (
-                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 lg:h-32 object-contain" />
+                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-12 md:h-18 lg:h-24 object-contain" />
               )}
               <div>
                 <h1 
-                  className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold drop-shadow-lg text-left text-outline-black"
+                  className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold drop-shadow-lg text-left text-outline-black"
                   style={{ color: masjidNameColor }}
                 >
                   {masjidName}
                 </h1>
                 {masjidAddress && (
-                  <p className="text-base md:text-lg lg:text-xl xl:text-2xl text-gray-300 text-left mt-0.5 text-outline-black">
+                  <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-300 text-left mt-0.5 text-outline-black">
                     {masjidAddress}
                   </p>
                 )}
@@ -340,21 +340,21 @@ const Index = () => {
             <HijriCalendarDisplay />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 w-full px-1 py-1 md:py-2 flex-grow">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 w-full px-0.5 py-0.5 md:py-1 flex-grow">
             <div className="col-span-full flex flex-col min-h-0">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <FinancialDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <ImamMuezzinDisplay />
               <NotificationStudyDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0">
+            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <InfoSlides />
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
