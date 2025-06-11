@@ -116,7 +116,7 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
       .channel('jumuah_financial_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_records' }, (payload) => {
         console.log('Financial record change received for Jumuah display!', payload);
-        fetchFinancialInfo(); // Call a specific function to only fetch financial data
+        fetchJumuahInfo();
       })
       .subscribe();
 
@@ -125,28 +125,6 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
       supabase.removeChannel(financialChannel);
     };
   }, [fetchJumuahInfo]);
-
-  // Separate function to fetch only financial info, to avoid re-fetching schedule unnecessarily
-  const fetchFinancialInfo = useCallback(async () => {
-    try {
-      const { data: financialData, error: financialError } = await supabase
-        .from("financial_records")
-        .select("id, created_at, transaction_type, amount, description")
-        .order("created_at", { ascending: false });
-
-      if (financialError) {
-        console.error("Error fetching financial records for Jumuah display (realtime):", financialError);
-      } else {
-        const balance = (financialData || []).reduce((sum, record) => {
-          return record.transaction_type === "inflow" ? sum + record.amount : sum - record.amount;
-        }, 0);
-        setTotalBalance(balance);
-        setRecentRecords(financialData || []);
-      }
-    } catch (err) {
-      console.error("Unexpected error fetching financial info (realtime):", err);
-    }
-  }, []);
 
   // Jumuah Countdown and Phase Logic
   useEffect(() => {
