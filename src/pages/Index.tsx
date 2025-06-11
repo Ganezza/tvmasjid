@@ -351,25 +351,25 @@ const Index = () => {
           </div>
 
           {/* Main Content Area - Using Grid for better layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-4 md:py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-4 md:py-6 flex-grow">
             {/* Prayer Times Display - Now full width */}
-            <div className="col-span-full">
+            <div className="col-span-full flex flex-col">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
             </div>
 
             {/* Left Column (FinancialDisplay) */}
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6 flex-grow">
               <FinancialDisplay />
             </div>
 
             {/* Middle Column (ImamMuezzinDisplay and NotificationStudyDisplay) */}
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-6 flex-grow">
               <ImamMuezzinDisplay />
               <NotificationStudyDisplay />
             </div>
 
             {/* Right Column (Info Slides, Islamic Holiday Countdown, Tarawih) */}
-            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6">
+            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-6 flex-grow">
               <InfoSlides />
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
