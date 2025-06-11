@@ -184,7 +184,7 @@ const ImamMuezzinDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white">
+      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white flex-grow flex flex-col">
         <p className="text-2xl">Memuat jadwal imam & muadzin...</p>
       </div>
     );
@@ -192,7 +192,7 @@ const ImamMuezzinDisplay: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white">
+      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white flex-grow flex flex-col">
         <p className="text-xl font-bold">Error:</p>
         <p className="text-lg">{error}</p>
       </div>
@@ -201,7 +201,7 @@ const ImamMuezzinDisplay: React.FC = () => {
 
   if (!currentSchedule) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white">
+      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white flex-grow flex flex-col">
         <p className="text-xl text-gray-400">
           Jadwal imam & muadzin untuk sholat berikutnya tidak ditemukan.
           {nextPrayerInfo && (
@@ -215,7 +215,7 @@ const ImamMuezzinDisplay: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/11 max-w-4xl text-center">
+    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/11 max-w-4xl text-center flex-grow flex flex-col">
       <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 text-green-300">
         Sholat {currentSchedule.prayer_name} Berikutnya
       </h3>
