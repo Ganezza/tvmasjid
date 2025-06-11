@@ -19,7 +19,7 @@ interface PrayerTimesDisplayProps {
   hideCountdown?: boolean; // New prop
 }
 
-const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown = false }) => {
+const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = React.memo(({ hideCountdown = false }) => {
   const [currentTime, setCurrentTime] = useState(dayjs());
   const [prayerTimes, setPrayerTimes] = useState<PrayerTime[]>([]);
   const [nextPrayer, setNextPrayer] = useState<PrayerTime | null>(null);
@@ -295,6 +295,6 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
       )}
     </div>
   );
-};
+});
 
 export default PrayerTimesDisplay;

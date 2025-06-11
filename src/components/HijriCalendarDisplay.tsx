@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/id"; // Import Indonesian locale
 
-const HijriCalendarDisplay: React.FC = () => {
+const HijriCalendarDisplay: React.FC = React.memo(() => {
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [hijriDate, setHijriDate] = useState<string>("Memuat...");
   const [currentTime, setCurrentTime] = useState<string>("");
@@ -41,6 +41,6 @@ const HijriCalendarDisplay: React.FC = () => {
       <p className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mt-0.5 text-outline-black">{currentTime}</p>
     </div>
   );
-};
+});
 
 export default HijriCalendarDisplay;

@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
-const RunningText: React.FC = () => {
+const RunningText: React.FC = React.memo(() => {
   const [text, setText] = useState<string>("Memuat teks berjalan...");
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +68,6 @@ const RunningText: React.FC = () => {
       </p>
     </div>
   );
-};
+});
 
 export default RunningText;
