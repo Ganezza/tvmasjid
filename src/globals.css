@@ -127,3 +127,18 @@
     -1.5px  1.5px 0 #FFD700,
      1.5px  1.5px 0 #FFD700;
 }
+
+/* New keyframes for auto-scrolling financial records */
+@keyframes auto-scroll-up {
+  0% { transform: translateY(0%); }
+  100% { transform: translateY(-50%); } /* Scrolls up by half the duplicated content height */
+}
+
+.auto-scroll-content {
+  /* Ensure content takes up necessary space for scrolling */
+  display: block; 
+  white-space: normal; 
+  animation-name: auto-scroll-up;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}

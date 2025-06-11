@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { ScrollAreaWithViewportRef } from "@/components/ui/scroll-area-viewport-ref";
 import { cn } from "@/lib/utils";
 
@@ -9,59 +9,41 @@ interface AutoScrollingFinancialRecordsProps {
 }
 
 const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children }) => {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const scrollSpeed = 1; // pixels per interval
-  const intervalTime = 50; // ms per interval (20 frames per second)
-  const pauseAtEnds = 3000; // ms to pause at top/bottom
-
-  const startAutoScroll = () => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    // Clear any existing interval
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-    }
-
-    // Only scroll if content is actually larger than viewport
-    if (viewport.scrollHeight <= viewport.clientHeight) {
-      return;
-    }
-
-    scrollIntervalRef.current = setInterval(() => {
-      if (viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight) {
-        // Reached bottom, pause then reset to top
-        clearInterval(scrollIntervalRef.current!);
-        scrollIntervalRef.current = null;
-        setTimeout(() => {
-          viewport.scrollTop = 0; // Reset to top
-          startAutoScroll(); // Start scrolling again from top
-        }, pauseAtEnds); // Pause for 3 seconds at bottom
-      } else {
-        // Scroll down
-        viewport.scrollTop += scrollSpeed;
-      }
-    }, intervalTime);
-  };
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [animationDuration, setAnimationDuration] = useState('0s');
+  const scrollSpeedPxPerSecond = 20; // Kecepatan scroll dalam piksel per detik
 
   useEffect(() => {
-    // Reset scroll position and restart scrolling when children change (e.g., new data)
-    if (viewportRef.current) {
-      viewportRef.current.scrollTop = 0;
-    }
-    startAutoScroll();
+    if (contentRef.current) {
+      // Mengukur tinggi total konten (termasuk duplikasi)
+      const totalContentHeight = contentRef.current.scrollHeight;
+      // Tinggi satu set konten asli
+      const originalContentHeight = totalContentHeight / 2; 
+      const viewportHeight = contentRef.current.parentElement?.clientHeight || 0;
 
-    return () => {
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
+      if (originalContentHeight > viewportHeight) {
+        // Hitung durasi animasi berdasarkan tinggi konten asli dan kecepatan scroll
+        const durationSeconds = originalContentHeight / scrollSpeedPxPerSecond;
+        setAnimationDuration(`${durationSeconds}s`);
+      } else {
+        setAnimationDuration('0s'); // Tidak ada animasi jika konten tidak meluap
       }
-    };
-  }, [children]); // Dependency on children to restart scroll if content changes
+    }
+  }, [children]); // Hitung ulang saat konten anak berubah
 
   return (
-    <ScrollAreaWithViewportRef viewportRef={viewportRef} className={cn("w-full pr-4 flex-grow")}>
-      {children}
+    <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow")}>
+      <div
+        ref={contentRef}
+        className="auto-scroll-content"
+        style={{
+          animationDuration: animationDuration,
+          animationPlayState: animationDuration === '0s' ? 'paused' : 'running',
+        }}
+      >
+        {children}
+        {children} {/* Duplikasi konten untuk loop yang mulus */}
+      </div>
     </ScrollAreaWithViewportRef>
   );
 };
