@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter"; // Import the plugin
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { id } from "date-fns/locale";
@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
 dayjs.extend(duration);
-dayjs.extend(isSameOrAfter); // Extend dayjs with the plugin
+dayjs.extend(isSameOrAfter);
 
 interface IslamicHoliday {
   id: string;
@@ -40,11 +40,11 @@ const IslamicHolidayCountdown: React.FC = () => {
         setError("Gagal memuat hari besar Islam.");
         toast.error("Gagal memuat hari besar Islam.");
       } else {
-        const now = dayjs().startOf('day'); // Get current date without time for comparison
+        const now = dayjs().startOf('day');
         const upcomingHolidays = data?.filter(holiday => dayjs(holiday.holiday_date).isSameOrAfter(now, 'day')) || [];
 
         if (upcomingHolidays.length > 0) {
-          setNextHoliday(upcomingHolidays[0]); // The first one is the next upcoming
+          setNextHoliday(upcomingHolidays[0]);
         } else {
           setNextHoliday(null);
         }
@@ -66,7 +66,7 @@ const IslamicHolidayCountdown: React.FC = () => {
         .channel('islamic_holidays_display_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'islamic_holidays' }, (payload) => {
           console.log('Islamic holiday change received for display!', payload);
-          fetchNextHoliday(); // Re-fetch if holidays change
+          fetchNextHoliday();
         })
         .subscribe();
       console.log("IslamicHolidayCountdown: Subscribed to channel 'islamic_holidays_display_changes'.");
@@ -89,13 +89,12 @@ const IslamicHolidayCountdown: React.FC = () => {
       }
 
       const now = dayjs();
-      const holidayDate = dayjs(nextHoliday.holiday_date).endOf('day'); // End of day to include the whole day
+      const holidayDate = dayjs(nextHoliday.holiday_date).endOf('day');
 
       const diffMs = holidayDate.diff(now);
 
       if (diffMs <= 0) {
         setCountdown("Hari ini!");
-        // Optionally, refetch after a short delay if the holiday just passed
         setTimeout(fetchNextHoliday, 5000); 
         return;
       }
@@ -119,10 +118,9 @@ const IslamicHolidayCountdown: React.FC = () => {
       if (days > 0) {
         countdownText += `${days} hari `;
       }
-      // Only show hours/minutes/seconds if less than a day
       if (years === 0 && months === 0 && days === 0) {
         countdownText += `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-      } else if (years === 0 && months === 0 && days < 7) { // Show hours/minutes if less than a week
+      } else if (years === 0 && months === 0 && days < 7) {
         countdownText += `${String(hours).padStart(2, '0')} jam ${String(minutes).padStart(2, '0')} menit`;
       }
 
@@ -130,47 +128,47 @@ const IslamicHolidayCountdown: React.FC = () => {
     };
 
     const interval = setInterval(updateCountdown, 1000);
-    updateCountdown(); // Initial call
+    updateCountdown();
 
     return () => clearInterval(interval);
   }, [nextHoliday, fetchNextHoliday]);
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
-        <p className="text-xl">Memuat hari besar Islam...</p>
+      <div className="bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col"> {/* Reduced padding */}
+        <p className="text-xl">Memuat hari besar Islam...</p> {/* Reduced font size */}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
-        <p className="text-xl font-bold">Error:</p>
-        <p className="text-lg">{error}</p>
+      <div className="bg-red-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col"> {/* Reduced padding */}
+        <p className="text-xl font-bold">Error:</p> {/* Reduced font size */}
+        <p className="text-lg">{error}</p> {/* Reduced font size */}
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col">
-      <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-yellow-300">
+    <div className="bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col"> {/* Reduced padding */}
+      <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 text-yellow-300"> {/* Reduced font size and margin */}
         Hari Besar Islam Mendatang
       </h3>
       {nextHoliday ? (
         <>
-          <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-blue-200 mb-2">
+          <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-blue-200 mb-1"> {/* Reduced font size and margin */}
             {nextHoliday.name}
           </p>
-          <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mb-4">
+          <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 mb-3"> {/* Reduced font size and margin */}
             {format(new Date(nextHoliday.holiday_date), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')}
           </p>
-          <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-green-400">
+          <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-green-400"> {/* Reduced font size */}
             {countdown}
           </p>
         </>
       ) : (
-        <p className="text-2xl text-gray-400">Tidak ada hari besar Islam mendatang yang tercatat.</p>
+        <p className="text-xl text-gray-400">Tidak ada hari besar Islam mendatang yang tercatat.</p> {/* Reduced font size */}
       )}
     </div>
   );

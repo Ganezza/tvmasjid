@@ -11,8 +11,8 @@ interface Schedule {
   prayer_name: string;
   imam_name: string;
   muezzin_name?: string | null;
-  khatib_name?: string | null; // Added new field
-  bilal_name?: string | null;  // Added new field
+  khatib_name?: string | null;
+  bilal_name?: string | null;
   display_order: number;
 }
 
@@ -25,7 +25,7 @@ const prayerNameMap: { [key: string]: string } = {
 };
 
 const getIndonesianDayOfWeek = (date: dayjs.Dayjs): string => {
-  const days = ["Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"]; // Changed Minggu to Ahad, Jumat to Jum'at
+  const days = ["Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"];
   return days[date.day()];
 };
 
@@ -33,17 +33,16 @@ const ImamMuezzinDisplay: React.FC = () => {
   const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [nextPrayerInfo, setNextPrayerInfo] = useState<{ day: string; prayer: string } | null>(null); // State baru
+  const [nextPrayerInfo, setNextPrayerInfo] = useState<{ day: string; prayer: string } | null>(null);
   const settingsChannelRef = useRef<RealtimeChannel | null>(null);
   const schedulesChannelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchAndDisplaySchedule = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    setNextPrayerInfo(null); // Reset info setiap kali fetch
+    setNextPrayerInfo(null);
 
     try {
-      // 1. Fetch app settings for prayer time calculation
       const { data: settings, error: settingsError } = await supabase
         .from("app_settings")
         .select("latitude, longitude, calculation_method")
@@ -61,13 +60,11 @@ const ImamMuezzinDisplay: React.FC = () => {
       const longitude = settings?.longitude || 106.8456;
       const calculationMethod = settings?.calculation_method || "MuslimWorldLeague";
 
-      // 2. Calculate prayer times for today
       const now = dayjs();
       const coordinates = new Coordinates(latitude, longitude);
       const params = CalculationMethod[calculationMethod as keyof typeof CalculationMethod]();
       const times = new PrayerTimes(coordinates, now.toDate(), params);
 
-      // List of actual prayer times for the day
       const todayPrayerTimes = [
         { name: "Fajr", time: dayjs(times.fajr) },
         { name: "Dhuhr", time: dayjs(times.dhuhr) },
@@ -79,7 +76,6 @@ const ImamMuezzinDisplay: React.FC = () => {
       let nextPrayerAdhanName: string | null = null;
       let targetDay = now;
 
-      // Find the next prayer for today
       for (const prayer of todayPrayerTimes) {
         if (prayer.time.isAfter(now)) {
           nextPrayerAdhanName = prayer.name;
@@ -87,17 +83,15 @@ const ImamMuezzinDisplay: React.FC = () => {
         }
       }
 
-      // If no prayer found for today, it means the next prayer is Fajr tomorrow
       if (!nextPrayerAdhanName) {
-        nextPrayerAdhanName = "Fajr"; // The next prayer is Fajr
-        targetDay = now.add(1, 'day'); // And it's tomorrow
+        nextPrayerAdhanName = "Fajr";
+        targetDay = now.add(1, 'day');
       }
 
       let nextPrayerDisplayName = prayerNameMap[nextPrayerAdhanName];
 
-      // Handle special case for Friday Dhuhr
       if (targetDay.day() === 5 && nextPrayerAdhanName === "Dhuhr") {
-        nextPrayerDisplayName = "Jum'at"; // Changed to Jum'at
+        nextPrayerDisplayName = "Jum'at";
       }
 
       if (!nextPrayerDisplayName) {
@@ -106,28 +100,25 @@ const ImamMuezzinDisplay: React.FC = () => {
         return;
       }
 
-      // 4. Get Indonesian day of week, based on targetDay
       const currentDayOfWeek = getIndonesianDayOfWeek(targetDay);
 
-      // Set info sholat berikutnya yang dicari
       setNextPrayerInfo({ day: currentDayOfWeek, prayer: nextPrayerDisplayName });
 
-      // 5. Fetch imam/muezzin schedule for the next prayer and target day
       const { data: scheduleData, error: scheduleError } = await supabase
         .from("imam_muezzin_schedules")
         .select("*")
         .eq("day_of_week", currentDayOfWeek)
         .eq("prayer_name", nextPrayerDisplayName)
         .order("display_order", { ascending: true })
-        .limit(1); // Removed .single()
+        .limit(1);
 
       if (scheduleError) {
         console.error("Error fetching imam/muezzin schedule:", scheduleError);
         setError("Gagal memuat jadwal imam & muadzin.");
-      } else if (scheduleData && scheduleData.length > 0) { // Check for data[0]
+      } else if (scheduleData && scheduleData.length > 0) {
         setCurrentSchedule(scheduleData[0]);
       } else {
-        setCurrentSchedule(null); // No schedule found for this prayer/day
+        setCurrentSchedule(null);
       }
     } catch (err) {
       console.error("Unexpected error in ImamMuezzinDisplay:", err);
@@ -139,9 +130,8 @@ const ImamMuezzinDisplay: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchAndDisplaySchedule(); // Initial fetch
+    fetchAndDisplaySchedule();
 
-    // Set up real-time listeners for relevant tables
     if (!settingsChannelRef.current) {
       settingsChannelRef.current = supabase
         .channel('imam_muezzin_display_settings_changes')
@@ -164,7 +154,6 @@ const ImamMuezzinDisplay: React.FC = () => {
       console.log("ImamMuezzinDisplay: Subscribed to channel 'imam_muezzin_display_schedules_changes'.");
     }
 
-    // Update every minute to ensure next prayer is always accurate
     const interval = setInterval(fetchAndDisplaySchedule, 60 * 1000); 
 
     return () => {
@@ -184,28 +173,28 @@ const ImamMuezzinDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white flex-grow flex flex-col">
-        <p className="text-2xl">Memuat jadwal imam & muadzin...</p>
+      <div className="bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col"> {/* Reduced padding */}
+        <p className="text-xl">Memuat jadwal imam & muadzin...</p> {/* Reduced font size */}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white flex-grow flex flex-col">
-        <p className="text-xl font-bold">Error:</p>
-        <p className="text-lg">{error}</p>
+      <div className="bg-red-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col"> {/* Reduced padding */}
+        <p className="text-xl font-bold">Error:</p> {/* Reduced font size */}
+        <p className="text-lg">{error}</p> {/* Reduced font size */}
       </div>
     );
   }
 
   if (!currentSchedule) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white flex-grow flex flex-col">
-        <p className="text-xl text-gray-400">
+      <div className="bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col"> {/* Reduced padding */}
+        <p className="text-lg text-gray-400"> {/* Reduced font size */}
           Jadwal imam & muadzin untuk sholat berikutnya tidak ditemukan.
           {nextPrayerInfo && (
-            <span className="block mt-2 text-lg">
+            <span className="block mt-1 text-base"> {/* Reduced font size and margin */}
               Mencari: <span className="font-semibold">{nextPrayerInfo.prayer}</span> pada hari <span className="font-semibold">{nextPrayerInfo.day}</span>.
             </span>
           )}
@@ -215,25 +204,25 @@ const ImamMuezzinDisplay: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/11 max-w-4xl text-center flex-grow flex flex-col">
-      <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 text-green-300">
+    <div className="bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col"> {/* Reduced padding */}
+      <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 text-green-300"> {/* Reduced font size and margin */}
         Sholat {currentSchedule.prayer_name} Berikutnya
       </h3>
-      <p className="text-3xl md:text-4xl lg:text-5xl text-blue-200">
+      <p className="text-2xl md:text-3xl lg:text-4xl text-blue-200"> {/* Reduced font size */}
         Imam: <span className="font-semibold">{currentSchedule.imam_name}</span>
       </p>
       {currentSchedule.muezzin_name && (
-        <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
+        <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 mt-1"> {/* Reduced font size */}
           Muadzin: <span className="font-medium">{currentSchedule.muezzin_name}</span>
         </p>
       )}
-      {currentSchedule.khatib_name && ( // Display Khatib if available
-        <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
+      {currentSchedule.khatib_name && (
+        <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 mt-1"> {/* Reduced font size */}
           Khatib: <span className="font-medium">{currentSchedule.khatib_name}</span>
         </p>
       )}
-      {currentSchedule.bilal_name && ( // Display Bilal if available
-        <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
+      {currentSchedule.bilal_name && (
+        <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 mt-1"> {/* Reduced font size */}
           Bilal: <span className="font-medium">{currentSchedule.bilal_name}</span>
         </p>
       )}
