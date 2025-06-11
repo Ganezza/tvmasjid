@@ -55,15 +55,15 @@ const RunningText: React.FC = () => {
 
   if (error) {
     return (
-      <div className="w-full bg-red-800 bg-opacity-70 p-4 rounded-lg shadow-xl mt-auto overflow-hidden text-center">
-        <p className="text-xl md:text-2xl text-red-200">Error: {error}</p>
+      <div className="w-full bg-red-800 bg-opacity-70 p-3 rounded-lg shadow-xl mt-auto overflow-hidden text-center">
+        <p className="text-lg md:text-xl text-red-200">Error: {error}</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full bg-gray-800 bg-opacity-70 p-2 rounded-lg shadow-xl mt-auto overflow-hidden"> {/* Reduced padding */}
-      <p className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-200 whitespace-nowrap animate-marquee"> {/* Reduced font sizes */}
+    <div className="w-full bg-gray-800 bg-opacity-70 p-1.5 rounded-lg shadow-xl mt-auto overflow-hidden">
+      <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-200 whitespace-nowrap animate-marquee">
         {text}
       </p>
     </div>

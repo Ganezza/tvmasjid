@@ -71,7 +71,7 @@ const InfoSlides: React.FC = () => {
   if (isLoading) {
     return (
       <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow">
-        <p className="text-base">Memuat slide informasi...</p>
+        <p className="text-sm">Memuat slide informasi...</p>
       </div>
     );
   }
@@ -79,8 +79,8 @@ const InfoSlides: React.FC = () => {
   if (error) {
     return (
       <div className="bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow">
-        <p className="text-base font-bold">Error:</p>
-        <p className="text-sm">{error}</p>
+        <p className="text-sm font-bold">Error:</p>
+        <p className="text-xs">{error}</p>
       </div>
     );
   }
@@ -88,7 +88,7 @@ const InfoSlides: React.FC = () => {
   if (slides.length === 0) {
     return (
       <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow">
-        <p className="text-base text-gray-400">Tidak ada slide informasi untuk ditampilkan.</p>
+        <p className="text-sm text-gray-400">Tidak ada slide informasi untuk ditampilkan.</p>
       </div>
     );
   }
@@ -96,7 +96,7 @@ const InfoSlides: React.FC = () => {
   return (
     <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden flex-grow flex flex-col">
       <Swiper
-        spaceBetween={15}
+        spaceBetween={10}
         centeredSlides={true}
         autoplay={{
           delay: 5000,
@@ -110,9 +110,9 @@ const InfoSlides: React.FC = () => {
         className="mySwiper w-full h-full"
       >
         {slides.map((slide) => (
-          <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-2">
+          <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-1.5">
             {slide.title && (
-              <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 text-yellow-300 text-center text-wrap">
+              <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-yellow-300 text-center text-wrap">
                 {slide.title}
               </h3>
             )}

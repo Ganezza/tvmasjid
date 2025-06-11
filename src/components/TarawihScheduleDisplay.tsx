@@ -127,17 +127,17 @@ const TarawihScheduleDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-3 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white flex-grow flex flex-col">
-        <p className="text-base">Memuat jadwal Tarawih...</p> {/* Reduced font size */}
+      <div className="bg-gray-800 bg-opacity-70 p-1.5 rounded-xl shadow-2xl w-full text-center mb-2 text-white flex-grow flex flex-col">
+        <p className="text-xs">Memuat jadwal Tarawih...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-3 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center mb-8 text-white flex-grow flex flex-col">
-        <p className="text-base font-bold">Error:</p> {/* Reduced font size */}
-        <p className="text-sm">{error}</p> {/* Reduced font size */}
+      <div className="bg-red-800 bg-opacity-70 p-1.5 rounded-xl shadow-2xl w-full text-center mb-2 text-white flex-grow flex flex-col">
+        <p className="text-xs font-bold">Error:</p>
+        <p className="text-xs">{error}</p>
       </div>
     );
   }
@@ -148,25 +148,25 @@ const TarawihScheduleDisplay: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col"> {/* Reduced padding and width classes */}
-      <h3 className="text-xl font-bold mb-1 text-yellow-300"> {/* Reduced font sizes */}
+    <div className="bg-gray-800 bg-opacity-70 p-1.5 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col">
+      <h3 className="text-lg font-bold mb-0.5 text-yellow-300">
         Jadwal Sholat Tarawih
       </h3>
-      <p className="text-xl text-blue-200"> {/* Reduced font sizes */}
+      <p className="text-lg text-blue-200">
         Imam: <span className="font-semibold">{tarawihSchedule.imam_name}</span>
       </p>
       {tarawihSchedule.khatib_name && (
-        <p className="text-base text-gray-300 mt-0.5"> {/* Reduced font sizes and margin */}
+        <p className="text-sm text-gray-300 mt-0.5">
           Khatib: <span className="font-medium">{tarawihSchedule.khatib_name}</span>
         </p>
       )}
       {tarawihSchedule.bilal_name && (
-        <p className="text-base text-gray-300 mt-0.5"> {/* Reduced font sizes and margin */}
+        <p className="text-sm text-gray-300 mt-0.5">
           Bilal: <span className="font-medium">{tarawihSchedule.bilal_name}</span>
         </p>
       )}
       {tarawihSchedule.muezzin_name && ( // Muezzin is still relevant for Tarawih
-        <p className="text-base text-gray-300 mt-0.5"> {/* Reduced font sizes and margin */}
+        <p className="text-sm text-gray-300 mt-0.5">
           Muadzin: <span className="font-medium">{tarawihSchedule.muezzin_name}</span>
         </p>
       )}
