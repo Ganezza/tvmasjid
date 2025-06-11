@@ -341,20 +341,20 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full px-2 py-2 md:py-4 flex-grow">
-            <div className="col-span-full flex flex-col">
+            <div className="col-span-full flex flex-col min-h-0">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow min-h-0">
               <FinancialDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow min-h-0">
               <ImamMuezzinDisplay />
               <NotificationStudyDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-4 flex-grow">
+            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-4 flex-grow min-h-0">
               <InfoSlides />
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
