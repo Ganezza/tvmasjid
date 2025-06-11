@@ -240,19 +240,19 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
   const prayersToDisplay = prayerTimes.filter(prayer => !(isRamadanModeActive && prayer.name === "Imsak"));
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-3 rounded-xl shadow-2xl text-center flex flex-col justify-between flex-grow">
-      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 text-blue-300">Jadwal Sholat</h2>
+    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl text-center flex flex-col justify-between flex-grow">
+      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 text-blue-300">Jadwal Sholat</h2>
       {isLoading ? (
-        <p className="text-base text-white">Memuat waktu sholat...</p>
+        <p className="text-sm text-white">Memuat waktu sholat...</p>
       ) : error ? (
-        <div className="bg-red-800 bg-opacity-70 p-2 rounded-lg text-white">
-          <p className="text-base font-bold">Error:</p>
-          <p className="text-sm">{error}</p>
-          <p className="text-xs mt-1">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+        <div className="bg-red-800 bg-opacity-70 p-1.5 rounded-lg text-white">
+          <p className="text-sm font-bold">Error:</p>
+          <p className="text-xs">{error}</p>
+          <p className="text-xs mt-0.5">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-lg md:text-xl lg:text-2xl xl:text-3xl">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-1 text-base md:text-lg lg:text-xl xl:text-2xl">
             {prayersToDisplay.map((prayer) => (
               <div
                 key={prayer.name}
@@ -269,7 +269,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
             ))}
           </div>
           {!hideCountdown && (
-            <div className="mt-2 text-yellow-300 font-semibold text-xl md:text-2xl lg:text-3xl xl:text-4xl">
+            <div className="mt-1.5 text-yellow-300 font-semibold text-lg md:text-xl lg:text-2xl xl:text-3xl">
               {nextPrayer ? (
                 nextPrayer.name === "Imsak" ? (
                   <>

@@ -173,25 +173,25 @@ const ImamMuezzinDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-3 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
-        <p className="text-base">Memuat jadwal imam & muadzin...</p>
+      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
+        <p className="text-sm">Memuat jadwal imam & muadzin...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-3 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
-        <p className="text-base font-bold">Error:</p>
-        <p className="text-sm">{error}</p>
+      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
+        <p className="text-sm font-bold">Error:</p>
+        <p className="text-xs">{error}</p>
       </div>
     );
   }
 
   if (!currentSchedule) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-3 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
-        <p className="text-sm text-gray-400">
+      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
+        <p className="text-xs text-gray-400">
           Jadwal imam & muadzin untuk sholat berikutnya tidak ditemukan.
           {nextPrayerInfo && (
             <span className="block mt-0.5 text-xs">
@@ -204,25 +204,25 @@ const ImamMuezzinDisplay: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-3 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col">
-      <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-1 text-green-300">
+    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col">
+      <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-0.5 text-green-300">
         Sholat {currentSchedule.prayer_name} Berikutnya
       </h3>
-      <p className="text-xl md:text-2xl lg:text-3xl text-blue-200">
+      <p className="text-lg md:text-xl lg:text-2xl text-blue-200">
         Imam: <span className="font-semibold">{currentSchedule.imam_name}</span>
       </p>
       {currentSchedule.muezzin_name && (
-        <p className="text-base md:text-xl lg:text-2xl text-gray-300 mt-0.5">
+        <p className="text-sm md:text-base lg:text-xl text-gray-300 mt-0.5">
           Muadzin: <span className="font-medium">{currentSchedule.muezzin_name}</span>
         </p>
       )}
       {currentSchedule.khatib_name && (
-        <p className="text-base md:text-xl lg:text-2xl text-gray-300 mt-0.5">
+        <p className="text-sm md:text-base lg:text-xl text-gray-300 mt-0.5">
           Khatib: <span className="font-medium">{currentSchedule.khatib_name}</span>
         </p>
       )}
       {currentSchedule.bilal_name && (
-        <p className="text-base md:text-xl lg:text-2xl text-gray-300 mt-0.5">
+        <p className="text-sm md:text-base lg:text-xl text-gray-300 mt-0.5">
           Bilal: <span className="font-medium">{currentSchedule.bilal_name}</span>
         </p>
       )}
