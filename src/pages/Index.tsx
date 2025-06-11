@@ -175,7 +175,7 @@ const Index = () => {
         }
         
         setNextPrayerName(foundNextPrayer?.name || null);
-        setNextPrayerTime(foundNextPrayer?.time || null);
+        setNextPrayerTime(foundNextNextPrayer?.time || null);
         console.log("Index: Next prayer determined:", foundNextPrayer?.name, foundNextPrayer?.time?.format('HH:mm:ss'));
       }
     } catch (err) {
@@ -318,20 +318,20 @@ const Index = () => {
         {isScreenDarkened && <DarkScreenOverlay />}
 
         <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened || isScreensaverActive ? 'hidden' : ''}`}>
-          <div className="w-full flex justify-between items-center p-2">
-            <div className="flex items-center gap-2">
+          <div className="w-full flex justify-between items-center p-1"> {/* Reduced padding */}
+            <div className="flex items-center gap-1"> {/* Reduced gap */}
               {masjidLogoUrl && (
-                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-20 md:h-28 lg:h-36 object-contain" />
+                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 lg:h-32 object-contain" /> {/* Reduced height */}
               )}
               <div>
                 <h1 
-                  className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold drop-shadow-lg text-left text-outline-black"
+                  className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold drop-shadow-lg text-left text-outline-black"
                   style={{ color: masjidNameColor }}
                 >
                   {masjidName}
                 </h1>
                 {masjidAddress && (
-                  <p className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-300 text-left mt-1 text-outline-black">
+                  <p className="text-base md:text-lg lg:text-xl xl:text-2xl text-gray-300 text-left mt-0.5 text-outline-black"> {/* Reduced text size and margin */}
                     {masjidAddress}
                   </p>
                 )}
@@ -340,21 +340,21 @@ const Index = () => {
             <HijriCalendarDisplay />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full px-2 py-2 md:py-4 flex-grow">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 w-full px-1 py-1 md:py-2 flex-grow"> {/* Reduced gap and padding */}
             <div className="col-span-full flex flex-col min-h-0">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow min-h-0">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0"> {/* Reduced gap */}
               <FinancialDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-4 flex-grow min-h-0">
+            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0"> {/* Reduced gap */}
               <ImamMuezzinDisplay />
               <NotificationStudyDisplay />
             </div>
 
-            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-4 flex-grow min-h-0">
+            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-2 flex-grow min-h-0"> {/* Reduced gap */}
               <InfoSlides />
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
@@ -368,7 +368,7 @@ const Index = () => {
         </div>
 
         <div
-          className="absolute bottom-4 left-4 z-50"
+          className="absolute bottom-2 left-2 z-50" {/* Reduced position */}
         >
           <Button
             variant="ghost"
@@ -377,7 +377,7 @@ const Index = () => {
             className="text-gray-400 hover:text-gray-200"
             aria-label="Go to Admin Panel"
           >
-            <Settings className="h-8 w-8" />
+            <Settings className="h-6 w-6" /> {/* Reduced icon size */}
           </Button>
         </div>
       </AppBackground>
