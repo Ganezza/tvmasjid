@@ -240,23 +240,23 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
   const prayersToDisplay = prayerTimes.filter(prayer => !(isRamadanModeActive && prayer.name === "Imsak"));
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl text-center flex flex-col justify-between flex-grow">
-      <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-blue-300">Jadwal Sholat</h2>
+    <div className="bg-gray-800 bg-opacity-70 p-3 rounded-xl shadow-2xl text-center flex flex-col justify-between flex-grow">
+      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 text-blue-300">Jadwal Sholat</h2>
       {isLoading ? (
-        <p className="text-xl text-white">Memuat waktu sholat...</p>
+        <p className="text-base text-white">Memuat waktu sholat...</p>
       ) : error ? (
-        <div className="bg-red-800 bg-opacity-70 p-3 rounded-lg text-white">
-          <p className="text-xl font-bold">Error:</p>
-          <p className="text-lg">{error}</p>
-          <p className="text-base mt-1">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+        <div className="bg-red-800 bg-opacity-70 p-2 rounded-lg text-white">
+          <p className="text-base font-bold">Error:</p>
+          <p className="text-sm">{error}</p>
+          <p className="text-xs mt-1">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-2xl md:text-3xl lg:text-4xl xl:text-5xl">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-lg md:text-xl lg:text-2xl xl:text-3xl">
             {prayersToDisplay.map((prayer) => (
               <div
                 key={prayer.name}
-                className={`p-1 rounded-md ${
+                className={`p-0.5 rounded-md ${
                   nextPrayer?.name === prayer.name
                     ? "bg-blue-600 text-white font-bold scale-105 transition-all duration-300"
                     : currentPrayerName === prayer.name
@@ -269,7 +269,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
             ))}
           </div>
           {!hideCountdown && (
-            <div className="mt-4 text-yellow-300 font-semibold text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
+            <div className="mt-2 text-yellow-300 font-semibold text-xl md:text-2xl lg:text-3xl xl:text-4xl">
               {nextPrayer ? (
                 nextPrayer.name === "Imsak" ? (
                   <>

@@ -76,47 +76,47 @@ const FinancialDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
-        <p className="text-xl">Memuat informasi keuangan...</p>
+      <div className="bg-gray-800 bg-opacity-70 p-3 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
+        <p className="text-base">Memuat informasi keuangan...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
-        <p className="text-xl font-bold">Error:</p>
-        <p className="text-lg">{error}</p>
+      <div className="bg-red-800 bg-opacity-70 p-3 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
+        <p className="text-base font-bold">Error:</p>
+        <p className="text-sm">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-4 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col">
-      <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 text-yellow-300">
+    <div className="bg-gray-800 bg-opacity-70 p-3 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col">
+      <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-1 text-yellow-300">
         Informasi Keuangan Masjid
       </h3>
-      <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-green-400 mb-1">
+      <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-green-400 mb-0.5">
         Saldo Kas: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </p>
-      <p className="text-lg md:text-xl lg:text-2xl text-gray-300 mb-3">
+      <p className="text-sm md:text-base lg:text-lg text-gray-300 mb-2">
         Data per: <span className="font-semibold">{lastFridayDate}</span>
       </p>
 
-      <h4 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 text-blue-300">
+      <h4 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 text-blue-300">
         Rincian Transaksi Terbaru
       </h4>
       {recentRecords.length === 0 ? (
-        <p className="text-lg md:text-xl text-gray-400">Belum ada transaksi yang tercatat.</p>
+        <p className="text-base md:text-lg text-gray-400">Belum ada transaksi yang tercatat.</p>
       ) : (
         <AutoScrollingFinancialRecords>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {recentRecords.map((record) => (
-              <div key={record.id} className="flex flex-col items-start bg-gray-700 p-2 rounded-md shadow-sm text-left">
-                <p className="font-medium text-xl md:text-2xl text-blue-200">
+              <div key={record.id} className="flex flex-col items-start bg-gray-700 p-1.5 rounded-md shadow-sm text-left">
+                <p className="font-medium text-base md:text-lg text-blue-200">
                   {record.description}
                 </p>
-                <p className={`text-lg md:text-xl font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
+                <p className={`text-sm md:text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
                   {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
                 <p className="text-xs text-gray-400">
