@@ -240,7 +240,7 @@ const PrayerTimesDisplay: React.FC<PrayerTimesDisplayProps> = ({ hideCountdown =
   const prayersToDisplay = prayerTimes.filter(prayer => !(isRamadanModeActive && prayer.name === "Imsak"));
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl text-center min-h-[200px] md:min-h-[250px] flex flex-col justify-between flex-grow">
+    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl text-center flex flex-col justify-between flex-grow">
       <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-blue-300">Jadwal Sholat</h2>
       {isLoading ? (
         <p className="text-xl text-white">Memuat waktu sholat...</p>
