@@ -81,7 +81,7 @@ const FinancialDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white">
+      <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white flex-grow flex flex-col">
         <p className="text-2xl">Memuat informasi keuangan...</p>
       </div>
     );
@@ -89,7 +89,7 @@ const FinancialDisplay: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white">
+      <div className="bg-red-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center text-white flex-grow flex flex-col">
         <p className="text-2xl font-bold">Error:</p>
         <p className="text-xl">{error}</p>
       </div>
@@ -97,7 +97,7 @@ const FinancialDisplay: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center">
+    <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-11/12 max-w-4xl text-center flex-grow flex flex-col">
       <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 text-yellow-300">
         Informasi Keuangan Masjid
       </h3>
@@ -114,7 +114,7 @@ const FinancialDisplay: React.FC = () => {
       {recentRecords.length === 0 ? (
         <p className="text-gray-400 text-xl md:text-2xl">Belum ada transaksi yang tercatat.</p>
       ) : (
-        <AutoScrollingFinancialRecords heightClass="h-56 md:h-72 lg:h-88">
+        <AutoScrollingFinancialRecords>
           <div className="space-y-3">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">

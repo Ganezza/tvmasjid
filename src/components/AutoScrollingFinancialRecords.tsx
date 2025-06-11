@@ -6,10 +6,9 @@ import { cn } from "@/lib/utils";
 
 interface AutoScrollingFinancialRecordsProps {
   children: React.ReactNode;
-  heightClass?: string; // e.g., "h-48 md:h-64"
 }
 
-const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children, heightClass }) => {
+const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children }) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const scrollSpeed = 1; // pixels per interval
@@ -61,7 +60,7 @@ const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps
   }, [children]); // Dependency on children to restart scroll if content changes
 
   return (
-    <ScrollAreaWithViewportRef viewportRef={viewportRef} className={cn(heightClass, "w-full pr-4")}>
+    <ScrollAreaWithViewportRef viewportRef={viewportRef} className={cn("w-full pr-4 flex-grow")}>
       {children}
     </ScrollAreaWithViewportRef>
   );
