@@ -1,1 +1,1 @@
-git stash pop
+git pull origin main
