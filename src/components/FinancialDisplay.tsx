@@ -109,7 +109,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
       {recentRecords.length === 0 ? (
         <p className="text-sm md:text-base text-gray-400">Belum ada transaksi yang tercatat.</p>
       ) : (
-        <AutoScrollingFinancialRecords>
+        <AutoScrollingFinancialRecords heightClass="flex-grow">
           <div className="space-y-1">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-1 rounded-md shadow-sm text-left">
