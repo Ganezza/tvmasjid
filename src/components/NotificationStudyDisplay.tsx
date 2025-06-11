@@ -120,7 +120,7 @@ const NotificationStudyDisplay: React.FC = () => {
   return (
     <div className="w-full bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl overflow-hidden flex-grow flex flex-col">
       <Swiper
-        spaceBetween={15} {/* Reduced from 30 */}
+        spaceBetween={15}
         centeredSlides={true}
         autoplay={{
           delay: 7000, // Slightly longer delay for text-heavy slides
@@ -134,14 +134,14 @@ const NotificationStudyDisplay: React.FC = () => {
         className="mySwiper w-full h-full"
       >
         {items.map((item) => (
-          <SwiperSlide key={item.id} className="relative flex flex-col items-center justify-center p-2 text-center h-full overflow-y-auto"> {/* Reduced padding */}
-            <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 text-yellow-300"> {/* Reduced font sizes */}
+          <SwiperSlide key={item.id} className="relative flex flex-col items-center justify-center p-2 text-center h-full overflow-y-auto">
+            <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 text-yellow-300">
               {item.type === "notification" ? "PENGUMUMAN" : item.type === "study" ? "JADWAL KAJIAN" : "ACARA KHUSUS"}
             </h3>
-            <h4 className="text-lg md:text-xl lg:text-2xl font-semibold mb-1 text-blue-300">{item.title}</h4> {/* Reduced font sizes */}
-            <p className="text-base md:text-lg lg:text-xl leading-relaxed text-gray-200 break-words">{item.content}</p> {/* Reduced font sizes */}
+            <h4 className="text-lg md:text-xl lg:text-2xl font-semibold mb-1 text-blue-300">{item.title}</h4>
+            <p className="text-base md:text-lg lg:text-xl leading-relaxed text-gray-200 break-words">{item.content}</p>
             {(item.event_date || item.event_time) && (
-              <p className="text-sm md:text-base lg:text-lg text-green-300 mt-1"> {/* Reduced font sizes and margin */}
+              <p className="text-sm md:text-base lg:text-lg text-green-300 mt-1">
                 {item.event_date && format(new Date(item.event_date), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')}
                 {item.event_date && item.event_time && " Pukul "}
                 {item.event_time}
