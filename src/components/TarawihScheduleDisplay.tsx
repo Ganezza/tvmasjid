@@ -20,7 +20,7 @@ const getIndonesianDayOfWeek = (date: dayjs.Dayjs): string => {
   return days[date.day()];
 };
 
-const TarawihScheduleDisplay: React.FC = () => {
+const TarawihScheduleDisplay: React.FC = React.memo(() => {
   const [tarawihSchedule, setTarawihSchedule] = useState<Schedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -172,6 +172,6 @@ const TarawihScheduleDisplay: React.FC = () => {
       )}
     </div>
   );
-};
+});
 
 export default TarawihScheduleDisplay;

@@ -18,7 +18,7 @@ interface IslamicHoliday {
   display_order: number;
 }
 
-const IslamicHolidayCountdown: React.FC = () => {
+const IslamicHolidayCountdown: React.FC = React.memo(() => {
   const [nextHoliday, setNextHoliday] = useState<IslamicHoliday | null>(null);
   const [countdown, setCountdown] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -172,6 +172,6 @@ const IslamicHolidayCountdown: React.FC = () => {
       )}
     </div>
   );
-};
+});
 
 export default IslamicHolidayCountdown;
