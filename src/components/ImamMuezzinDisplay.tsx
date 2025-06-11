@@ -29,7 +29,7 @@ const getIndonesianDayOfWeek = (date: dayjs.Dayjs): string => {
   return days[date.day()];
 };
 
-const ImamMuezzinDisplay: React.FC = () => {
+const ImamMuezzinDisplay: React.FC = React.memo(() => {
   const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -228,6 +228,6 @@ const ImamMuezzinDisplay: React.FC = () => {
       )}
     </div>
   );
-};
+});
 
 export default ImamMuezzinDisplay;

@@ -17,7 +17,7 @@ interface Slide {
   display_order: number;
 }
 
-const InfoSlides: React.FC = () => {
+const InfoSlides: React.FC = React.memo(() => {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,6 +128,6 @@ const InfoSlides: React.FC = () => {
       </Swiper>
     </div>
   );
-};
+});
 
 export default InfoSlides;

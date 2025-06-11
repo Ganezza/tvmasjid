@@ -14,7 +14,7 @@ interface FinancialRecord {
   description: string;
 }
 
-const FinancialDisplay: React.FC = () => {
+const FinancialDisplay: React.FC = React.memo(() => {
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,6 +129,6 @@ const FinancialDisplay: React.FC = () => {
       )}
     </div>
   );
-};
+});
 
 export default FinancialDisplay;

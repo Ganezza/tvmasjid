@@ -5,7 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import { format } from "date-fns";
 import { id } from "date-fns/locale"; // Import Indonesian locale for date-fns
-import { RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
+import { RealtimeChannel } from "@supabase/supabase/dist/module/lib/SupabaseClient"; // Import RealtimeChannel
 
 // Import Swiper styles
 import "swiper/css";
@@ -23,7 +23,7 @@ interface NotificationStudy {
   created_at: string;
 }
 
-const NotificationStudyDisplay: React.FC = () => {
+const NotificationStudyDisplay: React.FC = React.memo(() => {
   const [items, setItems] = useState<NotificationStudy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +152,6 @@ const NotificationStudyDisplay: React.FC = () => {
       </Swiper>
     </div>
   );
-};
+});
 
 export default NotificationStudyDisplay;
