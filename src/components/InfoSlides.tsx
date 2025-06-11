@@ -71,7 +71,7 @@ const InfoSlides: React.FC = () => {
   if (isLoading) {
     return (
       <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow">
-        <p className="text-2xl">Memuat slide informasi...</p>
+        <p className="text-base">Memuat slide informasi...</p> {/* Reduced font size */}
       </div>
     );
   }
@@ -79,8 +79,8 @@ const InfoSlides: React.FC = () => {
   if (error) {
     return (
       <div className="bg-red-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow">
-        <p className="text-2xl font-bold">Error:</p>
-        <p className="text-xl">{error}</p>
+        <p className="text-base font-bold">Error:</p> {/* Reduced font size */}
+        <p className="text-sm">{error}</p> {/* Reduced font size */}
       </div>
     );
   }
@@ -88,7 +88,7 @@ const InfoSlides: React.FC = () => {
   if (slides.length === 0) {
     return (
       <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden flex items-center justify-center text-white flex-grow">
-        <p className="text-2xl text-gray-400">Tidak ada slide informasi untuk ditampilkan.</p>
+        <p className="text-base text-gray-400">Tidak ada slide informasi untuk ditampilkan.</p> {/* Reduced font size */}
       </div>
     );
   }
@@ -96,7 +96,7 @@ const InfoSlides: React.FC = () => {
   return (
     <div className="bg-gray-800 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden flex-grow flex flex-col">
       <Swiper
-        spaceBetween={30}
+        spaceBetween={15} {/* Reduced from 30 */}
         centeredSlides={true}
         autoplay={{
           delay: 5000,
@@ -110,9 +110,9 @@ const InfoSlides: React.FC = () => {
         className="mySwiper w-full h-full"
       >
         {slides.map((slide) => (
-          <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-4">
+          <SwiperSlide key={slide.id} className="flex flex-col items-center justify-center p-2"> {/* Reduced padding */}
             {slide.title && (
-              <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-yellow-300 text-center text-wrap">
+              <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 text-yellow-300 text-center text-wrap"> {/* Reduced font sizes */}
                 {slide.title}
               </h3>
             )}
