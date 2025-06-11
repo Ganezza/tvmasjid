@@ -133,6 +133,7 @@ const AudioSettings: React.FC = () => {
       if (publicUrlData?.publicUrl) {
         setValue(fieldName, publicUrlData.publicUrl as any); // Cast to any because fieldName is dynamic
         toast.success("Audio berhasil diunggah!", { id: uploadToastId });
+        toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file audio dioptimalkan (misal: format MP3, bitrate rendah).");
       } else {
         throw new Error("Gagal mendapatkan URL publik audio.");
       }
