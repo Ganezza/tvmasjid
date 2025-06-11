@@ -6,8 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminPanel from "./pages/AdminPanel";
-import Login from "./pages/Login"; // Import Login
-import { SessionProvider } from "./components/SessionProvider"; // Import SessionProvider
+import Login from "./pages/Login";
+import { SessionProvider } from "./components/SessionProvider";
 
 const queryClient = new QueryClient();
 
@@ -16,12 +16,12 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <SessionProvider> {/* Bungkus Routes dengan SessionProvider */}
+      <BrowserRouter basename="/MRLN/"> {/* Tambahkan basename di sini */}
+        <SessionProvider>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/login" element={<Login />} /> {/* Tambahkan rute Login */}
+            <Route path="/login" element={<Login />} />
             {/* TAMBAHKAN SEMUA RUTE KUSTOM DI ATAS RUTE CATCH-ALL "*" */}
             <Route path="*" element={<NotFound />} />
           </Routes>
