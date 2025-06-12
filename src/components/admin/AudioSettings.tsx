@@ -30,6 +30,7 @@ const formSchema = z.object({
   adhanBeepAudioUrl: z.string().nullable().optional(), // New field for Adhan beep
   iqomahBeepAudioUrl: z.string().nullable().optional(), // New field for Iqomah beep
   imsakBeepAudioUrl: z.string().nullable().optional(), // NEW FIELD FOR IMSAK BEEP
+  adhanDurationSeconds: z.coerce.number().int().min(1, "Durasi Adzan harus minimal 1 detik.").default(120), // New field for Adhan duration
 });
 
 type AudioSettingsFormValues = z.infer<typeof formSchema>;
@@ -66,6 +67,7 @@ const AudioSettings: React.FC = () => {
       adhanBeepAudioUrl: null, // Default for new field
       iqomahBeepAudioUrl: null, // Default for new field
       imsakBeepAudioUrl: null, // Default for new field
+      adhanDurationSeconds: 120, // Default for new field
     },
   });
 
@@ -90,6 +92,7 @@ const AudioSettings: React.FC = () => {
       setValue("adhanBeepAudioUrl", settings.adhan_beep_audio_url); // Set new field
       setValue("iqomahBeepAudioUrl", settings.iqomah_beep_audio_url); // Set new field
       setValue("imsakBeepAudioUrl", settings.imsak_beep_audio_url); // SET NEW FIELD
+      setValue("adhanDurationSeconds", settings.adhan_duration_seconds ?? 120); // Set new field
     }
   }, [settings, isLoadingSettings, setValue]);
 
@@ -214,6 +217,7 @@ const AudioSettings: React.FC = () => {
           adhan_beep_audio_url: values.adhanBeepAudioUrl, // Save new field
           iqomah_beep_audio_url: values.iqomahBeepAudioUrl, // Save new field
           imsak_beep_audio_url: values.imsakBeepAudioUrl, // SAVE NEW FIELD
+          adhan_duration_seconds: values.adhanDurationSeconds, // SAVE NEW FIELD
         },
         { onConflict: "id" }
       );
@@ -277,6 +281,19 @@ const AudioSettings: React.FC = () => {
             {errors.iqomahCountdownDuration && <p className="text-red-400 text-sm mt-1">{errors.iqomahCountdownDuration.message}</p>}
           </div>
           
+          {/* New Adhan Duration Setting */}
+          <div>
+            <Label htmlFor="adhanDurationSeconds" className="text-gray-300">Durasi Adzan (detik)</Label>
+            <Input
+              id="adhanDurationSeconds"
+              type="number"
+              {...register("adhanDurationSeconds")}
+              className="bg-gray-700 border-gray-600 text-white mt-1"
+              placeholder="Contoh: 120 (untuk 2 menit)"
+            />
+            {errors.adhanDurationSeconds && <p className="text-red-400 text-sm mt-1">{errors.adhanDurationSeconds.message}</p>}
+          </div>
+
           <div className="border-t border-gray-700 pt-6">
             <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Murottal Otomatis</h3>
             <div>
