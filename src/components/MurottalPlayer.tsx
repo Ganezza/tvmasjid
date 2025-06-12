@@ -27,8 +27,6 @@ const PRAYER_CONFIGS: PrayerTimeConfig[] = [
   { name: "Isya", adhanName: "isha", audioUrlField: "murottal_audio_url_isha", offsetField: "isha_offset" },
 ];
 
-const ADHAN_DURATION_SECONDS = 120;
-
 interface MurottalPlayerProps {
   onPlayingChange: (isPlaying: boolean) => void;
 }
@@ -62,7 +60,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ onPlayingChange }) => {
     try {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url, iqomah_countdown_duration, imsak_beep_audio_url, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset")
+        .select("latitude, longitude, calculation_method, murottal_active, murottal_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, is_ramadan_mode_active, tarhim_active, tarhim_audio_url, tarhim_pre_adhan_duration, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url, iqomah_countdown_duration, imsak_beep_audio_url, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset, adhan_duration_seconds") // Include adhan_duration_seconds
         .eq("id", 1)
         .single();
 
@@ -95,6 +93,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ onPlayingChange }) => {
             maghribOffset: data.maghrib_offset,
             ishaOffset: data.isha_offset,
             imsakOffset: data.imsak_offset,
+            adhanDurationSeconds: data.adhan_duration_seconds, // Log new field
         });
 
         if (data.murottal_active || data.tarhim_active || data.adhan_beep_audio_url || data.iqomah_beep_audio_url || data.imsak_beep_audio_url) {
@@ -438,7 +437,7 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ onPlayingChange }) => {
             continue; 
           }
 
-          const adhanEndTime = iqomahConfig.adhanTime.add(ADHAN_DURATION_SECONDS, 'second');
+          const adhanEndTime = iqomahConfig.adhanTime.add(settings.adhan_duration_seconds, 'second'); // Use dynamic adhan_duration_seconds
           const iqomahEndTime = adhanEndTime.add(settings.iqomah_countdown_duration, 'second');
           const iqomahBeepEventName = `${iqomahConfig.name} Iqomah Beep`;
           
