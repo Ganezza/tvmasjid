@@ -19,6 +19,7 @@ interface AppSettings {
   background_image_url: string | null;
   background_color: string;
   screensaver_idle_minutes: number;
+  screensaver_slide_duration: number; // NEW FIELD
   murottal_active: boolean;
   tarhim_active: boolean;
   iqomah_countdown_duration: number;
@@ -93,6 +94,7 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           background_image_url: null,
           background_color: "#0A0A0A",
           screensaver_idle_minutes: 5,
+          screensaver_slide_duration: 10000, // DEFAULT VALUE FOR NEW FIELD
           murottal_active: false,
           tarhim_active: false,
           iqomah_countdown_duration: 300,
@@ -110,7 +112,7 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           adhan_beep_audio_url: null,
           iqomah_beep_audio_url: null,
           imsak_beep_audio_url: null,
-          masjid_name: "", // Changed default to empty string
+          masjid_name: "",
           masjid_logo_url: null,
           masjid_address: null,
           masjid_name_color: "#34D399",
