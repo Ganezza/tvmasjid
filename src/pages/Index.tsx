@@ -15,7 +15,7 @@ import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import DarkScreenOverlay from "@/components/DarkScreenOverlay";
 import ImsakOverlay from "@/components/ImsakOverlay";
-import Screensaver from "@/components/Screensaver";
+// import Screensaver from "@/components/Screensaver"; // Dihapus
 import MediaPlayerDisplay from "@/components/MediaPlayerDisplay";
 import { supabase } from "@/lib/supabase"; // Keep supabase import for other uses
 import { toast } from "sonner";
@@ -51,58 +51,58 @@ const Index = () => {
   const [iqomahCountdownDuration, setIqomahCountdownDuration] = useState<number>(300);
   const [khutbahDurationMinutes, setKhutbahDurationMinutes] = useState<number>(45);
   const [isRamadanModeActive, setIsRamadanModeActive] = useState(false);
-  const [screensaverIdleMinutes, setScreensaverIdleMinutes] = useState<number>(5);
+  // const [screensaverIdleMinutes, setScreensaverIdleMinutes] = useState<number>(5); // Dihapus
 
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
   const [showImsakOverlay, setShowImsakOverlay] = useState(false);
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
-  const [isScreensaverActive, setIsScreensaverActive] = useState(false);
+  // const [isScreensaverActive, setIsScreensaverActive] = useState(false); // Dihapus
   const [isMurottalPlaying, setIsMurottalPlaying] = useState(false); // State for MurottalPlayer status
 
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
   const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
 
-  const activityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // const activityTimerRef = useRef<NodeJS.Timeout | null>(null); // Dihapus
 
-  const resetActivityTimer = useCallback(() => {
-    console.log("Index: resetActivityTimer called. Clearing existing timer.");
-    if (activityTimerRef.current) {
-      clearTimeout(activityTimerRef.current);
-    }
-    if (screensaverIdleMinutes > 0) {
-      const timeoutDuration = screensaverIdleMinutes * 60 * 1000;
-      activityTimerRef.current = setTimeout(() => {
-        setIsScreensaverActive(true);
-        console.log(`Index: Screensaver activated due to inactivity (${screensaverIdleMinutes} minutes).`);
-      }, timeoutDuration);
-      console.log(`Index: New screensaver timer set for ${screensaverIdleMinutes} minutes.`);
-    } else {
-      console.log("Index: screensaverIdleMinutes is 0 or less. Screensaver will not activate automatically.");
-    }
-    if (isScreensaverActive) {
-      setIsScreensaverActive(false);
-      console.log("Index: Activity detected, screensaver deactivated.");
-    }
-  }, [screensaverIdleMinutes, isScreensaverActive]);
+  // const resetActivityTimer = useCallback(() => { // Dihapus
+  //   console.log("Index: resetActivityTimer called. Clearing existing timer.");
+  //   if (activityTimerRef.current) {
+  //     clearTimeout(activityTimerRef.current);
+  //   }
+  //   if (screensaverIdleMinutes > 0) {
+  //     const timeoutDuration = screensaverIdleMinutes * 60 * 1000;
+  //     activityTimerRef.current = setTimeout(() => {
+  //       setIsScreensaverActive(true);
+  //       console.log(`Index: Screensaver activated due to inactivity (${screensaverIdleMinutes} minutes).`);
+  //     }, timeoutDuration);
+  //     console.log(`Index: New screensaver timer set for ${screensaverIdleMinutes} minutes.`);
+  //   } else {
+  //     console.log("Index: screensaverIdleMinutes is 0 or less. Screensaver will not activate automatically.");
+  //   }
+  //   if (isScreensaverActive) {
+  //     setIsScreensaverActive(false);
+  //     console.log("Index: Activity detected, screensaver deactivated.");
+  //   }
+  // }, [screensaverIdleMinutes, isScreensaverActive]); // Dihapus
 
   useEffect(() => {
-    resetActivityTimer();
+    // resetActivityTimer(); // Dihapus
 
-    const events = ['mousemove', 'keydown', 'click', 'scroll'];
-    events.forEach(event => {
-      window.addEventListener(event, resetActivityTimer);
-    });
+    // const events = ['mousemove', 'keydown', 'click', 'scroll']; // Dihapus
+    // events.forEach(event => { // Dihapus
+    //   window.addEventListener(event, resetActivityTimer); // Dihapus
+    // }); // Dihapus
 
     return () => {
-      if (activityTimerRef.current) {
-        clearTimeout(activityTimerRef.current);
-      }
-      events.forEach(event => {
-        window.removeEventListener(event, resetActivityTimer);
-      });
+      // if (activityTimerRef.current) { // Dihapus
+      //   clearTimeout(activityTimerRef.current); // Dihapus
+      // } // Dihapus
+      // events.forEach(event => { // Dihapus
+      //   window.removeEventListener(event, resetActivityTimer); // Dihapus
+      // }); // Dihapus
     };
-  }, [resetActivityTimer]);
+  }, []); // Dihapus: [resetActivityTimer]
 
   useEffect(() => {
     if (isLoadingSettings || !settings) {
@@ -118,8 +118,8 @@ const Index = () => {
     setKhutbahDurationMinutes(settings.khutbah_duration_minutes || 45);
     setIsRamadanModeActive(settings.is_ramadan_mode_active || false);
     setMasjidNameColor(settings.masjid_name_color || "#34D399");
-    setScreensaverIdleMinutes(settings.screensaver_idle_minutes || 5);
-    console.log("Index: screensaverIdleMinutes from settings:", settings.screensaver_idle_minutes);
+    // setScreensaverIdleMinutes(settings.screensaver_idle_minutes || 5); // Dihapus
+    // console.log("Index: screensaverIdleMinutes from settings:", settings.screensaver_idle_minutes); // Dihapus
 
 
     const coordinates = new Adhan.Coordinates(settings.latitude || -6.2088, settings.longitude || 106.8456);
@@ -211,7 +211,7 @@ const Index = () => {
       // setIsScreenDarkened(false); // Removed this line
 
       console.log(`Index: updateOverlayVisibility - Current Time: ${now.format('HH:mm:ss')}`);
-      console.log(`Index: Current Overlay States - Prayer: ${showPrayerOverlay}, Jumuah: ${showJumuahOverlay}, Imsak: ${showImsakOverlay}, Darkened: ${isScreenDarkened}, Screensaver: ${isScreensaverActive}`);
+      console.log(`Index: Current Overlay States - Prayer: ${showPrayerOverlay}, Jumuah: ${showJumuahOverlay}, Imsak: ${showImsakOverlay}, Darkened: ${isScreenDarkened}`); // Dihapus: Screensaver
 
 
       // Priority 1: Imsak Overlay (if Ramadan mode active)
@@ -259,13 +259,13 @@ const Index = () => {
     updateOverlayVisibility();
 
     return () => clearInterval(interval);
-  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive, isScreenDarkened, isScreensaverActive]); // Added isScreenDarkened and isScreensaverActive to dependencies
+  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive, isScreenDarkened]); // Dihapus: isScreensaverActive
 
   // Combine all conditions that should pause the MediaPlayerDisplay
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay || showImsakOverlay;
-  const shouldMediaPlayerBePaused = isOverlayActive || isScreenDarkened || isScreensaverActive || isMurottalPlaying;
+  const shouldMediaPlayerBePaused = isOverlayActive || isScreenDarkened || isMurottalPlaying; // Dihapus: isScreensaverActive
 
-  console.log(`Index: Render - isScreensaverActive: ${isScreensaverActive}, isOverlayActive: ${isOverlayActive}, isScreenDarkened: ${isScreenDarkened}, shouldMediaPlayerBePaused: ${shouldMediaPlayerBePaused}`);
+  console.log(`Index: Render - isOverlayActive: ${isOverlayActive}, isScreenDarkened: ${isScreenDarkened}, shouldMediaPlayerBePaused: ${shouldMediaPlayerBePaused}`); // Dihapus: isScreensaverActive
 
 
   const handleRefresh = () => {
@@ -278,9 +278,9 @@ const Index = () => {
         {/* MurottalPlayer now receives a callback to update its playing status */}
         <MurottalPlayer onPlayingChange={setIsMurottalPlaying} />
 
-        {isScreensaverActive && !isOverlayActive && !isScreenDarkened && (
-          <Screensaver />
-        )}
+        {/* {isScreensaverActive && !isOverlayActive && !isScreenDarkened && ( // Dihapus
+          <Screensaver /> // Dihapus
+        )} */}
 
         {showImsakOverlay && isRamadanModeActive && imsakTime && (
           <ImsakOverlay
