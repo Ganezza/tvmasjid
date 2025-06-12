@@ -128,6 +128,8 @@ const AudioSettings: React.FC = () => {
 
       if (publicUrlData?.publicUrl) {
         setValue(fieldName, publicUrlData.publicUrl as any); // Cast to any because fieldName is dynamic
+        // Explicitly update to 100% before success
+        toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim').replace('adhanBeepAudioUrl', 'Adzan Beep').replace('iqomahBeepAudioUrl', 'Iqomah Beep').replace('imsakBeepAudioUrl', 'Imsak Beep')}: 100%`, { id: uploadToastId });
         toast.success("Audio berhasil diunggah!", { id: uploadToastId });
         toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file audio dioptimalkan (misal: format MP3, bitrate rendah).");
 
@@ -135,7 +137,7 @@ const AudioSettings: React.FC = () => {
         if (oldAudioUrl && oldAudioUrl !== publicUrlData.publicUrl) {
           try {
             const oldUrlParts = (oldAudioUrl as string).split('/');
-            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('audio') + 1).join('/');
+            const oldFileNameWithFolder = oldUrlParts.slice(urlParts.indexOf('audio') + 1).join('/');
             const { error: deleteError } = await supabase.storage
               .from('audio')
               .remove([oldFileNameWithFolder]);
