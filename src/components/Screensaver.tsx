@@ -226,7 +226,8 @@ const Screensaver: React.FC = () => {
     );
   }
 
-  const slideDuration = (settings?.screensaver_slide_duration || 10) * 1000; // Convert seconds to milliseconds for Swiper
+  // Use the screensaver_slide_duration directly as it's already in milliseconds from settings
+  const slideDuration = settings?.screensaver_slide_duration || 10000; // Default to 10 seconds (10000 ms)
 
   return (
     <div className="fixed inset-0 bg-gray-950 flex flex-col items-center justify-center z-[100] text-white p-4">
@@ -275,7 +276,7 @@ const Screensaver: React.FC = () => {
                     </h4>
                     <div className="max-h-64 overflow-y-auto custom-scrollbar">
                       <div className="space-y-4">
-                        {recentRecords.slice(0, 5).map((record) => ( // Show top 5 recent records
+                        {recentRecords.slice(0, 5).map((record) => (
                           <div key={record.id} className="flex flex-col items-start bg-gray-700 p-4 rounded-md shadow-sm text-left">
                             <p className="font-medium text-2xl md:text-3xl text-blue-200">
                               {record.description}
