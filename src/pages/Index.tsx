@@ -318,18 +318,14 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 w-full px-0.5 py-0.5 md:py-1 flex-grow">
-            <div className="col-span-full flex flex-col min-h-0">
+            {/* Kolom 1: Jadwal Sholat & Keuangan */}
+            <div className="col-span-full md:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
-            </div>
-
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <FinancialDisplay />
-              {/* MediaPlayerDisplay moved here, below FinancialDisplay */}
-              <MediaPlayerDisplay isOverlayActive={shouldMediaPlayerBePaused} />
             </div>
 
-            {/* Moved InfoSlides here, next to ImamMuezzinDisplay and NotificationStudyDisplay */}
-            <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
+            {/* Kolom 2: Imam/Muadzin, Notifikasi/Kajian, Info Slides */}
+            <div className="col-span-full md:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <ImamMuezzinDisplay />
               <NotificationStudyDisplay />
               <React.Suspense fallback={<div>Memuat Info Slides...</div>}>
@@ -337,10 +333,11 @@ const Index = () => {
               </React.Suspense>
             </div>
 
-            {/* Adjusted col-span for the remaining components */}
+            {/* Kolom 3: Hari Besar Islam, Jadwal Tarawih, Media Player */}
             <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
+              <MediaPlayerDisplay isOverlayActive={shouldMediaPlayerBePaused} />
             </div>
           </div>
 
