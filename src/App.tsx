@@ -20,7 +20,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename="/tvmasjid/">
+      <BrowserRouter basename="/tvmasjid/" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <SessionProvider>
           <AppSettingsProvider> {/* Wrap with AppSettingsProvider */}
             {/* Wrapper untuk skala global */}
