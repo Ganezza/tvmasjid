@@ -66,18 +66,23 @@ const Index = () => {
   const activityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const resetActivityTimer = useCallback(() => {
+    console.log("Index: resetActivityTimer called. Clearing existing timer.");
     if (activityTimerRef.current) {
       clearTimeout(activityTimerRef.current);
     }
     if (screensaverIdleMinutes > 0) {
+      const timeoutDuration = screensaverIdleMinutes * 60 * 1000;
       activityTimerRef.current = setTimeout(() => {
         setIsScreensaverActive(true);
-        console.log("Screensaver activated due to inactivity.");
-      }, screensaverIdleMinutes * 60 * 1000);
+        console.log(`Index: Screensaver activated due to inactivity (${screensaverIdleMinutes} minutes).`);
+      }, timeoutDuration);
+      console.log(`Index: New screensaver timer set for ${screensaverIdleMinutes} minutes.`);
+    } else {
+      console.log("Index: screensaverIdleMinutes is 0 or less. Screensaver will not activate automatically.");
     }
     if (isScreensaverActive) {
       setIsScreensaverActive(false);
-      console.log("Activity detected, screensaver deactivated.");
+      console.log("Index: Activity detected, screensaver deactivated.");
     }
   }, [screensaverIdleMinutes, isScreensaverActive]);
 
@@ -114,6 +119,8 @@ const Index = () => {
     setIsRamadanModeActive(settings.is_ramadan_mode_active || false);
     setMasjidNameColor(settings.masjid_name_color || "#34D399");
     setScreensaverIdleMinutes(settings.screensaver_idle_minutes || 5);
+    console.log("Index: screensaverIdleMinutes from settings:", settings.screensaver_idle_minutes);
+
 
     const coordinates = new Adhan.Coordinates(settings.latitude || -6.2088, settings.longitude || 106.8456);
     const params = Adhan.CalculationMethod[settings.calculation_method as keyof typeof Adhan.CalculationMethod]();
@@ -200,9 +207,12 @@ const Index = () => {
       setShowPrayerOverlay(false);
       setShowJumuahOverlay(false);
       setShowImsakOverlay(false);
-      setIsScreenDarkened(false); // Reset darkened state here, it will be set again if needed
+      // Do NOT reset isScreenDarkened here, it's managed by handlePrayerOrKhutbahEnd
+      // setIsScreenDarkened(false); // Removed this line
 
       console.log(`Index: updateOverlayVisibility - Current Time: ${now.format('HH:mm:ss')}`);
+      console.log(`Index: Current Overlay States - Prayer: ${showPrayerOverlay}, Jumuah: ${showJumuahOverlay}, Imsak: ${showImsakOverlay}, Darkened: ${isScreenDarkened}, Screensaver: ${isScreensaverActive}`);
+
 
       // Priority 1: Imsak Overlay (if Ramadan mode active)
       if (isRamadanModeActive && imsakTime) {
@@ -249,11 +259,14 @@ const Index = () => {
     updateOverlayVisibility();
 
     return () => clearInterval(interval);
-  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive]);
+  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive, isScreenDarkened, isScreensaverActive]); // Added isScreenDarkened and isScreensaverActive to dependencies
 
   // Combine all conditions that should pause the MediaPlayerDisplay
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay || showImsakOverlay;
   const shouldMediaPlayerBePaused = isOverlayActive || isScreenDarkened || isScreensaverActive || isMurottalPlaying;
+
+  console.log(`Index: Render - isScreensaverActive: ${isScreensaverActive}, isOverlayActive: ${isOverlayActive}, isScreenDarkened: ${isScreenDarkened}, shouldMediaPlayerBePaused: ${shouldMediaPlayerBePaused}`);
+
 
   const handleRefresh = () => {
     window.location.reload();
