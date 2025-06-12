@@ -1,0 +1,261 @@
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { RealtimeChannel } from "@supabase/supabase-js";
+
+interface MediaFile {
+  id: string;
+  title: string | null;
+  file_path: string;
+  file_type: "audio" | "video";
+}
+
+const MediaPlayerDisplay: React.FC = React.memo(() => {
+  const [activeMedia, setActiveMedia] = useState<MediaFile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
+  const fetchActiveMedia = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // 1. Fetch active_media_id from app_settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from("app_settings")
+        .select("active_media_id")
+        .eq("id", 1)
+        .single();
+
+      if (settingsError && settingsError.code !== 'PGRST116') {
+        console.error("MediaPlayerDisplay: Error fetching active_media_id:", settingsError);
+        setError("Gagal memuat pengaturan media aktif.");
+        setActiveMedia(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const activeMediaId = settingsData?.active_media_id;
+
+      if (!activeMediaId) {
+        setActiveMedia(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Fetch media details using active_media_id
+      const { data: mediaData, error: mediaError } = await supabase
+        .from("media_files")
+        .select("*")
+        .eq("id", activeMediaId)
+        .single();
+
+      if (mediaError) {
+        console.error("MediaPlayerDisplay: Error fetching active media details:", mediaError);
+        setError("Gagal memuat detail media aktif.");
+        setActiveMedia(null);
+      } else if (mediaData) {
+        setActiveMedia(mediaData);
+      } else {
+        setActiveMedia(null); // Media not found
+      }
+    } catch (err) {
+      console.error("MediaPlayerDisplay: Unexpected error fetching active media:", err);
+      setError("Terjadi kesalahan saat memuat media.");
+      setActiveMedia(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchActiveMedia();
+
+    // Setup Realtime Channel for app_settings changes (specifically active_media_id)
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('media_player_display_settings_changes')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
+          console.log('MediaPlayerDisplay: App settings change received!', payload);
+          fetchActiveMedia(); // Re-fetch if active_media_id changes
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'media_files' }, (payload) => {
+          console.log('MediaPlayerDisplay: Media files table change received!', payload);
+          // If the active media file itself is updated or deleted, re-fetch
+          if (activeMedia && (payload.new?.id === activeMedia.id || payload.old?.id === activeMedia.id)) {
+            fetchActiveMedia();
+          } else if (!activeMedia && payload.eventType === 'INSERT') {
+            // If no active media, but a new one is inserted, check if it becomes active
+            fetchActiveMedia();
+          }
+        })
+        .subscribe();
+      console.log("MediaPlayerDisplay: Subscribed to channel 'media_player_display_settings_changes'.");
+    }
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        console.log("MediaPlayerDisplay: Unsubscribed from channel 'media_player_display_settings_changes'.");
+        channelRef.current = null;
+      }
+    };
+  }, [fetchActiveMedia, activeMedia]); // Add activeMedia to dependencies to re-evaluate subscription if activeMedia changes
+
+  useEffect(() => {
+    // Handle playback when activeMedia changes
+    if (activeMedia) {
+      const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
+      if (!publicUrl) {
+        setError("URL media tidak ditemukan.");
+        return;
+      }
+
+      if (activeMedia.file_type === "audio" && audioRef.current) {
+        audioRef.current.src = publicUrl;
+        audioRef.current.load();
+        audioRef.current.play().catch(e => {
+          console.error("Error playing audio:", e);
+          toast.error(`Gagal memutar audio: ${e.message || "Pastikan file audio valid dan diizinkan autoplay."}`);
+        });
+        if (videoRef.current) { // Pause video if audio starts
+          videoRef.current.pause();
+          videoRef.current.src = ""; // Clear video source
+        }
+      } else if (activeMedia.file_type === "video" && videoRef.current) {
+        videoRef.current.src = publicUrl;
+        videoRef.current.load();
+        videoRef.current.play().catch(e => {
+          console.error("Error playing video:", e);
+          toast.error(`Gagal memutar video: ${e.message || "Pastikan file video valid dan diizinkan autoplay."}`);
+        });
+        if (audioRef.current) { // Pause audio if video starts
+          audioRef.current.pause();
+          audioRef.current.src = ""; // Clear audio source
+        }
+      }
+    } else {
+      // If no active media, pause and clear both players
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.src = "";
+      }
+    }
+  }, [activeMedia]);
+
+  const handleMediaEnded = useCallback(() => {
+    // Loop the current media
+    if (activeMedia?.file_type === "audio" && audioRef.current) {
+      audioRef.current.play().catch(e => console.error("Error looping audio:", e));
+    } else if (activeMedia?.file_type === "video" && videoRef.current) {
+      videoRef.current.play().catch(e => console.error("Error looping video:", e));
+    }
+  }, [activeMedia]);
+
+  const handleMediaError = useCallback((event: React.SyntheticEvent<HTMLMediaElement, Event>) => {
+    console.error("Media playback error:", event.currentTarget.error);
+    let errorMessage = "Terjadi kesalahan saat memutar media.";
+    if (event.currentTarget.error) {
+      switch (event.currentTarget.error.code) {
+        case event.currentTarget.error.MEDIA_ERR_ABORTED:
+          errorMessage = "Pemutaran media dibatalkan.";
+          break;
+        case event.currentTarget.error.MEDIA_ERR_NETWORK:
+          errorMessage = "Kesalahan jaringan saat memuat media.";
+          break;
+        case event.currentTarget.error.MEDIA_ERR_DECODE:
+          errorMessage = "Kesalahan dekode media. Format tidak didukung?";
+          break;
+        case event.currentTarget.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+          errorMessage = "Sumber media tidak didukung atau tidak ditemukan.";
+          break;
+        default:
+          errorMessage = "Kesalahan media tidak diketahui.";
+      }
+    }
+    toast.error(errorMessage);
+    setError(errorMessage);
+    setActiveMedia(null); // Clear active media on error
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+        <p className="text-sm">Memuat media player...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+        <p className="text-sm font-bold">Error Media:</p>
+        <p className="text-xs">{error}</p>
+        <p className="text-xs mt-0.5">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+      </div>
+    );
+  }
+
+  if (!activeMedia) {
+    return (
+      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+        <p className="text-sm text-gray-400">Tidak ada media yang dipilih untuk diputar.</p>
+        <p className="text-xs text-gray-400 mt-0.5">Pilih media di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+      </div>
+    );
+  }
+
+  const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
+
+  if (!publicUrl) {
+    return (
+      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+        <p className="text-sm font-bold">Error:</p>
+        <p className="text-xs">URL media tidak valid atau tidak dapat diakses.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden">
+      <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-yellow-300">
+        {activeMedia.title || (activeMedia.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
+      </h3>
+      {activeMedia.file_type === "audio" ? (
+        <audio
+          ref={audioRef}
+          src={publicUrl}
+          controls
+          loop
+          autoPlay
+          className="w-full max-w-md mt-2"
+          onEnded={handleMediaEnded}
+          onError={handleMediaError}
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          src={publicUrl}
+          controls
+          loop
+          autoPlay
+          muted // Muted by default for autoplay compatibility in some browsers
+          className="w-full h-full object-contain mt-2"
+          onEnded={handleMediaEnded}
+          onError={handleMediaError}
+        />
+      )}
+      <p className="text-xs text-gray-400 mt-2">
+        {activeMedia.file_type === "video" && "Catatan: Video mungkin dimulai dalam mode 'mute' karena batasan browser untuk autoplay."}
+      </p>
+    </div>
+  );
+});
+
+export default MediaPlayerDisplay;

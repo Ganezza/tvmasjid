@@ -12,6 +12,7 @@ import DisplaySettings from "@/components/admin/DisplaySettings";
 import AudioSettings from "@/components/admin/AudioSettings";
 import MasjidInfoSettings from "@/components/admin/MasjidInfoSettings";
 import IslamicHolidaySettings from "@/components/admin/IslamicHolidaySettings";
+import MediaPlayerSettings from "@/components/admin/MediaPlayerSettings"; // Import new component
 import { signOutAndClearSession } from "@/lib/auth"; // Import the new utility
 
 const AdminPanel = () => {
@@ -69,6 +70,9 @@ const AdminPanel = () => {
 
         {/* Islamic Holiday Settings - New component */}
         <IslamicHolidaySettings />
+
+        {/* Media Player Settings - New component */}
+        <MediaPlayerSettings />
       </div>
     </div>
   );
