@@ -166,6 +166,9 @@ const InfoSlideSettings: React.FC = () => {
 
     const uploadToastId = toast.loading("Mengunggah gambar slide...");
 
+    // Capture the old image URL if editing
+    const oldImageUrl = editingSlide?.content || null;
+
     try {
       const { data, error } = await supabase.storage
         .from('images') // Use 'images' bucket
@@ -187,6 +190,26 @@ const InfoSlideSettings: React.FC = () => {
         setPreviewImageUrl(publicUrlData.publicUrl); // Set preview
         toast.success("Gambar slide berhasil diunggah!", { id: uploadToastId });
         toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file gambar dioptimalkan (misal: format WebP, resolusi sesuai kebutuhan).");
+
+        // Attempt to delete the old image if it exists and is different from the new one
+        if (oldImageUrl && oldImageUrl !== publicUrlData.publicUrl) {
+          try {
+            const oldUrlParts = oldImageUrl.split('/');
+            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('images') + 1).join('/');
+            const { error: deleteFileError } = await supabase.storage
+              .from('images')
+              .remove([oldFileNameWithFolder]);
+            if (deleteFileError) {
+              console.warn("Gagal menghapus gambar slide lama dari storage:", deleteFileError);
+              toast.warning("Gagal menghapus gambar slide lama.");
+            } else {
+              console.log("Gambar slide lama berhasil dihapus.");
+            }
+          } catch (e) {
+            console.warn("Error parsing old image path for deletion:", e);
+          }
+        }
+
       } else {
         throw new Error("Gagal mendapatkan URL publik gambar.");
       }
