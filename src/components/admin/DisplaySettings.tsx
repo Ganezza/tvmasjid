@@ -14,8 +14,8 @@ import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useApp
 const formSchema = z.object({
   backgroundImageUrl: z.string().nullable().optional(), // No longer strictly a URL for input, but will store URL
   backgroundColor: z.string().min(1, "Warna latar belakang tidak boleh kosong.").default("#0A0A0A"),
-  screensaverIdleMinutes: z.coerce.number().int().min(1, "Durasi screensaver harus minimal 1 menit.").default(5),
-  screensaverSlideDuration: z.coerce.number().int().min(1, "Durasi slide harus minimal 1 detik.").default(10), // Changed default to 10 seconds
+  // screensaverIdleMinutes: z.coerce.number().int().min(1, "Durasi screensaver harus minimal 1 menit.").default(5), // Dihapus
+  // screensaverSlideDuration: z.coerce.number().int().min(1, "Durasi slide harus minimal 1 detik.").default(10), // Dihapus
 });
 
 type DisplaySettingsFormValues = z.infer<typeof formSchema>;
@@ -28,8 +28,8 @@ const DisplaySettings: React.FC = () => {
     defaultValues: {
       backgroundImageUrl: null,
       backgroundColor: "#0A0A0A",
-      screensaverIdleMinutes: 5,
-      screensaverSlideDuration: 10, // Default value in seconds
+      // screensaverIdleMinutes: 5, // Dihapus
+      // screensaverSlideDuration: 10, // Dihapus
     },
   });
 
@@ -41,8 +41,8 @@ const DisplaySettings: React.FC = () => {
       setValue("backgroundImageUrl", settings.background_image_url);
       setCurrentImageUrl(settings.background_image_url);
       setValue("backgroundColor", settings.background_color || "#0A0A0A");
-      setValue("screensaverIdleMinutes", settings.screensaver_idle_minutes || 5);
-      setValue("screensaverSlideDuration", (settings.screensaver_slide_duration || 10000) / 1000); // Convert ms to seconds for display
+      // setValue("screensaverIdleMinutes", settings.screensaver_idle_minutes || 5); // Dihapus
+      // setValue("screensaverSlideDuration", (settings.screensaver_slide_duration || 10000) / 1000); // Dihapus
     }
   }, [settings, isLoadingSettings, setValue]);
 
@@ -123,8 +123,8 @@ const DisplaySettings: React.FC = () => {
           id: 1,
           background_image_url: values.backgroundImageUrl || null,
           background_color: values.backgroundColor,
-          screensaver_idle_minutes: values.screensaverIdleMinutes,
-          screensaver_slide_duration: values.screensaverSlideDuration * 1000, // Convert seconds to milliseconds for storage
+          // screensaver_idle_minutes: values.screensaverIdleMinutes, // Dihapus
+          // screensaver_slide_duration: values.screensaverSlideDuration * 1000, // Dihapus
         },
         { onConflict: "id" }
       );
@@ -175,28 +175,8 @@ const DisplaySettings: React.FC = () => {
             />
             {errors.backgroundColor && <p className="text-red-400 text-sm mt-1">{errors.backgroundColor.message}</p>}
           </div>
-          <div>
-            <Label htmlFor="screensaverIdleMinutes" className="text-gray-300">Durasi Idle Screensaver (menit)</Label>
-            <Input
-              id="screensaverIdleMinutes"
-              type="number"
-              {...register("screensaverIdleMinutes")}
-              className="bg-gray-700 border-gray-600 text-white mt-1"
-              placeholder="Contoh: 5"
-            />
-            {errors.screensaverIdleMinutes && <p className="text-red-400 text-sm mt-1">{errors.screensaverIdleMinutes.message}</p>}
-          </div>
-          <div>
-            <Label htmlFor="screensaverSlideDuration" className="text-gray-300">Durasi Pergantian Slide Screensaver (detik)</Label>
-            <Input
-              id="screensaverSlideDuration"
-              type="number"
-              {...register("screensaverSlideDuration")}
-              className="bg-gray-700 border-gray-600 text-white mt-1"
-              placeholder="Contoh: 10 (untuk 10 detik)"
-            />
-            {errors.screensaverSlideDuration && <p className="text-red-400 text-sm mt-1">{errors.screensaverSlideDuration.message}</p>}
-          </div>
+          {/* Dihapus: Screensaver Idle Minutes */}
+          {/* Dihapus: Screensaver Slide Duration */}
           <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
             {isSubmitting ? "Menyimpan..." : "Simpan Pengaturan Tampilan"}
           </Button>

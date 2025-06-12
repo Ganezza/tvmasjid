@@ -13,7 +13,6 @@ import AudioSettings from "@/components/admin/AudioSettings";
 import MasjidInfoSettings from "@/components/admin/MasjidInfoSettings";
 import IslamicHolidaySettings from "@/components/admin/IslamicHolidaySettings";
 import MediaPlayerSettings from "@/components/admin/MediaPlayerSettings";
-import ScreensaverContentSettings from "@/components/admin/ScreensaverContentSettings"; // Import new component
 import { signOutAndClearSession } from "@/lib/auth";
 
 const AdminPanel = () => {
@@ -74,9 +73,6 @@ const AdminPanel = () => {
 
         {/* Media Player Settings */}
         <MediaPlayerSettings />
-
-        {/* Screensaver Content Settings - New component */}
-        <ScreensaverContentSettings />
       </div>
     </div>
   );

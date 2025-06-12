@@ -18,8 +18,8 @@ interface AppSettings {
   running_text: string;
   background_image_url: string | null;
   background_color: string;
-  screensaver_idle_minutes: number;
-  screensaver_slide_duration: number; // This will now store seconds, but the type is still number
+  // screensaver_idle_minutes: number; // Dihapus
+  // screensaver_slide_duration: number; // Dihapus
   murottal_active: boolean;
   tarhim_active: boolean;
   iqomah_countdown_duration: number;
@@ -93,8 +93,8 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           running_text: "Selamat datang di Masjid Agung Al-Falah. Mari tingkatkan iman dan taqwa kita. Jangan lupa matikan ponsel saat sholat. Semoga Allah menerima amal ibadah kita. Aamiin.",
           background_image_url: null,
           background_color: "#0A0A0A",
-          screensaver_idle_minutes: 5,
-          screensaver_slide_duration: 10, // DEFAULT VALUE FOR NEW FIELD (in seconds)
+          // screensaver_idle_minutes: 5, // Dihapus
+          // screensaver_slide_duration: 10, // Dihapus
           murottal_active: false,
           tarhim_active: false,
           iqomah_countdown_duration: 300,
