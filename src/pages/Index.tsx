@@ -288,6 +288,10 @@ const Index = () => {
       <AppBackground>
         <MurottalPlayer />
 
+        {/* MediaPlayerDisplay should always be mounted to avoid AbortError,
+            its playback will be controlled by isOverlayActive prop */}
+        <MediaPlayerDisplay isOverlayActive={isOverlayActive || isScreenDarkened || isScreensaverActive} />
+
         {isScreensaverActive && !isOverlayActive && !isScreenDarkened && (
           <Screensaver />
         )}
@@ -364,8 +368,7 @@ const Index = () => {
               </React.Suspense>
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
-              {/* New Media Player Display */}
-              <MediaPlayerDisplay /> 
+              {/* MediaPlayerDisplay dipindahkan ke luar div kondisional */}
             </div>
           </div>
 
