@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"; // Import DialogDescription
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -226,6 +226,9 @@ const NotificationStudySettings: React.FC = () => {
           <DialogContent className="bg-gray-800 text-white border-gray-700">
             <DialogHeader>
               <DialogTitle className="text-blue-300">{editingItem ? "Edit Item Notifikasi/Kajian" : "Tambah Item Baru"}</DialogTitle>
+              <DialogDescription>
+                {editingItem ? "Perbarui detail notifikasi, kajian, atau acara khusus ini." : "Isi detail untuk notifikasi, kajian, atau acara khusus baru."}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>

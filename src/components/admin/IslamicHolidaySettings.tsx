@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"; // Import DialogDescription
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useForm } from "react-hook-form";
@@ -167,7 +167,7 @@ const IslamicHolidaySettings: React.FC = () => {
     }
 
     setIsSyncing(true);
-    const syncToastId = toast.loading(`Menyinkronkan hari besar untuk tahun ${yearToSync}...`);
+    const syncToastId = toast.loading(`Menyinkronkan hari besar untuk tahun ${yearToYear}...`);
 
     try {
       const { data, error } = await supabase.functions.invoke('fetch-holidays', {
@@ -234,6 +234,9 @@ const IslamicHolidaySettings: React.FC = () => {
           <DialogContent className="bg-gray-800 text-white border-gray-700">
             <DialogHeader>
               <DialogTitle className="text-blue-300">{editingHoliday ? "Edit Hari Besar Islam" : "Tambah Hari Besar Islam Baru"}</DialogTitle>
+              <DialogDescription>
+                {editingHoliday ? "Perbarui detail hari besar Islam ini." : "Isi detail untuk hari besar Islam baru."}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
