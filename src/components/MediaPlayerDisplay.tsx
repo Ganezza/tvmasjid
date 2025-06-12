@@ -10,6 +10,7 @@ interface MediaFile {
   title: string | null;
   file_path: string;
   file_type: "audio" | "video";
+  source_type: "upload" | "youtube"; // New field
 }
 
 interface MediaPlayerDisplayProps {
@@ -23,6 +24,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
   const [isPlaying, setIsPlaying] = useState(false); // New state for manual play/pause
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const youtubeIframeRef = useRef<HTMLIFrameElement>(null); // Ref for YouTube iframe
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchActiveMedia = useCallback(async () => {
@@ -120,26 +122,49 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
   // Effect to handle playback based on isPlaying and isOverlayActive
   useEffect(() => {
-    const mediaElement = activeMedia?.file_type === "audio" ? audioRef.current : videoRef.current;
+    if (!activeMedia) return;
 
-    if (!mediaElement) return;
+    const handlePlayback = (play: boolean) => {
+      if (activeMedia.source_type === "youtube" && youtubeIframeRef.current) {
+        const player = youtubeIframeRef.current;
+        if (player && player.contentWindow) {
+          const command = play ? 'playVideo' : 'pauseVideo';
+          player.contentWindow.postMessage(
+            `{"event":"command","func":"${command}","args":""}`,
+            "*"
+          );
+          console.log(`MediaPlayerDisplay: Sent YouTube command: ${command}`);
+        }
+      } else {
+        const mediaElement = activeMedia.file_type === "audio" ? audioRef.current : videoRef.current;
+        if (mediaElement) {
+          if (play) {
+            mediaElement.play().catch(e => {
+              console.error("Error playing media:", e);
+              toast.error(`Gagal memutar media: ${e.message || "Pastikan file media valid dan diizinkan autoplay."}`);
+              setIsPlaying(false); // Reset playing state on error
+            });
+            console.log("MediaPlayerDisplay: Media resumed.");
+          } else {
+            mediaElement.pause();
+            console.log("MediaPlayerDisplay: Media paused.");
+          }
+        }
+      }
+    };
 
     if (isOverlayActive) {
-      if (!mediaElement.paused) {
-        mediaElement.pause();
+      if (isPlaying) { // Only pause if it was actively playing
+        handlePlayback(false); // Pause media
         console.log("MediaPlayerDisplay: Media paused due to overlay/murottal.");
       }
     } else {
-      if (isPlaying && mediaElement.paused) {
-        mediaElement.play().catch(e => {
-          console.error("Error playing media:", e);
-          toast.error(`Gagal memutar media: ${e.message || "Pastikan file media valid dan diizinkan autoplay."}`);
-          setIsPlaying(false); // Reset playing state on error
-        });
-        console.log("MediaPlayerDisplay: Media resumed.");
-      } else if (!isPlaying && !mediaElement.paused) {
-        mediaElement.pause();
-        console.log("MediaPlayerDisplay: Media paused by user or no longer intended to play.");
+      if (isPlaying) { // If supposed to be playing and no overlay
+        handlePlayback(true); // Ensure media is playing
+        console.log("MediaPlayerDisplay: Media resumed/continued.");
+      } else {
+        handlePlayback(false); // Ensure media is paused
+        console.log("MediaPlayerDisplay: Media remains paused.");
       }
     }
   }, [isPlaying, isOverlayActive, activeMedia]);
@@ -148,6 +173,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
   useEffect(() => {
     const audioEl = audioRef.current;
     const videoEl = videoRef.current;
+    const youtubeIframeEl = youtubeIframeRef.current;
 
     // Pause and clear all media elements first
     if (audioEl) {
@@ -158,46 +184,61 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
       videoEl.pause();
       videoEl.src = "";
     }
+    if (youtubeIframeEl) {
+      youtubeIframeEl.src = ""; // Clear YouTube iframe src
+    }
     setIsPlaying(false); // Reset playing state when media changes
 
     if (activeMedia) {
-      const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
-      console.log("MediaPlayerDisplay: Active media changed. Public URL:", publicUrl);
-      if (!publicUrl) {
-        setError("URL media tidak ditemukan.");
-        return;
-      }
+      if (activeMedia.source_type === "upload") {
+        const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
+        console.log("MediaPlayerDisplay: Active media changed (Upload). Public URL:", publicUrl);
+        if (!publicUrl) {
+          setError("URL media tidak ditemukan.");
+          return;
+        }
 
-      if (activeMedia.file_type === "audio" && audioEl) {
-        audioEl.src = publicUrl;
-        audioEl.load();
-      } else if (activeMedia.file_type === "video" && videoEl) {
-        videoEl.src = publicUrl;
-        videoEl.load();
+        if (activeMedia.file_type === "audio" && audioEl) {
+          audioEl.src = publicUrl;
+          audioEl.load();
+        } else if (activeMedia.file_type === "video" && videoEl) {
+          videoEl.src = publicUrl;
+          videoEl.load();
+        }
+      } else if (activeMedia.source_type === "youtube" && youtubeIframeEl) {
+        // For YouTube, file_path already contains the embed URL
+        const youtubeEmbedUrl = activeMedia.file_path;
+        console.log("MediaPlayerDisplay: Active media changed (YouTube). Embed URL:", youtubeEmbedUrl);
+        // Add enablejsapi=1 to allow programmatic control
+        youtubeIframeEl.src = `${youtubeEmbedUrl}?autoplay=0&controls=1&modestbranding=1&rel=0&enablejsapi=1&loop=1&playlist=${youtubeEmbedUrl.split('/').pop()}`;
       }
     }
   }, [activeMedia]);
 
 
   const handleMediaEnded = useCallback(() => {
-    // Loop the current media only if it was manually started
-    if (isPlaying) {
-      if (activeMedia?.file_type === "audio" && audioRef.current) {
-        audioRef.current.play().catch(e => console.error("Error looping audio:", e));
-      } else if (activeMedia?.file_type === "video" && videoRef.current) {
-        videoRef.current.play().catch(e => console.error("Error looping video:", e));
+    // For uploaded media, loop if isPlaying is true
+    if (activeMedia?.source_type === "upload") {
+      if (isPlaying) {
+        if (activeMedia.file_type === "audio" && audioRef.current) {
+          audioRef.current.play().catch(e => console.error("Error looping audio:", e));
+        } else if (activeMedia.file_type === "video" && videoRef.current) {
+          videoRef.current.play().catch(e => console.error("Error looping video:", e));
+        }
+      } else {
+        // If not playing manually, just ensure it's paused
+        if (audioRef.current) audioRef.current.pause();
+        if (videoRef.current) videoRef.current.pause();
       }
-    } else {
-      // If not playing manually, just ensure it's paused
-      if (audioRef.current) audioRef.current.pause();
-      if (videoRef.current) videoRef.current.pause();
     }
+    // For YouTube, the loop parameter in the URL should handle looping
   }, [isPlaying, activeMedia]);
 
-  const handleMediaError = useCallback((event: React.SyntheticEvent<HTMLMediaElement, Event>) => {
+  const handleMediaError = useCallback((event: React.SyntheticEvent<HTMLMediaElement | HTMLIFrameElement, Event>) => {
     console.error("Media playback error:", event.currentTarget.error);
     let errorMessage = "Terjadi kesalahan saat memutar media.";
-    if (event.currentTarget.error) {
+    // Check if it's an HTMLMediaElement error
+    if ('code' in event.currentTarget.error) {
       switch (event.currentTarget.error.code) {
         case event.currentTarget.error.MEDIA_ERR_ABORTED:
           errorMessage = "Pemutaran media dibatalkan.";
@@ -214,6 +255,9 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
         default:
           errorMessage = "Kesalahan media tidak diketahui.";
       }
+    } else {
+      // Generic error for iframe or other cases
+      errorMessage = `Kesalahan media: ${event.currentTarget.error.message || "Tidak diketahui."}`;
     }
     toast.error(errorMessage);
     setError(errorMessage);
@@ -222,23 +266,38 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
   }, []);
 
   const togglePlayback = () => {
-    console.log("MediaPlayerDisplay: Toggle playback button clicked."); // Log when button is clicked
-    const mediaElement = activeMedia?.file_type === "audio" ? audioRef.current : videoRef.current;
-    if (mediaElement) {
-      if (isPlaying) {
-        mediaElement.pause();
-        setIsPlaying(false);
-        console.log("MediaPlayerDisplay: Media paused by user."); // Log when paused
-      } else {
-        console.log("MediaPlayerDisplay: Attempting to play media..."); // Log when play is attempted
-        mediaElement.play().then(() => {
-          setIsPlaying(true);
-          console.log("MediaPlayerDisplay: Media started playing successfully."); // Log when play succeeds
-        }).catch(e => {
-          console.error("Error attempting to play media manually:", e);
-          toast.error(`Gagal memutar media: ${e.message || "Terjadi kesalahan."}`);
+    console.log("MediaPlayerDisplay: Toggle playback button clicked.");
+    if (!activeMedia) return;
+
+    if (activeMedia.source_type === "youtube" && youtubeIframeRef.current) {
+      const player = youtubeIframeRef.current;
+      if (player && player.contentWindow) {
+        const command = isPlaying ? 'pauseVideo' : 'playVideo';
+        player.contentWindow.postMessage(
+          `{"event":"command","func":"${command}","args":""}`,
+          "*"
+        );
+        setIsPlaying(!isPlaying);
+        console.log(`MediaPlayerDisplay: Sent YouTube command: ${command}. New isPlaying state: ${!isPlaying}`);
+      }
+    } else {
+      const mediaElement = activeMedia.file_type === "audio" ? audioRef.current : videoRef.current;
+      if (mediaElement) {
+        if (isPlaying) {
+          mediaElement.pause();
           setIsPlaying(false);
-        });
+          console.log("MediaPlayerDisplay: Media paused by user.");
+        } else {
+          console.log("MediaPlayerDisplay: Attempting to play media...");
+          mediaElement.play().then(() => {
+            setIsPlaying(true);
+            console.log("MediaPlayerDisplay: Media started playing successfully.");
+          }).catch(e => {
+            console.error("Error attempting to play media manually:", e);
+            toast.error(`Gagal memutar media: ${e.message || "Terjadi kesalahan."}`);
+            setIsPlaying(false);
+          });
+        }
       }
     }
   };
@@ -270,10 +329,16 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
     );
   }
 
-  // Define publicUrl here, after activeMedia is confirmed to exist
-  const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
+  // Determine the source URL based on source_type
+  let mediaSourceUrl: string | undefined;
+  if (activeMedia.source_type === "upload") {
+    mediaSourceUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
+  } else if (activeMedia.source_type === "youtube") {
+    // For YouTube, file_path already contains the embed URL
+    mediaSourceUrl = activeMedia.file_path;
+  }
 
-  if (!publicUrl) {
+  if (!mediaSourceUrl) {
     return (
       <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
         <p className="text-sm font-bold">Error:</p>
@@ -288,20 +353,20 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
         {activeMedia.title || (activeMedia.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
       </h3>
       <div className="relative w-full flex-grow flex items-center justify-center">
-        {activeMedia.file_type === "audio" ? (
+        {activeMedia.source_type === "upload" && activeMedia.file_type === "audio" ? (
           <audio
             ref={audioRef}
-            src={publicUrl}
+            src={mediaSourceUrl}
             controls={false} // Hide default controls
             loop
             className="hidden" // Hide audio element, control via custom button
             onEnded={handleMediaEnded}
             onError={handleMediaError}
           />
-        ) : (
+        ) : activeMedia.source_type === "upload" && activeMedia.file_type === "video" ? (
           <video
             ref={videoRef}
-            src={publicUrl}
+            src={mediaSourceUrl}
             controls={false} // Hide default controls
             loop
             muted // Muted by default for autoplay compatibility in some browsers
@@ -309,7 +374,20 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
             onEnded={handleMediaEnded}
             onError={handleMediaError}
           />
-        )}
+        ) : activeMedia.source_type === "youtube" ? (
+          <div className="relative w-full h-full flex items-center justify-center">
+            <iframe
+              ref={youtubeIframeRef}
+              className="w-full h-full object-contain rounded-md border border-gray-600"
+              src={`${mediaSourceUrl}?autoplay=0&controls=1&modestbranding=1&rel=0&enablejsapi=1&loop=1&playlist=${mediaSourceUrl.split('/').pop()}`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              onError={(e) => handleMediaError(e as React.SyntheticEvent<HTMLIFrameElement, Event>)}
+            ></iframe>
+          </div>
+        ) : null}
         <Button 
           onClick={togglePlayback} 
           className="absolute bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg"
@@ -323,7 +401,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
           Klik tombol <PlayCircle className="inline-block h-3 w-3 relative -top-0.5" /> untuk memutar media.
         </p>
       )}
-      {activeMedia.file_type === "video" && (
+      {activeMedia.file_type === "video" && (activeMedia.source_type === "upload" || activeMedia.source_type === "youtube") && (
         <p className="text-xs text-gray-400 mt-1">
           Catatan: Video mungkin dimulai dalam mode 'mute' karena batasan browser untuk autoplay.
         </p>
