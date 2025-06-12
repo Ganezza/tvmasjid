@@ -381,7 +381,10 @@ const MediaPlayerSettings: React.FC = () => {
       </CardHeader>
       <CardContent>
         <p className="text-gray-400 mb-4">Kelola file audio/video atau tautan YouTube yang akan diputar di layar utama.</p>
-        <Button onClick={handleAddMedia} className="w-full bg-green-600 hover:bg-green-700 text-white mb-4">
+        <Button onClick={() => {
+          console.log("Button 'Tambah Media Baru' clicked!"); // New log here
+          handleAddMedia();
+        }} className="w-full bg-green-600 hover:bg-green-700 text-white mb-4">
           <PlusCircle className="mr-2 h-4 w-4" /> Tambah Media Baru
         </Button>
 
