@@ -35,7 +35,7 @@ const getYouTubeVideoId = (url: string): string | null => {
 const uploadMediaFormSchema = z.object({
   id: z.string().optional(),
   title: z.string().max(100, "Judul terlalu panjang.").nullable().optional(),
-  file: z.instanceof(FileList).refine(file => file.length > 0, "File media harus diunggah."),
+  file: z.instanceof(FileList).refine(file => file.length > 0, "File media harus diunggah.").optional(), // Made optional for edit mode
   file_type: z.enum(["audio", "video"], { message: "Tipe file tidak valid." }),
   display_order: z.coerce.number().int().min(0, "Urutan tampilan harus non-negatif.").default(0),
 });
@@ -178,6 +178,7 @@ const MediaPlayerSettings: React.FC = () => {
         title: media.title || "",
         file_type: media.file_type,
         display_order: media.display_order,
+        file: undefined, // Ensure file input is reset
       });
       setDialogMode('edit-upload');
     } else { // youtube
@@ -258,6 +259,8 @@ const MediaPlayerSettings: React.FC = () => {
     let fileType: "audio" | "video" = values.file_type;
     const sourceType: "upload" = "upload";
 
+    const oldFilePath = editingMedia?.source_type === 'upload' ? editingMedia.file_path : null;
+
     if (values.file && values.file.length > 0) {
       const file = values.file[0];
       const fileExtension = file.name.split('.').pop();
@@ -278,6 +281,26 @@ const MediaPlayerSettings: React.FC = () => {
           throw error;
         }
         toast.success("File media berhasil diunggah!", { id: uploadToastId });
+
+        // Delete old file if a new one was uploaded and it's different
+        if (oldFilePath && oldFilePath !== filePath) {
+          try {
+            const oldUrlParts = oldFilePath.split('/');
+            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('audio') + 1).join('/');
+            const { error: deleteOldFileError } = await supabase.storage
+              .from('audio')
+              .remove([oldFileNameWithFolder]);
+            if (deleteOldFileError) {
+              console.warn("Gagal menghapus file media lama dari storage:", deleteOldFileError);
+              toast.warning("Gagal menghapus file media lama.");
+            } else {
+              console.log("File media lama berhasil dihapus.");
+            }
+          } catch (e) {
+            console.warn("Error parsing old file path for deletion:", e);
+          }
+        }
+
       } catch (error: any) {
         toast.error(`Gagal mengunggah file: ${error.message}`, { id: uploadToastId });
         return;
