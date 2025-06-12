@@ -166,6 +166,7 @@ const MediaPlayerSettings: React.FC = () => {
   }, [fetchMediaAndSettings]);
 
   const handleAddMedia = () => {
+    console.log("handleAddMedia called. Setting isDialogOpen to true."); // Debugging log
     setEditingMedia(null);
     reset({ title: "", file: undefined, youtubeUrl: "", file_type: "audio", source_type: "upload", display_order: 0 });
     setIsDialogOpen(true);
@@ -199,7 +200,7 @@ const MediaPlayerSettings: React.FC = () => {
         const fileNameWithFolder = urlParts.slice(urlParts.indexOf('audio') + 1).join('/'); // Assuming 'audio' bucket
         
         const { error: storageError } = await supabase.storage
-          .from('audio') // Use 'audio' bucket for media
+          .from('audio') // Use 'audio' bucket for all media
           .remove([fileNameWithFolder]);
 
         if (storageError) {
