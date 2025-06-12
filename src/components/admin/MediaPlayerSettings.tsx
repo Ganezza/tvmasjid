@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select components
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,15 +20,49 @@ interface MediaFile {
   title: string | null;
   file_path: string;
   file_type: "audio" | "video";
+  source_type: "upload" | "youtube"; // New field
   display_order: number;
 }
+
+// Helper to extract YouTube video ID
+const getYouTubeVideoId = (url: string): string | null => {
+  const regex = /(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/|)([\w-]{11})(?:\S+)?/i;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+};
 
 const mediaFormSchema = z.object({
   id: z.string().optional(),
   title: z.string().max(100, "Judul terlalu panjang.").nullable().optional(),
-  file: z.any().optional(), // For file input
-  file_type: z.enum(["audio", "video"], { message: "Tipe file tidak valid." }).optional(),
+  file: z.instanceof(FileList).optional(), // For file input
+  youtubeUrl: z.string().url("URL YouTube tidak valid.").nullable().optional(), // For YouTube URL
+  file_type: z.enum(["audio", "video"], { message: "Tipe file tidak valid." }).optional(), // Still needed for uploaded files
+  source_type: z.enum(["upload", "youtube"], { message: "Tipe sumber tidak valid." }), // New field
   display_order: z.coerce.number().int().min(0, "Urutan tampilan harus non-negatif.").default(0),
+}).superRefine((data, ctx) => {
+  if (data.source_type === "upload") {
+    if (!data.file || data.file.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "File media harus diunggah untuk tipe 'Upload'.",
+        path: ["file"],
+      });
+    }
+  } else if (data.source_type === "youtube") {
+    if (!data.youtubeUrl) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "URL YouTube tidak boleh kosong untuk tipe 'YouTube'.",
+        path: ["youtubeUrl"],
+      });
+    } else if (!getYouTubeVideoId(data.youtubeUrl)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "URL YouTube tidak valid.",
+        path: ["youtubeUrl"],
+      });
+    }
+  }
 });
 
 type MediaFormValues = z.infer<typeof mediaFormSchema>;
@@ -44,12 +79,17 @@ const MediaPlayerSettings: React.FC = () => {
     resolver: zodResolver(mediaFormSchema),
     defaultValues: {
       title: "",
-      file_type: "audio",
+      file: undefined,
+      youtubeUrl: "",
+      file_type: "audio", // Default for uploaded files
+      source_type: "upload", // Default source type
       display_order: 0,
     },
   });
 
-  const { handleSubmit, register, setValue, reset, formState: { isSubmitting, errors } } = form;
+  const { handleSubmit, register, setValue, watch, reset, formState: { isSubmitting, errors } } = form;
+  const selectedSourceType = watch("source_type");
+  const currentYoutubeUrl = watch("youtubeUrl");
 
   const fetchMediaAndSettings = useCallback(async () => {
     try {
@@ -128,7 +168,7 @@ const MediaPlayerSettings: React.FC = () => {
 
   const handleAddMedia = () => {
     setEditingMedia(null);
-    reset({ title: "", file: undefined, file_type: "audio", display_order: 0 });
+    reset({ title: "", file: undefined, youtubeUrl: "", file_type: "audio", source_type: "upload", display_order: 0 });
     setIsDialogOpen(true);
   };
 
@@ -137,31 +177,36 @@ const MediaPlayerSettings: React.FC = () => {
     reset({
       id: media.id,
       title: media.title || "",
+      file: undefined, // Clear file input for editing
+      youtubeUrl: media.source_type === "youtube" ? media.file_path : "", // Set YouTube URL if applicable
       file_type: media.file_type,
+      source_type: media.source_type,
       display_order: media.display_order,
     });
     setIsDialogOpen(true);
   };
 
   const handleDeleteMedia = async (media: MediaFile) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus media ini? Ini juga akan menghapus file dari penyimpanan.")) {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus media ini? Ini juga akan menghapus file dari penyimpanan jika diunggah.")) {
       return;
     }
 
     const deleteToastId = toast.loading("Menghapus media...");
 
     try {
-      // Delete from storage first
-      const urlParts = media.file_path.split('/');
-      const fileNameWithFolder = urlParts.slice(urlParts.indexOf('audio') + 1).join('/'); // Assuming 'audio' bucket
-      
-      const { error: storageError } = await supabase.storage
-        .from('audio') // Use 'audio' bucket for media
-        .remove([fileNameWithFolder]);
+      // If it's an uploaded file, delete from storage first
+      if (media.source_type === "upload") {
+        const urlParts = media.file_path.split('/');
+        const fileNameWithFolder = urlParts.slice(urlParts.indexOf('audio') + 1).join('/'); // Assuming 'audio' bucket
+        
+        const { error: storageError } = await supabase.storage
+          .from('audio') // Use 'audio' bucket for media
+          .remove([fileNameWithFolder]);
 
-      if (storageError) {
-        console.warn("Failed to delete file from storage:", storageError);
-        // Don't throw, proceed to delete from DB even if storage fails
+        if (storageError) {
+          console.warn("Failed to delete file from storage:", storageError);
+          // Don't throw, proceed to delete from DB even if storage fails
+        }
       }
 
       // Then delete from database
@@ -209,42 +254,63 @@ const MediaPlayerSettings: React.FC = () => {
 
   const onSubmit = async (values: MediaFormValues) => {
     let filePath = editingMedia?.file_path || null;
-    let fileType = editingMedia?.file_type || values.file_type;
+    let fileType: "audio" | "video" = editingMedia?.file_type || "video"; // Default to video for YouTube
+    let sourceType: "upload" | "youtube" = values.source_type;
 
-    if (values.file && values.file.length > 0) {
-      const file = values.file[0];
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExtension}`;
-      filePath = `media/${fileName}`; // Store in 'media' subfolder within 'audio' bucket
+    if (sourceType === "upload") {
+      if (values.file && values.file.length > 0) {
+        const file = values.file[0];
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `${uuidv4()}.${fileExtension}`;
+        filePath = `media/${fileName}`; // Store in 'media' subfolder within 'audio' bucket
 
-      const uploadToastId = toast.loading("Mengunggah file media...");
+        const uploadToastId = toast.loading("Mengunggah file media...");
 
-      try {
-        const { data, error } = await supabase.storage
-          .from('audio') // Use 'audio' bucket for all media
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+        try {
+          const { data, error } = await supabase.storage
+            .from('audio') // Use 'audio' bucket for all media
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false,
+            });
 
-        if (error) {
-          throw error;
+          if (error) {
+            throw error;
+          }
+
+          // Determine file type based on MIME type or extension
+          if (file.type.startsWith('audio/')) {
+            fileType = 'audio';
+          } else if (file.type.startsWith('video/')) {
+            fileType = 'video';
+          } else {
+            throw new Error("Tipe file tidak didukung. Hanya audio dan video.");
+          }
+
+          toast.success("File media berhasil diunggah!", { id: uploadToastId });
+        } catch (error: any) {
+          console.error("Error uploading file:", error);
+          toast.error(`Gagal mengunggah file: ${error.message}`, { id: uploadToastId });
+          return; // Stop submission if upload fails
         }
-
-        // Determine file type based on MIME type or extension
-        if (file.type.startsWith('audio/')) {
-          fileType = 'audio';
-        } else if (file.type.startsWith('video/')) {
-          fileType = 'video';
+      } else if (!editingMedia || editingMedia.source_type !== "upload") {
+        // If not editing an existing upload, and no new file is provided, it's an error
+        toast.error("File media harus diunggah.");
+        return;
+      }
+    } else if (sourceType === "youtube") {
+      if (values.youtubeUrl) {
+        const videoId = getYouTubeVideoId(values.youtubeUrl);
+        if (videoId) {
+          filePath = `https://www.youtube.com/embed/${videoId}`; // Store embed URL
+          fileType = "video"; // YouTube is always video
         } else {
-          throw new Error("Tipe file tidak didukung. Hanya audio dan video.");
+          toast.error("URL YouTube tidak valid.");
+          return;
         }
-
-        toast.success("File media berhasil diunggah!", { id: uploadToastId });
-      } catch (error: any) {
-        console.error("Error uploading file:", error);
-        toast.error(`Gagal mengunggah file: ${error.message}`, { id: uploadToastId });
-        return; // Stop submission if upload fails
+      } else {
+        toast.error("URL YouTube tidak boleh kosong.");
+        return;
       }
     }
 
@@ -257,6 +323,7 @@ const MediaPlayerSettings: React.FC = () => {
       title: values.title || null,
       file_path: filePath,
       file_type: fileType,
+      source_type: sourceType, // Include source_type in payload
       display_order: values.display_order,
     };
 
@@ -296,7 +363,7 @@ const MediaPlayerSettings: React.FC = () => {
         <CardTitle className="text-2xl font-semibold text-blue-300">Pengaturan Media Player</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-400 mb-4">Kelola file audio/video yang akan diputar di layar utama.</p>
+        <p className="text-gray-400 mb-4">Kelola file audio/video atau tautan YouTube yang akan diputar di layar utama.</p>
         <Button onClick={handleAddMedia} className="w-full bg-green-600 hover:bg-green-700 text-white mb-4">
           <PlusCircle className="mr-2 h-4 w-4" /> Tambah Media Baru
         </Button>
@@ -309,7 +376,9 @@ const MediaPlayerSettings: React.FC = () => {
               <div key={media.id} className="flex items-center justify-between bg-gray-700 p-3 rounded-md shadow-sm">
                 <div className="flex-grow mr-2">
                   <p className="font-medium text-lg text-blue-200">{media.title || "(Tanpa Judul)"}</p>
-                  <p className="text-sm text-gray-300">Tipe: {media.file_type} | Urutan: {media.display_order}</p>
+                  <p className="text-sm text-gray-300">
+                    Tipe: {media.file_type} | Sumber: {media.source_type} | Urutan: {media.display_order}
+                  </p>
                   <p className="text-xs text-gray-400 truncate">{media.file_path}</p>
                 </div>
                 <div className="flex space-x-2 items-center">
@@ -357,26 +426,79 @@ const MediaPlayerSettings: React.FC = () => {
               </div>
 
               <div>
-                <Label htmlFor="file" className="text-gray-300">Unggah File Media (Audio/Video)</Label>
-                <Input
-                  id="file"
-                  type="file"
-                  accept="audio/*,video/*"
-                  {...register("file")}
-                  className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
-                />
-                {errors.file && <p className="text-red-400 text-sm mt-1">{errors.file.message as string}</p>}
-                {editingMedia?.file_path && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-400 mb-1">File saat ini:</p>
-                    {editingMedia.file_type === "audio" ? (
-                      <audio controls src={supabase.storage.from('audio').getPublicUrl(editingMedia.file_path).data?.publicUrl} className="w-full max-w-xs" />
-                    ) : (
-                      <video controls src={supabase.storage.from('audio').getPublicUrl(editingMedia.file_path).data?.publicUrl} className="w-full max-w-xs h-32 object-contain" />
-                    )}
-                  </div>
-                )}
+                <Label htmlFor="source_type" className="text-gray-300">Tipe Sumber Media</Label>
+                <Select
+                  onValueChange={(value: "upload" | "youtube") => {
+                    setValue("source_type", value);
+                    // Clear other input fields when source type changes
+                    setValue("file", undefined);
+                    setValue("youtubeUrl", "");
+                  }}
+                  defaultValue={form.getValues("source_type")}
+                >
+                  <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white mt-1">
+                    <SelectValue placeholder="Pilih Tipe Sumber" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 text-white border-gray-600">
+                    <SelectItem value="upload">Unggah File (Audio/Video)</SelectItem>
+                    <SelectItem value="youtube">Tautan YouTube</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.source_type && <p className="text-red-400 text-sm mt-1">{errors.source_type.message}</p>}
               </div>
+
+              {selectedSourceType === "upload" && (
+                <div>
+                  <Label htmlFor="file" className="text-gray-300">Unggah File Media (Audio/Video)</Label>
+                  <Input
+                    id="file"
+                    type="file"
+                    accept="audio/*,video/*"
+                    {...register("file")}
+                    className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
+                  />
+                  {errors.file && <p className="text-red-400 text-sm mt-1">{errors.file.message as string}</p>}
+                  {editingMedia?.source_type === "upload" && editingMedia.file_path && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-400 mb-1">File saat ini:</p>
+                      {editingMedia.file_type === "audio" ? (
+                        <audio controls src={supabase.storage.from('audio').getPublicUrl(editingMedia.file_path).data?.publicUrl} className="w-full max-w-xs" />
+                      ) : (
+                        <video controls src={supabase.storage.from('audio').getPublicUrl(editingMedia.file_path).data?.publicUrl} className="w-full max-w-xs h-32 object-contain" />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {selectedSourceType === "youtube" && (
+                <div>
+                  <Label htmlFor="youtubeUrl" className="text-gray-300">URL Video YouTube</Label>
+                  <Input
+                    id="youtubeUrl"
+                    type="url"
+                    {...register("youtubeUrl")}
+                    className="bg-gray-700 border-gray-600 text-white mt-1"
+                    placeholder="Contoh: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                  />
+                  {errors.youtubeUrl && <p className="text-red-400 text-sm mt-1">{errors.youtubeUrl.message}</p>}
+                  {currentYoutubeUrl && getYouTubeVideoId(currentYoutubeUrl) && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-400 mb-1">Pratinjau Video:</p>
+                      <div className="relative w-full" style={{ paddingTop: '56.25%' }}> {/* 16:9 Aspect Ratio */}
+                        <iframe
+                          className="absolute top-0 left-0 w-full h-full rounded-md border border-gray-600"
+                          src={`https://www.youtube.com/embed/${getYouTubeVideoId(currentYoutubeUrl)}?autoplay=0&controls=1&modestbranding=1&rel=0`}
+                          title="YouTube video player"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="display_order" className="text-gray-300">Urutan Tampilan</Label>
