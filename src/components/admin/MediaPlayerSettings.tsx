@@ -3,14 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"; // Import DialogDescription
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select components
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"; // Import DropdownMenu components
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Trash2, Edit, PlusCircle, PlayCircle, CheckCircle } from "lucide-react";
+import { Trash2, Edit, PlusCircle, PlayCircle, CheckCircle, Upload, Youtube } from "lucide-react"; // Added Upload and Youtube icons
 import { v4 as uuidv4 } from 'uuid';
 import { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -19,7 +20,7 @@ interface MediaFile {
   title: string | null;
   file_path: string;
   file_type: "audio" | "video";
-  source_type: "upload" | "youtube"; // New field
+  source_type: "upload" | "youtube";
   display_order: number;
 }
 
@@ -30,69 +31,62 @@ const getYouTubeVideoId = (url: string): string | null => {
   return match ? match[1] : null;
 };
 
-const mediaFormSchema = z.object({
+// Schema for Uploaded Media
+const uploadMediaFormSchema = z.object({
   id: z.string().optional(),
   title: z.string().max(100, "Judul terlalu panjang.").nullable().optional(),
-  file: z.instanceof(FileList).optional(), // For file input
-  youtubeUrl: z.string().url("URL YouTube tidak valid.").nullable().optional(), // For YouTube URL
-  file_type: z.enum(["audio", "video"], { message: "Tipe file tidak valid." }).optional(), // Still needed for uploaded files
-  source_type: z.enum(["upload", "youtube"], { message: "Tipe sumber tidak valid." }), // New field
+  file: z.instanceof(FileList).refine(file => file.length > 0, "File media harus diunggah."),
+  file_type: z.enum(["audio", "video"], { message: "Tipe file tidak valid." }),
   display_order: z.coerce.number().int().min(0, "Urutan tampilan harus non-negatif.").default(0),
-}).superRefine((data, ctx) => {
-  if (data.source_type === "upload") {
-    if (!data.file || data.file.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "File media harus diunggah untuk tipe 'Upload'.",
-        path: ["file"],
-      });
-    }
-  } else if (data.source_type === "youtube") {
-    if (!data.youtubeUrl) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "URL YouTube tidak boleh kosong untuk tipe 'YouTube'.",
-        path: ["youtubeUrl"],
-      });
-    } else if (!getYouTubeVideoId(data.youtubeUrl)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "URL YouTube tidak valid.",
-        path: ["youtubeUrl"],
-      });
-    }
-  }
 });
 
-type MediaFormValues = z.infer<typeof mediaFormSchema>;
+// Schema for YouTube Media
+const youtubeMediaFormSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().max(100, "Judul terlalu panjang.").nullable().optional(),
+  youtubeUrl: z.string().url("URL YouTube tidak valid.").min(1, "URL YouTube tidak boleh kosong.")
+    .refine(url => getYouTubeVideoId(url) !== null, "URL YouTube tidak valid."),
+  display_order: z.coerce.number().int().min(0, "Urutan tampilan harus non-negatif.").default(0),
+});
+
+type UploadMediaFormValues = z.infer<typeof uploadMediaFormSchema>;
+type YoutubeMediaFormValues = z.infer<typeof youtubeMediaFormSchema>;
+
+type DialogMode = 'none' | 'add-upload' | 'add-youtube' | 'edit-upload' | 'edit-youtube';
 
 const MediaPlayerSettings: React.FC = () => {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<DialogMode>('none');
   const [editingMedia, setEditingMedia] = useState<MediaFile | null>(null);
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const settingsChannelRef = useRef<RealtimeChannel | null>(null);
 
-  const form = useForm<MediaFormValues>({
-    resolver: zodResolver(mediaFormSchema),
+  const uploadForm = useForm<UploadMediaFormValues>({
+    resolver: zodResolver(uploadMediaFormSchema),
     defaultValues: {
       title: "",
       file: undefined,
-      youtubeUrl: "",
-      file_type: "audio", // Default for uploaded files
-      source_type: "upload", // Default source type
+      file_type: "audio",
       display_order: 0,
     },
   });
 
-  const { handleSubmit, register, setValue, watch, reset, formState: { isSubmitting, errors } } = form;
-  const selectedSourceType = watch("source_type");
-  const currentYoutubeUrl = watch("youtubeUrl");
+  const youtubeForm = useForm<YoutubeMediaFormValues>({
+    resolver: zodResolver(youtubeMediaFormSchema),
+    defaultValues: {
+      title: "",
+      youtubeUrl: "",
+      display_order: 0,
+    },
+  });
+
+  const { handleSubmit: handleUploadSubmit, register: registerUpload, setValue: setUploadValue, reset: resetUploadForm, formState: { isSubmitting: isUploadSubmitting, errors: uploadErrors } } = uploadForm;
+  const { handleSubmit: handleYoutubeSubmit, register: registerYoutube, setValue: setYoutubeValue, reset: resetYoutubeForm, watch: watchYoutubeUrl, formState: { isSubmitting: isYoutubeSubmitting, errors: youtubeErrors } } = youtubeForm;
+  const currentYoutubeUrl = watchYoutubeUrl("youtubeUrl");
 
   const fetchMediaAndSettings = useCallback(async () => {
     try {
-      // Fetch active media ID from app_settings
       const { data: settingsData, error: settingsError } = await supabase
         .from("app_settings")
         .select("active_media_id")
@@ -108,7 +102,6 @@ const MediaPlayerSettings: React.FC = () => {
         setActiveMediaId(null);
       }
 
-      // Fetch all media files
       const { data, error } = await supabase
         .from("media_files")
         .select("*")
@@ -165,25 +158,37 @@ const MediaPlayerSettings: React.FC = () => {
     };
   }, [fetchMediaAndSettings]);
 
-  const handleAddMedia = () => {
-    console.log("handleAddMedia called. Setting isDialogOpen to true."); // Debugging log
+  const handleAddUploadMedia = () => {
     setEditingMedia(null);
-    reset({ title: "", file: undefined, youtubeUrl: "", file_type: "audio", source_type: "upload", display_order: 0 });
-    setIsDialogOpen(true);
+    resetUploadForm();
+    setDialogMode('add-upload');
+  };
+
+  const handleAddYoutubeMedia = () => {
+    setEditingMedia(null);
+    resetYoutubeForm();
+    setDialogMode('add-youtube');
   };
 
   const handleEditMedia = (media: MediaFile) => {
     setEditingMedia(media);
-    reset({
-      id: media.id,
-      title: media.title || "",
-      file: undefined, // Clear file input for editing
-      youtubeUrl: media.source_type === "youtube" ? media.file_path : "", // Set YouTube URL if applicable
-      file_type: media.file_type,
-      source_type: media.source_type,
-      display_order: media.display_order,
-    });
-    setIsDialogOpen(true);
+    if (media.source_type === 'upload') {
+      resetUploadForm({
+        id: media.id,
+        title: media.title || "",
+        file_type: media.file_type,
+        display_order: media.display_order,
+      });
+      setDialogMode('edit-upload');
+    } else { // youtube
+      resetYoutubeForm({
+        id: media.id,
+        title: media.title || "",
+        youtubeUrl: media.file_path, // file_path stores the YouTube URL
+        display_order: media.display_order,
+      });
+      setDialogMode('edit-youtube');
+    }
   };
 
   const handleDeleteMedia = async (media: MediaFile) => {
@@ -194,22 +199,19 @@ const MediaPlayerSettings: React.FC = () => {
     const deleteToastId = toast.loading("Menghapus media...");
 
     try {
-      // If it's an uploaded file, delete from storage first
       if (media.source_type === "upload") {
         const urlParts = media.file_path.split('/');
-        const fileNameWithFolder = urlParts.slice(urlParts.indexOf('audio') + 1).join('/'); // Assuming 'audio' bucket
+        const fileNameWithFolder = urlParts.slice(urlParts.indexOf('audio') + 1).join('/');
         
         const { error: storageError } = await supabase.storage
-          .from('audio') // Use 'audio' bucket for all media
+          .from('audio')
           .remove([fileNameWithFolder]);
 
         if (storageError) {
           console.warn("Failed to delete file from storage:", storageError);
-          // Don't throw, proceed to delete from DB even if storage fails
         }
       }
 
-      // Then delete from database
       const { error: dbError } = await supabase
         .from("media_files")
         .delete()
@@ -219,7 +221,6 @@ const MediaPlayerSettings: React.FC = () => {
         throw dbError;
       }
 
-      // If the deleted media was the active one, clear active_media_id
       if (activeMediaId === media.id) {
         await supabase
           .from("app_settings")
@@ -245,91 +246,53 @@ const MediaPlayerSettings: React.FC = () => {
         throw error;
       }
       toast.success("Media berhasil diatur sebagai aktif!", { id: setAsActiveToastId });
-      setActiveMediaId(mediaId); // Optimistic update
+      setActiveMediaId(mediaId);
     } catch (error: any) {
       console.error("Error setting active media:", error);
       toast.error(`Gagal mengatur media aktif: ${error.message}`, { id: setAsActiveToastId });
     }
   };
 
-  const onSubmit = async (values: MediaFormValues) => {
-    console.log("onSubmit called with values:", values);
-    let filePath = editingMedia?.file_path || null;
-    let fileType: "audio" | "video" = editingMedia?.file_type || "video"; // Default to video for YouTube
-    let sourceType: "upload" | "youtube" = values.source_type;
+  const onSubmitUpload = async (values: UploadMediaFormValues) => {
+    let filePath: string | null = null;
+    let fileType: "audio" | "video" = values.file_type;
+    const sourceType: "upload" = "upload";
 
-    if (sourceType === "upload") {
-      console.log("Source type is 'upload'. Checking file...");
-      if (values.file && values.file.length > 0) {
-        const file = values.file[0];
-        console.log("File selected:", file.name, file.type);
-        const fileExtension = file.name.split('.').pop();
-        const fileName = `${uuidv4()}.${fileExtension}`;
-        filePath = `media/${fileName}`; // Store in 'media' subfolder within 'audio' bucket
-        console.log("Generated filePath for upload:", filePath);
+    if (values.file && values.file.length > 0) {
+      const file = values.file[0];
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExtension}`;
+      filePath = `media/${fileName}`;
 
-        const uploadToastId = toast.loading("Mengunggah file media...");
+      const uploadToastId = toast.loading("Mengunggah file media...");
 
-        try {
-          console.log("Attempting Supabase storage upload...");
-          const { data, error } = await supabase.storage
-            .from('audio') // Use 'audio' bucket for all media
-            .upload(filePath, file, {
-              cacheControl: '3600',
-              upsert: false,
-            });
+      try {
+        const { data, error } = await supabase.storage
+          .from('audio')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
 
-          if (error) {
-            console.error("Supabase upload error:", error);
-            throw error;
-          }
-          console.log("Supabase upload successful:", data);
-
-          // Determine file type based on MIME type or extension
-          if (file.type.startsWith('audio/')) {
-            fileType = 'audio';
-          } else if (file.type.startsWith('video/')) {
-            fileType = 'video';
-          } else {
-            throw new Error("Tipe file tidak didukung. Hanya audio dan video.");
-          }
-          console.log("Determined fileType:", fileType);
-
-          toast.success("File media berhasil diunggah!", { id: uploadToastId });
-        } catch (error: any) {
-          console.error("Error during file upload process:", error);
-          toast.error(`Gagal mengunggah file: ${error.message}`, { id: uploadToastId });
-          return; // Stop submission if upload fails
+        if (error) {
+          throw error;
         }
-      } else if (!editingMedia || editingMedia.source_type !== "upload") {
-        // If not editing an existing upload, and no new file is provided, it's an error
-        console.log("No file provided for upload, and not editing an existing upload.");
-        toast.error("File media harus diunggah.");
+        toast.success("File media berhasil diunggah!", { id: uploadToastId });
+      } catch (error: any) {
+        toast.error(`Gagal mengunggah file: ${error.message}`, { id: uploadToastId });
         return;
       }
-    } else if (sourceType === "youtube") {
-      console.log("Source type is 'youtube'. Checking URL...");
-      if (values.youtubeUrl) {
-        const videoId = getYouTubeVideoId(values.youtubeUrl);
-        if (videoId) {
-          filePath = `https://www.youtube.com/embed/${videoId}`; // Store embed URL
-          fileType = "video"; // YouTube is always video
-          console.log("YouTube video ID found. Embed URL:", filePath);
-        } else {
-          console.log("Invalid YouTube URL.");
-          toast.error("URL YouTube tidak valid.");
-          return;
-        }
-      } else {
-        console.log("YouTube URL is empty.");
-        toast.error("URL YouTube tidak boleh kosong.");
-        return;
-      }
+    } else if (dialogMode === 'edit-upload' && editingMedia?.source_type === 'upload') {
+      // If editing and no new file is provided, keep the existing file_path
+      filePath = editingMedia.file_path;
+      fileType = editingMedia.file_type;
+    } else {
+      toast.error("File media harus diunggah.");
+      return;
     }
 
-    if (!filePath || !fileType) {
-      console.error("Final check: filePath or fileType is null/undefined. filePath:", filePath, "fileType:", fileType);
-      toast.error("File media atau tipe file tidak valid.");
+    if (!filePath) {
+      toast.error("File media tidak valid.");
       return;
     }
 
@@ -337,13 +300,11 @@ const MediaPlayerSettings: React.FC = () => {
       title: values.title || null,
       file_path: filePath,
       file_type: fileType,
-      source_type: sourceType, // Include source_type in payload
+      source_type: sourceType,
       display_order: values.display_order,
     };
-    console.log("Payload for DB operation:", payload);
 
-    if (editingMedia) {
-      console.log("Updating existing media with ID:", editingMedia.id);
+    if (dialogMode === 'edit-upload' && editingMedia) {
       const { error } = await supabase
         .from("media_files")
         .update(payload)
@@ -354,11 +315,10 @@ const MediaPlayerSettings: React.FC = () => {
         toast.error("Gagal memperbarui media.");
       } else {
         toast.success("Media berhasil diperbarui!");
-        setIsDialogOpen(false);
+        setDialogMode('none');
         fetchMediaAndSettings();
       }
     } else {
-      console.log("Inserting new media into DB.");
       const { error } = await supabase
         .from("media_files")
         .insert(payload);
@@ -368,7 +328,55 @@ const MediaPlayerSettings: React.FC = () => {
         toast.error("Gagal menambahkan media.");
       } else {
         toast.success("Media berhasil ditambahkan!");
-        setIsDialogOpen(false);
+        setDialogMode('none');
+        fetchMediaAndSettings();
+      }
+    }
+  };
+
+  const onSubmitYoutube = async (values: YoutubeMediaFormValues) => {
+    const videoId = getYouTubeVideoId(values.youtubeUrl);
+    if (!videoId) {
+      toast.error("URL YouTube tidak valid.");
+      return;
+    }
+    const filePath = `https://www.youtube.com/embed/${videoId}`;
+    const fileType: "video" = "video";
+    const sourceType: "youtube" = "youtube";
+
+    const payload = {
+      title: values.title || null,
+      file_path: filePath,
+      file_type: fileType,
+      source_type: sourceType,
+      display_order: values.display_order,
+    };
+
+    if (dialogMode === 'edit-youtube' && editingMedia) {
+      const { error } = await supabase
+        .from("media_files")
+        .update(payload)
+        .eq("id", editingMedia.id);
+
+      if (error) {
+        console.error("Error updating media in DB:", error);
+        toast.error("Gagal memperbarui media.");
+      } else {
+        toast.success("Media berhasil diperbarui!");
+        setDialogMode('none');
+        fetchMediaAndSettings();
+      }
+    } else {
+      const { error } = await supabase
+        .from("media_files")
+        .insert(payload);
+
+      if (error) {
+        console.error("Error adding media to DB:", error);
+        toast.error("Gagal menambahkan media.");
+      } else {
+        toast.success("Media berhasil ditambahkan!");
+        setDialogMode('none');
         fetchMediaAndSettings();
       }
     }
@@ -381,12 +389,22 @@ const MediaPlayerSettings: React.FC = () => {
       </CardHeader>
       <CardContent>
         <p className="text-gray-400 mb-4">Kelola file audio/video atau tautan YouTube yang akan diputar di layar utama.</p>
-        <Button onClick={() => {
-          console.log("Button 'Tambah Media Baru' clicked!"); // New log here
-          handleAddMedia();
-        }} className="w-full bg-green-600 hover:bg-green-700 text-white mb-4">
-          <PlusCircle className="mr-2 h-4 w-4" /> Tambah Media Baru
-        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="w-full bg-green-600 hover:bg-green-700 text-white mb-4">
+              <PlusCircle className="mr-2 h-4 w-4" /> Tambah Media Baru
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 bg-gray-700 text-white border-gray-600">
+            <DropdownMenuItem onClick={handleAddUploadMedia} className="cursor-pointer hover:bg-gray-600">
+              <Upload className="mr-2 h-4 w-4" /> Unggah File Media
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleAddYoutubeMedia} className="cursor-pointer hover:bg-gray-600">
+              <Youtube className="mr-2 h-4 w-4" /> Tambah Tautan YouTube
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <div className="space-y-3">
           {mediaFiles.length === 0 ? (
@@ -428,118 +446,154 @@ const MediaPlayerSettings: React.FC = () => {
           )}
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {/* Dialog for Upload Media */}
+        <Dialog open={dialogMode === 'add-upload' || dialogMode === 'edit-upload'} onOpenChange={(open) => { if (!open) setDialogMode('none'); }}>
           <DialogContent className="bg-gray-800 text-white border-gray-700">
             <DialogHeader>
-              <DialogTitle className="text-blue-300">{editingMedia ? "Edit Media" : "Tambah Media Baru"}</DialogTitle>
+              <DialogTitle className="text-blue-300">{dialogMode === 'edit-upload' ? "Edit Media Unggahan" : "Unggah File Media Baru"}</DialogTitle>
               <DialogDescription>
-                {editingMedia ? "Perbarui detail media ini." : "Isi detail untuk media baru yang akan diputar di layar utama."}
+                {dialogMode === 'edit-upload' ? "Perbarui detail media unggahan ini." : "Unggah file audio atau video baru untuk diputar di layar utama."}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleUploadSubmit(onSubmitUpload)} className="space-y-4">
               <div>
-                <Label htmlFor="title" className="text-gray-300">Judul (Opsional)</Label>
+                <Label htmlFor="uploadTitle" className="text-gray-300">Judul (Opsional)</Label>
                 <Input
-                  id="title"
-                  {...register("title")}
+                  id="uploadTitle"
+                  {...registerUpload("title")}
                   className="bg-gray-700 border-gray-600 text-white mt-1"
-                  placeholder="Judul media (mis: Video Kajian)"
+                  placeholder="Judul media (mis: Rekaman Kajian)"
                 />
-                {errors.title && <p className="text-red-400 text-sm mt-1">{errors.title.message}</p>}
+                {uploadErrors.title && <p className="text-red-400 text-sm mt-1">{uploadErrors.title.message}</p>}
               </div>
 
               <div>
-                <Label htmlFor="source_type" className="text-gray-300">Tipe Sumber Media</Label>
+                <Label htmlFor="file" className="text-gray-300">Unggah File Media (Audio/Video)</Label>
+                <Input
+                  id="file"
+                  type="file"
+                  accept="audio/*,video/*"
+                  {...registerUpload("file")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
+                />
+                {uploadErrors.file && <p className="text-red-400 text-sm mt-1">{uploadErrors.file.message as string}</p>}
+                {dialogMode === 'edit-upload' && editingMedia?.source_type === "upload" && editingMedia.file_path && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-400 mb-1">File saat ini:</p>
+                    {editingMedia.file_type === "audio" ? (
+                      <audio controls src={supabase.storage.from('audio').getPublicUrl(editingMedia.file_path).data?.publicUrl} className="w-full max-w-xs" />
+                    ) : (
+                      <video controls src={supabase.storage.from('audio').getPublicUrl(editingMedia.file_path).data?.publicUrl} className="w-full max-w-xs h-32 object-contain" />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="file_type" className="text-gray-300">Tipe File</Label>
                 <Select
-                  onValueChange={(value: "upload" | "youtube") => {
-                    setValue("source_type", value);
-                    // Clear other input fields when source type changes
-                    setValue("file", undefined);
-                    setValue("youtubeUrl", "");
-                  }}
-                  defaultValue={form.getValues("source_type")}
+                  onValueChange={(value: "audio" | "video") => setUploadValue("file_type", value)}
+                  defaultValue={uploadForm.getValues("file_type")}
                 >
                   <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white mt-1">
-                    <SelectValue placeholder="Pilih Tipe Sumber" />
+                    <SelectValue placeholder="Pilih Tipe File" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 text-white border-gray-600">
-                    <SelectItem value="upload">Unggah File (Audio/Video)</SelectItem>
-                    <SelectItem value="youtube">Tautan YouTube</SelectItem>
+                    <SelectItem value="audio">Audio</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.source_type && <p className="text-red-400 text-sm mt-1">{errors.source_type.message}</p>}
+                {uploadErrors.file_type && <p className="text-red-400 text-sm mt-1">{uploadErrors.file_type.message}</p>}
               </div>
 
-              {selectedSourceType === "upload" && (
-                <div>
-                  <Label htmlFor="file" className="text-gray-300">Unggah File Media (Audio/Video)</Label>
-                  <Input
-                    id="file"
-                    type="file"
-                    accept="audio/*,video/*"
-                    {...register("file")}
-                    className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
-                  />
-                  {errors.file && <p className="text-red-400 text-sm mt-1">{errors.file.message as string}</p>}
-                  {editingMedia?.source_type === "upload" && editingMedia.file_path && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-400 mb-1">File saat ini:</p>
-                      {editingMedia.file_type === "audio" ? (
-                        <audio controls src={supabase.storage.from('audio').getPublicUrl(editingMedia.file_path).data?.publicUrl} className="w-full max-w-xs" />
-                      ) : (
-                        <video controls src={supabase.storage.from('audio').getPublicUrl(editingMedia.file_path).data?.publicUrl} className="w-full max-w-xs h-32 object-contain" />
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedSourceType === "youtube" && (
-                <div>
-                  <Label htmlFor="youtubeUrl" className="text-gray-300">URL Video YouTube</Label>
-                  <Input
-                    id="youtubeUrl"
-                    type="url"
-                    {...register("youtubeUrl")}
-                    className="bg-gray-700 border-gray-600 text-white mt-1"
-                    placeholder="Contoh: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                  />
-                  {errors.youtubeUrl && <p className="text-red-400 text-sm mt-1">{errors.youtubeUrl.message}</p>}
-                  {currentYoutubeUrl && getYouTubeVideoId(currentYoutubeUrl) && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-400 mb-1">Pratinjau Video:</p>
-                      <div className="relative w-full" style={{ paddingTop: '56.25%' }}> {/* 16:9 Aspect Ratio */}
-                        <iframe
-                          className="absolute top-0 left-0 w-full h-full rounded-md border border-gray-600"
-                          src={`https://www.youtube.com/embed/${getYouTubeVideoId(currentYoutubeUrl)}?autoplay=0&controls=1&modestbranding=1&rel=0`}
-                          title="YouTube video player"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                        ></iframe>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
               <div>
-                <Label htmlFor="display_order" className="text-gray-300">Urutan Tampilan</Label>
+                <Label htmlFor="uploadDisplayOrder" className="text-gray-300">Urutan Tampilan</Label>
                 <Input
-                  id="display_order"
+                  id="uploadDisplayOrder"
                   type="number"
-                  {...register("display_order")}
+                  {...registerUpload("display_order")}
                   className="bg-gray-700 border-gray-600 text-white mt-1"
                 />
-                {errors.display_order && <p className="text-red-400 text-sm mt-1">{errors.display_order.message}</p>}
+                {uploadErrors.display_order && <p className="text-red-400 text-sm mt-1">{uploadErrors.display_order.message}</p>}
               </div>
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="text-gray-300 border-gray-600 hover:bg-gray-700">
+                <Button type="button" variant="outline" onClick={() => setDialogMode('none')} className="text-gray-300 border-gray-600 hover:bg-gray-700">
                   Batal
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  {isSubmitting ? "Menyimpan..." : (editingMedia ? "Simpan Perubahan" : "Tambah Media")}
+                <Button type="submit" disabled={isUploadSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  {isUploadSubmitting ? "Menyimpan..." : (dialogMode === 'edit-upload' ? "Simpan Perubahan" : "Unggah Media")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog for YouTube Media */}
+        <Dialog open={dialogMode === 'add-youtube' || dialogMode === 'edit-youtube'} onOpenChange={(open) => { if (!open) setDialogMode('none'); }}>
+          <DialogContent className="bg-gray-800 text-white border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-blue-300">{dialogMode === 'edit-youtube' ? "Edit Tautan YouTube" : "Tambah Tautan YouTube Baru"}</DialogTitle>
+              <DialogDescription>
+                {dialogMode === 'edit-youtube' ? "Perbarui detail tautan YouTube ini." : "Tambahkan tautan video YouTube baru untuk diputar di layar utama."}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleYoutubeSubmit(onSubmitYoutube)} className="space-y-4">
+              <div>
+                <Label htmlFor="youtubeTitle" className="text-gray-300">Judul (Opsional)</Label>
+                <Input
+                  id="youtubeTitle"
+                  {...registerYoutube("title")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                  placeholder="Judul video (mis: Khutbah Jumat Terbaru)"
+                />
+                {youtubeErrors.title && <p className="text-red-400 text-sm mt-1">{youtubeErrors.title.message}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="youtubeUrl" className="text-gray-300">URL Video YouTube</Label>
+                <Input
+                  id="youtubeUrl"
+                  type="url"
+                  {...registerYoutube("youtubeUrl")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                  placeholder="Contoh: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                />
+                {youtubeErrors.youtubeUrl && <p className="text-red-400 text-sm mt-1">{youtubeErrors.youtubeUrl.message}</p>}
+                {currentYoutubeUrl && getYouTubeVideoId(currentYoutubeUrl) && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-400 mb-1">Pratinjau Video:</p>
+                    <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                      <iframe
+                        className="absolute top-0 left-0 w-full h-full rounded-md border border-gray-600"
+                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(currentYoutubeUrl)}?autoplay=0&controls=1&modestbranding=1&rel=0`}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="youtubeDisplayOrder" className="text-gray-300">Urutan Tampilan</Label>
+                <Input
+                  id="youtubeDisplayOrder"
+                  type="number"
+                  {...registerYoutube("display_order")}
+                  className="bg-gray-700 border-gray-600 text-white mt-1"
+                />
+                {youtubeErrors.display_order && <p className="text-red-400 text-sm mt-1">{youtubeErrors.display_order.message}</p>}
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogMode('none')} className="text-gray-300 border-gray-600 hover:bg-gray-700">
+                  Batal
+                </Button>
+                <Button type="submit" disabled={isYoutubeSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  {isYoutubeSubmitting ? "Menyimpan..." : (dialogMode === 'edit-youtube' ? "Simpan Perubahan" : "Tambah Tautan")}
                 </Button>
               </DialogFooter>
             </form>
