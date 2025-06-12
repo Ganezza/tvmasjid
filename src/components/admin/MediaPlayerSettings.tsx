@@ -267,7 +267,8 @@ const MediaPlayerSettings: React.FC = () => {
       const fileName = `${uuidv4()}.${fileExtension}`;
       filePath = `media/${fileName}`;
 
-      const uploadToastId = toast.loading("Mengunggah file media...");
+      // Updated initial toast message to include 0%
+      const uploadToastId = toast.loading("Mengunggah file media: 0%");
 
       try {
         const { data, error } = await supabase.storage
@@ -275,6 +276,11 @@ const MediaPlayerSettings: React.FC = () => {
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false,
+            onUploadProgress: (event: ProgressEvent) => {
+              const percent = Math.round((event.loaded * 100) / event.total);
+              // Updated toast message with progress percentage
+              toast.loading(`Mengunggah file media: ${percent}%`, { id: uploadToastId });
+            },
           });
 
         if (error) {
