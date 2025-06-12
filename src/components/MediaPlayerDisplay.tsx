@@ -85,30 +85,30 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
   }, []);
 
   useEffect(() => {
+    // Initial fetch when component mounts
     fetchActiveMedia();
 
-    // Setup Realtime Channel for app_settings changes (specifically active_media_id)
+    // Setup Realtime Channel only once on mount
     if (!channelRef.current) {
-      channelRef.current = supabase
+      const channel = supabase
         .channel('media_player_display_settings_changes')
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
           console.log('MediaPlayerDisplay: App settings change received!', payload);
-          fetchActiveMedia(); // Re-fetch if active_media_id changes
+          // Directly call fetchActiveMedia, it will get the latest settings
+          fetchActiveMedia(); 
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'media_files' }, (payload) => {
           console.log('MediaPlayerDisplay: Media files table change received!', payload);
-          // If the active media file itself is updated or deleted, re-fetch
-          if (activeMedia && (payload.new?.id === activeMedia.id || payload.old?.id === activeMedia.id)) {
-            fetchActiveMedia();
-          } else if (!activeMedia && payload.eventType === 'INSERT') {
-            // If no active media, but a new one is inserted, check if it becomes active
-            fetchActiveMedia();
-          }
+          // Re-fetch if the active media file itself is updated or deleted, or if a new one is inserted and no media is currently active
+          // The `fetchActiveMedia` function already handles this by querying the DB.
+          fetchActiveMedia(); 
         })
         .subscribe();
+      channelRef.current = channel;
       console.log("MediaPlayerDisplay: Subscribed to channel 'media_player_display_settings_changes'.");
     }
 
+    // Cleanup function to unsubscribe when component unmounts
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
@@ -116,7 +116,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
         channelRef.current = null;
       }
     };
-  }, [fetchActiveMedia, activeMedia]); // Add activeMedia to dependencies to re-evaluate subscription if activeMedia changes
+  }, [fetchActiveMedia]); // Only fetchActiveMedia (stable useCallback) as dependency
 
   // Effect to handle playback based on isPlaying and isOverlayActive
   useEffect(() => {
