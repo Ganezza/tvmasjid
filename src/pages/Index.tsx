@@ -327,12 +327,12 @@ const Index = () => {
               <TarawihScheduleDisplay />
             </div>
 
-            {/* Kolom 2: Slide, Pengumuman */}
+            {/* Kolom 2: Pengumuman, Slide */}
             <div className="col-span-1 flex flex-col gap-1 flex-grow min-h-0">
+              <NotificationStudyDisplay />
               <React.Suspense fallback={<div>Memuat Info Slides...</div>}>
                 <InfoSlides />
               </React.Suspense>
-              <NotificationStudyDisplay />
             </div>
 
             {/* Kolom 3: Media Player, Informasi Keuangan Masjid */}
