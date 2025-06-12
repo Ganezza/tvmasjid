@@ -23,7 +23,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import * as Adhan from "adhan";
-import { Settings } from "lucide-react";
+import { Settings, RefreshCw } from "lucide-react"; // Import RefreshCw icon
 import { Button } from "@/components/ui/button";
 import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
 
@@ -255,6 +255,10 @@ const Index = () => {
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay || showImsakOverlay;
   const shouldMediaPlayerBePaused = isOverlayActive || isScreenDarkened || isScreensaverActive || isMurottalPlaying;
 
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
   return (
     <>
       <AppBackground>
@@ -349,8 +353,17 @@ const Index = () => {
         </div>
 
         <div
-          className="absolute bottom-2 left-2 z-50"
+          className="absolute bottom-2 left-2 z-50 flex space-x-2" // Added flex and space-x-2 for spacing
         >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRefresh} // Added onClick handler
+            className="text-gray-400 hover:text-gray-200"
+            aria-label="Refresh Display"
+          >
+            <RefreshCw className="h-6 w-6" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
