@@ -6,9 +6,11 @@ import { cn } from "@/lib/utils";
 
 interface AutoScrollingFinancialRecordsProps {
   children: React.ReactNode;
+  heightClass?: string; // New prop for height control
+  className?: string; // Allow passing additional classes
 }
 
-const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children }) => {
+const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children, heightClass, className }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [animationDuration, setAnimationDuration] = useState('0s');
   const scrollSpeedPxPerSecond = 20; // Kecepatan scroll dalam piksel per detik
@@ -18,10 +20,15 @@ const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps
       // Mengukur tinggi total konten (termasuk duplikasi)
       const totalContentHeight = contentRef.current.scrollHeight;
       // Tinggi satu set konten asli
-      const originalContentHeight = totalContentHeight / 2; 
-      const viewportHeight = contentRef.current.parentElement?.clientHeight || 0;
+      const originalContentHeight = totalContentHeight / 2;
+      // Cari elemen viewport yang sebenarnya dari ScrollArea
+      const viewportElement = contentRef.current.closest('.radix-scroll-area-viewport');
+      const viewportHeight = viewportElement?.clientHeight || 0;
 
-      if (originalContentHeight > viewportHeight) {
+      console.log("AutoScrollingFinancialRecords: originalContentHeight", originalContentHeight, "viewportHeight", viewportHeight);
+
+      // Hanya aktifkan animasi jika konten meluap dan viewport memiliki tinggi yang valid
+      if (originalContentHeight > viewportHeight && viewportHeight > 0) {
         // Hitung durasi animasi berdasarkan tinggi konten asli dan kecepatan scroll
         const durationSeconds = originalContentHeight / scrollSpeedPxPerSecond;
         setAnimationDuration(`${durationSeconds}s`);
@@ -29,10 +36,10 @@ const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps
         setAnimationDuration('0s'); // Tidak ada animasi jika konten tidak meluap
       }
     }
-  }, [children]); // Hitung ulang saat konten anak berubah
+  }, [children, heightClass]); // Hitung ulang saat konten anak atau heightClass berubah
 
   return (
-    <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow")}>
+    <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow", heightClass, className)}>
       <div
         ref={contentRef}
         className="auto-scroll-content"

@@ -100,7 +100,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
         Saldo Kas: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </p>
       <p className="text-xs md:text-sm lg:text-base text-gray-300 mb-1.5">
-        Data per: <span className="font-semibold">{lastFridayDate}</span>
+        Data per: <span className="font-semibold">{format(new Date(), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')}</span>
       </p>
 
       <h4 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-blue-300">
@@ -109,7 +109,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
       {recentRecords.length === 0 ? (
         <p className="text-sm md:text-base text-gray-400">Belum ada transaksi yang tercatat.</p>
       ) : (
-        <AutoScrollingFinancialRecords>
+        <AutoScrollingFinancialRecords heightClass="max-h-48 lg:max-h-64">
           <div className="space-y-1">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-1 rounded-md shadow-sm text-left">
