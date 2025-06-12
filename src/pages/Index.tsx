@@ -317,8 +317,8 @@ const Index = () => {
             <HijriCalendarDisplay />
           </div>
 
-          {/* Main grid container for 3 columns on small screens, 2 on medium, 3 on large */}
-          <div className="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-1 w-full px-0.5 py-0.5 md:py-1 flex-grow">
+          {/* Main grid container for 3 columns on small screens, 3 on medium, 3 on large */}
+          <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-1 w-full px-0.5 py-0.5 md:py-1 flex-grow">
             {/* Kolom 1: Jadwal Sholat, Imam, Hari Besar Islam, Tarawih */}
             <div className="col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
