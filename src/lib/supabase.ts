@@ -5,8 +5,11 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let supabase: SupabaseClient | null = null;
 
+console.log("Supabase Client Init: VITE_SUPABASE_URL =", supabaseUrl ? "Loaded" : "NOT LOADED", supabaseUrl);
+console.log("Supabase Client Init: VITE_SUPABASE_ANON_KEY =", supabaseAnonKey ? "Loaded" : "NOT LOADED", supabaseAnonKey);
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Supabase URL or Anon Key is not set in environment variables.");
+  console.error("Supabase URL or Anon Key is not set in environment variables. Please check your .env file.");
   // Anda mungkin ingin melempar error atau menangani ini dengan lebih baik di aplikasi produksi
 } else {
   // Pastikan klien hanya dibuat sekali
@@ -18,6 +21,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
         detectSessionInUrl: true, // Penting untuk menangani redirect dari alur autentikasi
       },
     });
+    console.log("Supabase Client Init: Supabase client created successfully.");
+  } else {
+    console.log("Supabase Client Init: Supabase client already exists.");
   }
 }
 
