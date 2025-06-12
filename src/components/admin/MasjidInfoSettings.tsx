@@ -59,6 +59,7 @@ const MasjidInfoSettings: React.FC = () => {
     const filePath = `logos/${fileName}`; // Path inside the bucket
 
     const uploadToastId = toast.loading("Mengunggah logo masjid: 0%");
+    const oldLogoUrl = currentLogoUrl; // Capture current URL before upload
 
     try {
       const { data, error } = await supabase.storage
@@ -85,6 +86,26 @@ const MasjidInfoSettings: React.FC = () => {
         setCurrentLogoUrl(publicUrlData.publicUrl);
         toast.success("Logo masjid berhasil diunggah!", { id: uploadToastId });
         toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file gambar dioptimalkan (misal: format WebP, resolusi sesuai kebutuhan).");
+
+        // Attempt to delete the old logo if it exists and is different
+        if (oldLogoUrl && oldLogoUrl !== publicUrlData.publicUrl) {
+          try {
+            const oldUrlParts = oldLogoUrl.split('/');
+            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('images') + 1).join('/');
+            const { error: deleteError } = await supabase.storage
+              .from('images')
+              .remove([oldFileNameWithFolder]);
+            if (deleteError) {
+              console.warn("Gagal menghapus logo masjid lama dari storage:", deleteError);
+              toast.warning("Gagal menghapus logo masjid lama.");
+            } else {
+              console.log("Logo masjid lama berhasil dihapus.");
+            }
+          } catch (e) {
+            console.warn("Error parsing old logo path for deletion:", e);
+          }
+        }
+
       } else {
         throw new Error("Gagal mendapatkan URL publik logo.");
       }

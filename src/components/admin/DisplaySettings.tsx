@@ -54,6 +54,7 @@ const DisplaySettings: React.FC = () => {
     const filePath = `backgrounds/${fileName}`; // Path inside the bucket
 
     const uploadToastId = toast.loading("Mengunggah gambar latar belakang: 0%");
+    const oldImageUrl = currentImageUrl; // Capture current URL before upload
 
     try {
       const { data, error } = await supabase.storage
@@ -79,6 +80,27 @@ const DisplaySettings: React.FC = () => {
         setValue("backgroundImageUrl", publicUrlData.publicUrl);
         setCurrentImageUrl(publicUrlData.publicUrl);
         toast.success("Gambar latar belakang berhasil diunggah!", { id: uploadToastId });
+        toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file gambar dioptimalkan (misal: format WebP, resolusi sesuai kebutuhan).");
+
+        // Attempt to delete the old image if it exists and is different
+        if (oldImageUrl && oldImageUrl !== publicUrlData.publicUrl) {
+          try {
+            const oldUrlParts = oldImageUrl.split('/');
+            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('images') + 1).join('/');
+            const { error: deleteError } = await supabase.storage
+              .from('images')
+              .remove([oldFileNameWithFolder]);
+            if (deleteError) {
+              console.warn("Gagal menghapus gambar latar belakang lama dari storage:", deleteError);
+              toast.warning("Gagal menghapus gambar latar belakang lama.");
+            } else {
+              console.log("Gambar latar belakang lama berhasil dihapus.");
+            }
+          } catch (e) {
+            console.warn("Error parsing old image path for deletion:", e);
+          }
+        }
+
       } else {
         throw new Error("Gagal mendapatkan URL publik gambar.");
       }
