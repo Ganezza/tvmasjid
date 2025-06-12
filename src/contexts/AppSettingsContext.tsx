@@ -19,7 +19,7 @@ interface AppSettings {
   background_image_url: string | null;
   background_color: string;
   screensaver_idle_minutes: number;
-  screensaver_slide_duration: number; // NEW FIELD
+  screensaver_slide_duration: number; // This will now store seconds, but the type is still number
   murottal_active: boolean;
   tarhim_active: boolean;
   iqomah_countdown_duration: number;
@@ -94,7 +94,7 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           background_image_url: null,
           background_color: "#0A0A0A",
           screensaver_idle_minutes: 5,
-          screensaver_slide_duration: 10000, // DEFAULT VALUE FOR NEW FIELD
+          screensaver_slide_duration: 10, // DEFAULT VALUE FOR NEW FIELD (in seconds)
           murottal_active: false,
           tarhim_active: false,
           iqomah_countdown_duration: 300,
