@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"; // Import DialogDescription
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,9 +15,9 @@ import { RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChann
 
 interface Slide {
   id: string;
-  type: "text" | "image";
+  type: "text" | "image"; // Keep both types for existing data, but new data will be 'image'
+  content: string; // Text or image URL
   title?: string;
-  content: string; // This will now be the URL of the uploaded image
   display_order: number;
 }
 
@@ -273,6 +273,9 @@ const InfoSlideSettings: React.FC = () => {
           <DialogContent className="bg-gray-800 text-white border-gray-700">
             <DialogHeader>
               <DialogTitle className="text-blue-300">{editingSlide ? "Edit Slide Gambar" : "Tambah Slide Gambar Baru"}</DialogTitle>
+              <DialogDescription>
+                {editingSlide ? "Perbarui detail slide gambar ini." : "Isi detail untuk slide gambar baru."}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <input type="hidden" {...register("type")} value="image" />
