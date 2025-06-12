@@ -18,8 +18,6 @@ interface AppSettings {
   running_text: string;
   background_image_url: string | null;
   background_color: string;
-  // screensaver_idle_minutes: number; // Dihapus
-  // screensaver_slide_duration: number; // Dihapus
   murottal_active: boolean;
   tarhim_active: boolean;
   iqomah_countdown_duration: number;
@@ -42,7 +40,19 @@ interface AppSettings {
   masjid_address: string | null;
   masjid_name_color: string | null;
   active_media_id: string | null;
-  // Add any other app_settings fields here
+  // NEW FIELDS FOR PER-PRAYER MUROTTAL SETTINGS
+  murottal_active_fajr: boolean;
+  murottal_active_dhuhr: boolean;
+  murottal_active_asr: boolean;
+  murottal_active_maghrib: boolean;
+  murottal_active_isha: boolean;
+  murottal_active_imsak: boolean;
+  murottal_pre_adhan_duration_fajr: number;
+  murottal_pre_adhan_duration_dhuhr: number;
+  murottal_pre_adhan_duration_asr: number;
+  murottal_pre_adhan_duration_maghrib: number;
+  murottal_pre_adhan_duration_isha: number;
+  murottal_pre_adhan_duration_imsak: number;
 }
 
 interface AppSettingsContextType {
@@ -93,8 +103,6 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           running_text: "Selamat datang di Masjid Agung Al-Falah. Mari tingkatkan iman dan taqwa kita. Jangan lupa matikan ponsel saat sholat. Semoga Allah menerima amal ibadah kita. Aamiin.",
           background_image_url: null,
           background_color: "#0A0A0A",
-          // screensaver_idle_minutes: 5, // Dihapus
-          // screensaver_slide_duration: 10, // Dihapus
           murottal_active: false,
           tarhim_active: false,
           iqomah_countdown_duration: 300,
@@ -117,6 +125,19 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           masjid_address: null,
           masjid_name_color: "#34D399",
           active_media_id: null,
+          // Default values for new fields
+          murottal_active_fajr: false,
+          murottal_active_dhuhr: false,
+          murottal_active_asr: false,
+          murottal_active_maghrib: false,
+          murottal_active_isha: false,
+          murottal_active_imsak: false,
+          murottal_pre_adhan_duration_fajr: 10,
+          murottal_pre_adhan_duration_dhuhr: 10,
+          murottal_pre_adhan_duration_asr: 10,
+          murottal_pre_adhan_duration_maghrib: 10,
+          murottal_pre_adhan_duration_isha: 10,
+          murottal_pre_adhan_duration_imsak: 10,
         };
         setSettings(defaultSettings);
         // Optionally, upsert default settings to DB if they don't exist
