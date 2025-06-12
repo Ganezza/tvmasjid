@@ -12,15 +12,16 @@ import DisplaySettings from "@/components/admin/DisplaySettings";
 import AudioSettings from "@/components/admin/AudioSettings";
 import MasjidInfoSettings from "@/components/admin/MasjidInfoSettings";
 import IslamicHolidaySettings from "@/components/admin/IslamicHolidaySettings";
-import MediaPlayerSettings from "@/components/admin/MediaPlayerSettings"; // Import new component
-import { signOutAndClearSession } from "@/lib/auth"; // Import the new utility
+import MediaPlayerSettings from "@/components/admin/MediaPlayerSettings";
+import ScreensaverContentSettings from "@/components/admin/ScreensaverContentSettings"; // Import new component
+import { signOutAndClearSession } from "@/lib/auth";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     await signOutAndClearSession();
-    navigate("/login"); // Redirect to login page after logout
+    navigate("/login");
   };
 
   return (
@@ -68,11 +69,14 @@ const AdminPanel = () => {
         {/* Audio Settings */}
         <AudioSettings />
 
-        {/* Islamic Holiday Settings - New component */}
+        {/* Islamic Holiday Settings */}
         <IslamicHolidaySettings />
 
-        {/* Media Player Settings - New component */}
+        {/* Media Player Settings */}
         <MediaPlayerSettings />
+
+        {/* Screensaver Content Settings - New component */}
+        <ScreensaverContentSettings />
       </div>
     </div>
   );
