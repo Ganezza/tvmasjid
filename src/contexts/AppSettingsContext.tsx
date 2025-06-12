@@ -110,7 +110,7 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           adhan_beep_audio_url: null,
           iqomah_beep_audio_url: null,
           imsak_beep_audio_url: null,
-          masjid_name: "Masjid Digital TV",
+          masjid_name: "", // Changed default to empty string
           masjid_logo_url: null,
           masjid_address: null,
           masjid_name_color: "#34D399",

@@ -41,7 +41,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { settings, isLoadingSettings } = useAppSettings(); // Use the new hook
 
-  const [masjidName, setMasjidName] = useState<string>("Masjid Digital TV");
+  const [masjidName, setMasjidName] = useState<string>(""); // Changed default to empty string
   const [masjidLogoUrl, setMasjidLogoUrl] = useState<string | null>(null);
   const [masjidAddress, setMasjidAddress] = useState<string | null>(null);
   const [masjidNameColor, setMasjidNameColor] = useState<string>("#34D399");
@@ -106,7 +106,7 @@ const Index = () => {
     }
 
     console.log("Index: Settings available, updating state and calculating prayer times.");
-    setMasjidName(settings.masjid_name || "Masjid Digital TV");
+    setMasjidName(settings.masjid_name || ""); // Ensure it's an empty string if null
     setMasjidLogoUrl(settings.masjid_logo_url);
     setMasjidAddress(settings.masjid_address);
     setIqomahCountdownDuration(settings.iqomah_countdown_duration || 300);
@@ -305,12 +305,14 @@ const Index = () => {
                 <img src={masjidLogoUrl} alt="Masjid Logo" className="h-20 md:h-28 lg:h-36 object-contain" />
               )}
               <div>
-                <h1 
-                  className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold drop-shadow-lg text-left text-outline-black"
-                  style={{ color: masjidNameColor }}
-                >
-                  {masjidName}
-                </h1>
+                {masjidName && ( // Only render if masjidName is not empty
+                  <h1 
+                    className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold drop-shadow-lg text-left text-outline-black"
+                    style={{ color: masjidNameColor }}
+                  >
+                    {masjidName}
+                  </h1>
+                )}
                 {masjidAddress && (
                   <p className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-300 text-left mt-0.5 text-outline-black">
                     {masjidAddress}
