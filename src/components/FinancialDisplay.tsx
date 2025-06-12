@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -20,6 +20,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFridayDate, setLastFridayDate] = useState<string>("");
+  const viewportRef = useRef<HTMLDivElement>(null); // Create a ref for the viewport
 
   const fetchFinancialSummary = useCallback(async () => {
     setIsLoading(true);
@@ -109,7 +110,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
       {recentRecords.length === 0 ? (
         <p className="text-sm md:text-base text-gray-400">Belum ada transaksi yang tercatat.</p>
       ) : (
-        <AutoScrollingFinancialRecords heightClass="max-h-48 lg:max-h-64">
+        <AutoScrollingFinancialRecords heightClass="max-h-48 lg:max-h-64" viewportRef={viewportRef}>
           <div className="space-y-1">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-1 rounded-md shadow-sm text-left">

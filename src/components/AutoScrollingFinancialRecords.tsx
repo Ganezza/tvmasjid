@@ -8,38 +8,39 @@ interface AutoScrollingFinancialRecordsProps {
   children: React.ReactNode;
   heightClass?: string; // New prop for height control
   className?: string; // Allow passing additional classes
+  viewportRef: React.RefObject<HTMLDivElement>; // Explicitly require viewportRef
 }
 
-const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children, heightClass, className }) => {
+const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children, heightClass, className, viewportRef }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [animationDuration, setAnimationDuration] = useState('0s');
   const scrollSpeedPxPerSecond = 20; // Kecepatan scroll dalam piksel per detik
 
   useEffect(() => {
-    if (contentRef.current) {
-      // Mengukur tinggi total konten (termasuk duplikasi)
+    if (contentRef.current && viewportRef.current) {
       const totalContentHeight = contentRef.current.scrollHeight;
-      // Tinggi satu set konten asli
-      const originalContentHeight = totalContentHeight / 2;
-      // Cari elemen viewport yang sebenarnya dari ScrollArea
-      const viewportElement = contentRef.current.closest('.radix-scroll-area-viewport');
-      const viewportHeight = viewportElement?.clientHeight || 0;
+      const originalContentHeight = totalContentHeight / 2; // Assuming content is duplicated
+      const viewportHeight = viewportRef.current.clientHeight;
 
-      console.log("AutoScrollingFinancialRecords: originalContentHeight", originalContentHeight, "viewportHeight", viewportHeight);
+      console.log("AutoScrollingFinancialRecords Debug:");
+      console.log("  originalContentHeight:", originalContentHeight);
+      console.log("  viewportHeight:", viewportHeight);
 
-      // Hanya aktifkan animasi jika konten meluap dan viewport memiliki tinggi yang valid
       if (originalContentHeight > viewportHeight && viewportHeight > 0) {
-        // Hitung durasi animasi berdasarkan tinggi konten asli dan kecepatan scroll
         const durationSeconds = originalContentHeight / scrollSpeedPxPerSecond;
         setAnimationDuration(`${durationSeconds}s`);
+        console.log("  Animation will run. Duration:", `${durationSeconds}s`);
       } else {
-        setAnimationDuration('0s'); // Tidak ada animasi jika konten tidak meluap
+        setAnimationDuration('0s');
+        console.log("  Animation will NOT run (content fits or viewport is 0).");
       }
+    } else {
+      console.log("AutoScrollingFinancialRecords Debug: contentRef or viewportRef not ready.");
     }
-  }, [children, heightClass]); // Hitung ulang saat konten anak atau heightClass berubah
+  }, [children, heightClass, viewportRef]); // Re-run when children, heightClass, or viewportRef changes
 
   return (
-    <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow", heightClass, className)}>
+    <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow", heightClass, className)} viewportRef={viewportRef}>
       <div
         ref={contentRef}
         className="auto-scroll-content"
