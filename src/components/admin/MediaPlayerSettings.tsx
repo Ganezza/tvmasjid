@@ -5,13 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"; // Import DropdownMenu components
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Trash2, Edit, PlusCircle, PlayCircle, CheckCircle, Upload, Youtube } from "lucide-react"; // Added Upload and Youtube icons
+import { Trash2, Edit, PlusCircle, PlayCircle, CheckCircle, Upload, Youtube } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -24,23 +24,20 @@ interface MediaFile {
   display_order: number;
 }
 
-// Helper to extract YouTube video ID
 const getYouTubeVideoId = (url: string): string | null => {
   const regex = /(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/|)([\w-]{11})(?:\S+)?/i;
   const match = url.match(regex);
   return match ? match[1] : null;
 };
 
-// Schema for Uploaded Media
 const uploadMediaFormSchema = z.object({
   id: z.string().optional(),
   title: z.string().max(100, "Judul terlalu panjang.").nullable().optional(),
-  file: z.instanceof(FileList).refine(file => file.length > 0, "File media harus diunggah.").optional(), // Made optional for edit mode
+  file: z.instanceof(FileList).refine(file => file.length > 0, "File media harus diunggah.").optional(),
   file_type: z.enum(["audio", "video"], { message: "Tipe file tidak valid." }),
   display_order: z.coerce.number().int().min(0, "Urutan tampilan harus non-negatif.").default(0),
 });
 
-// Schema for YouTube Media
 const youtubeMediaFormSchema = z.object({
   id: z.string().optional(),
   title: z.string().max(100, "Judul terlalu panjang.").nullable().optional(),
@@ -178,14 +175,14 @@ const MediaPlayerSettings: React.FC = () => {
         title: media.title || "",
         file_type: media.file_type,
         display_order: media.display_order,
-        file: undefined, // Ensure file input is reset
+        file: undefined,
       });
       setDialogMode('edit-upload');
-    } else { // youtube
+    } else {
       resetYoutubeForm({
         id: media.id,
         title: media.title || "",
-        youtubeUrl: media.file_path, // file_path stores the YouTube URL
+        youtubeUrl: media.file_path,
         display_order: media.display_order,
       });
       setDialogMode('edit-youtube');
@@ -201,15 +198,20 @@ const MediaPlayerSettings: React.FC = () => {
 
     try {
       if (media.source_type === "upload") {
-        const urlParts = media.file_path.split('/');
-        const fileNameWithFolder = urlParts.slice(urlParts.indexOf('audio') + 1).join('/');
+        const filePathInStorage = media.file_path; 
         
-        const { error: storageError } = await supabase.storage
-          .from('audio')
-          .remove([fileNameWithFolder]);
+        const { data: removedFiles, error: storageError } = await supabase.storage
+          .from('audio') // Ensure this is the correct bucket name
+          .remove([filePathInStorage]);
 
         if (storageError) {
-          console.warn("Failed to delete file from storage:", storageError);
+          console.error("Gagal menghapus file dari penyimpanan Supabase:", storageError);
+          toast.error(`Gagal menghapus file dari penyimpanan: ${storageError.message}`, { id: deleteToastId });
+        } else if (!removedFiles || removedFiles.length === 0) {
+          console.warn("File tidak ditemukan di penyimpanan atau tidak ada file yang dihapus:", filePathInStorage);
+          toast.warning("File tidak ditemukan di penyimpanan atau tidak ada file yang dihapus.", { id: deleteToastId });
+        } else {
+          console.log("File berhasil dihapus dari penyimpanan:", removedFiles);
         }
       }
 
@@ -267,7 +269,6 @@ const MediaPlayerSettings: React.FC = () => {
       const fileName = `${uuidv4()}.${fileExtension}`;
       filePath = `media/${fileName}`;
 
-      // Updated initial toast message to include 0%
       const uploadToastId = toast.loading("Mengunggah file media: 0%");
 
       try {
@@ -278,7 +279,6 @@ const MediaPlayerSettings: React.FC = () => {
             upsert: false,
             onUploadProgress: (event: ProgressEvent) => {
               const percent = Math.round((event.loaded * 100) / event.total);
-              // Updated toast message with progress percentage
               toast.loading(`Mengunggah file media: ${percent}%`, { id: uploadToastId });
             },
           });
@@ -288,14 +288,11 @@ const MediaPlayerSettings: React.FC = () => {
         }
         toast.success("File media berhasil diunggah!", { id: uploadToastId });
 
-        // Delete old file if a new one was uploaded and it's different
         if (oldFilePath && oldFilePath !== filePath) {
           try {
-            const oldUrlParts = oldFilePath.split('/');
-            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('audio') + 1).join('/');
             const { error: deleteOldFileError } = await supabase.storage
               .from('audio')
-              .remove([oldFileNameWithFolder]);
+              .remove([oldFilePath]);
             if (deleteOldFileError) {
               console.warn("Gagal menghapus file media lama dari storage:", deleteOldFileError);
               toast.warning("Gagal menghapus file media lama.");
@@ -312,7 +309,6 @@ const MediaPlayerSettings: React.FC = () => {
         return;
       }
     } else if (dialogMode === 'edit-upload' && editingMedia?.source_type === 'upload') {
-      // If editing and no new file is provided, keep the existing file_path
       filePath = editingMedia.file_path;
       fileType = editingMedia.file_type;
     } else {
