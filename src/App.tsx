@@ -5,10 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import AdminPanel from "./pages/AdminPanel";
-import Login from "./pages/Login";
 import { SessionProvider } from "./components/SessionProvider";
-// import "./App.css"; // Hapus import ini
+import React from "react"; // Import React
+
+// Menggunakan React.lazy untuk memuat komponen secara dinamis
+const AdminPanel = React.lazy(() => import("./pages/AdminPanel"));
+const Login = React.lazy(() => import("./pages/Login"));
 
 const queryClient = new QueryClient();
 
@@ -28,8 +30,23 @@ const App = () => (
           }}>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/admin" element={<AdminPanel />} />
-              <Route path="/login" element={<Login />} />
+              {/* Menggunakan Suspense untuk lazy-loaded components */}
+              <Route 
+                path="/admin" 
+                element={
+                  <React.Suspense fallback={<div>Memuat Admin Panel...</div>}>
+                    <AdminPanel />
+                  </React.Suspense>
+                } 
+              />
+              <Route 
+                path="/login" 
+                element={
+                  <React.Suspense fallback={<div>Memuat Halaman Login...</div>}>
+                    <Login />
+                  </React.Suspense>
+                } 
+              />
               {/* TAMBAHKAN SEMUA RUTE KUSTOM DI ATAS RUTE CATCH-ALL "*" */}
               <Route path="*" element={<NotFound />} />
             </Routes>

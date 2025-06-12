@@ -4,7 +4,6 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import HijriCalendarDisplay from "@/components/HijriCalendarDisplay";
 import PrayerTimesDisplay from "@/components/PrayerTimesDisplay";
 import RunningText from "@/components/RunningText";
-import InfoSlides from "@/components/InfoSlides";
 import ImamMuezzinDisplay from "@/components/ImamMuezzinDisplay";
 import NotificationStudyDisplay from "@/components/NotificationStudyDisplay";
 import FinancialDisplay from "@/components/FinancialDisplay";
@@ -29,6 +28,9 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 
 dayjs.extend(duration);
 dayjs.extend(isBetween);
+
+// Menggunakan React.lazy untuk memuat komponen InfoSlides secara dinamis
+const InfoSlides = React.lazy(() => import("@/components/InfoSlides"));
 
 const ADHAN_DURATION_SECONDS = 120;
 const ADHAN_JUMUAH_DURATION_SECONDS = 120;
@@ -355,7 +357,10 @@ const Index = () => {
             </div>
 
             <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
-              <InfoSlides />
+              {/* Menggunakan Suspense untuk lazy-loaded InfoSlides */}
+              <React.Suspense fallback={<div>Memuat Info Slides...</div>}>
+                <InfoSlides />
+              </React.Suspense>
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
             </div>
