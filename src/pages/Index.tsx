@@ -47,6 +47,7 @@ const Index = () => {
   const [nextPrayerName, setNextPrayerName] = useState<string | null>(null);
   const [nextPrayerTime, setNextPrayerTime] = useState<dayjs.Dayjs | null>(null);
   const [iqomahCountdownDuration, setIqomahCountdownDuration] = useState<number>(300);
+  const [maghribIqomahCountdownDuration, setMaghribIqomahCountdownDuration] = useState<number>(120); // New state for Maghrib Iqomah duration
   const [khutbahDurationMinutes, setKhutbahDurationMinutes] = useState<number>(45);
   const [adhanDurationSeconds, setAdhanDurationSeconds] = useState<number>(120); // New state for Adhan duration
   const [isRamadanModeActive, setIsRamadanModeActive] = useState(false);
@@ -114,6 +115,7 @@ const Index = () => {
     setMasjidLogoUrl(settings.masjid_logo_url);
     setMasjidAddress(settings.masjid_address);
     setIqomahCountdownDuration(settings.iqomah_countdown_duration || 300);
+    setMaghribIqomahCountdownDuration(settings.maghrib_iqomah_countdown_duration || 120); // Set Maghrib Iqomah duration
     setKhutbahDurationMinutes(settings.khutbah_duration_minutes || 45);
     setAdhanDurationSeconds(settings.adhan_duration_seconds || 120); // Set Adhan duration from settings
     setIsRamadanModeActive(settings.is_ramadan_mode_active || false);
@@ -243,9 +245,15 @@ const Index = () => {
       // Priority 3: Regular Prayer Countdown Overlay
       if (nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
         const overlayStartTime = nextPrayerTime.subtract(PRE_ADHAN_COUNTDOWN_SECONDS, 'second');
-        const overlayEndTime = nextPrayerTime.add(adhanDurationSeconds + iqomahCountdownDuration, 'second'); // Use adhanDurationSeconds
+        
+        // Determine correct iqomah duration
+        const currentIqomahDuration = nextPrayerName === "Maghrib" 
+          ? maghribIqomahCountdownDuration 
+          : iqomahCountdownDuration;
 
-        console.log(`Index: Checking Prayer Overlay. Next Prayer: ${nextPrayerName} at ${nextPrayerTime.format('HH:mm:ss')}. Overlay Start: ${overlayStartTime.format('HH:mm:ss')}, Overlay End: ${overlayEndTime.format('HH:mm:ss')}`);
+        const overlayEndTime = nextPrayerTime.add(adhanDurationSeconds + currentIqomahDuration, 'second'); // Use adhanDurationSeconds and dynamic iqomah duration
+
+        console.log(`Index: Checking Prayer Overlay. Next Prayer: ${nextPrayerName} at ${nextPrayerTime.format('HH:mm:ss')}. Overlay Start: ${overlayStartTime.format('HH:mm:ss')}, Overlay End: ${overlayEndTime.format('HH:mm:ss')}. Using Iqomah Duration: ${currentIqomahDuration}s`);
         if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
           setShowPrayerOverlay(true);
           console.log("Index: Prayer Countdown Overlay is active.");
@@ -259,11 +267,12 @@ const Index = () => {
     updateOverlayVisibility();
 
     return () => clearInterval(interval);
-  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, adhanDurationSeconds, jumuahDhuhrTime, imsakTime, isRamadanModeActive, isScreenDarkened]); // Dihapus: isScreensaverActive
+  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, maghribIqomahCountdownDuration, khutbahDurationMinutes, adhanDurationSeconds, jumuahDhuhrTime, imsakTime, isRamadanModeActive, isScreenDarkened]); // Dihapus: isScreensaverActive
 
   // Combine all conditions that should pause the MediaPlayerDisplay
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay || showImsakOverlay;
   const shouldMediaPlayerBePaused = isOverlayActive || isScreenDarkened || isMurottalPlaying; // Dihapus: isScreensaverActive
+
 
   console.log(`Index: Render - isOverlayActive: ${isOverlayActive}, isScreenDarkened: ${isScreenDarkened}, shouldMediaPlayerBePaused: ${shouldMediaPlayerBePaused}`); // Dihapus: isScreensaverActive
 
@@ -271,6 +280,11 @@ const Index = () => {
   const handleRefresh = () => {
     window.location.reload();
   };
+
+  // Determine the iqomah duration to pass to PrayerCountdownOverlay
+  const currentPrayerIqomahDuration = nextPrayerName === "Maghrib" 
+    ? maghribIqomahCountdownDuration 
+    : iqomahCountdownDuration;
 
   return (
     <>
@@ -295,9 +309,10 @@ const Index = () => {
           <PrayerCountdownOverlay
             nextPrayerName={nextPrayerName}
             nextPrayerTime={nextPrayerTime}
-            iqomahCountdownDuration={iqomahCountdownDuration}
+            iqomahCountdownDuration={currentPrayerIqomahDuration} // Pass the determined duration
             onClose={handlePrayerOrKhutbahEnd}
             isJumuah={false}
+            adhanDurationSeconds={adhanDurationSeconds}
           />
         )}
         {showJumuahOverlay && jumuahDhuhrTime && (
@@ -305,6 +320,7 @@ const Index = () => {
             jumuahDhuhrTime={jumuahDhuhrTime}
             khutbahDurationMinutes={khutbahDurationMinutes}
             onClose={handlePrayerOrKhutbahEnd}
+            adhanDurationSeconds={adhanDurationSeconds}
           />
         )}
 
