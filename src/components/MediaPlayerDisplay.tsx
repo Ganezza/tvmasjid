@@ -10,7 +10,11 @@ interface MediaFile {
   file_type: "audio" | "video";
 }
 
-const MediaPlayerDisplay: React.FC = React.memo(() => {
+interface MediaPlayerDisplayProps {
+  isOverlayActive: boolean; // New prop to indicate if an overlay is active
+}
+
+const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOverlayActive }) => {
   const [activeMedia, setActiveMedia] = useState<MediaFile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +109,10 @@ const MediaPlayerDisplay: React.FC = React.memo(() => {
   }, [fetchActiveMedia, activeMedia]); // Add activeMedia to dependencies to re-evaluate subscription if activeMedia changes
 
   useEffect(() => {
-    // Handle playback when activeMedia changes
+    // Handle playback when activeMedia or isOverlayActive changes
+    const audioEl = audioRef.current;
+    const videoEl = videoRef.current;
+
     if (activeMedia) {
       const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
       if (!publicUrl) {
@@ -113,41 +120,66 @@ const MediaPlayerDisplay: React.FC = React.memo(() => {
         return;
       }
 
-      if (activeMedia.file_type === "audio" && audioRef.current) {
-        audioRef.current.src = publicUrl;
-        audioRef.current.load();
-        audioRef.current.play().catch(e => {
-          console.error("Error playing audio:", e);
-          toast.error(`Gagal memutar audio: ${e.message || "Pastikan file audio valid dan diizinkan autoplay."}`);
-        });
-        if (videoRef.current) { // Pause video if audio starts
-          videoRef.current.pause();
-          videoRef.current.src = ""; // Clear video source
+      if (activeMedia.file_type === "audio") {
+        if (videoEl) { // Ensure video is paused if audio is active
+          videoEl.pause();
+          videoEl.src = ""; // Clear video source
         }
-      } else if (activeMedia.file_type === "video" && videoRef.current) {
-        videoRef.current.src = publicUrl;
-        videoRef.current.load();
-        videoRef.current.play().catch(e => {
-          console.error("Error playing video:", e);
-          toast.error(`Gagal memutar video: ${e.message || "Pastikan file video valid dan diizinkan autoplay."}`);
-        });
-        if (audioRef.current) { // Pause audio if video starts
-          audioRef.current.pause();
-          audioRef.current.src = ""; // Clear audio source
+        if (audioEl) {
+          if (audioEl.src !== publicUrl) { // Only set src if different
+            audioEl.src = publicUrl;
+            audioEl.load();
+          }
+          if (isOverlayActive) {
+            if (!audioEl.paused) {
+              audioEl.pause();
+              console.log("MediaPlayerDisplay: Audio paused due to overlay.");
+            }
+          } else {
+            audioEl.play().catch(e => {
+              console.error("Error playing audio:", e);
+              toast.error(`Gagal memutar audio: ${e.message || "Pastikan file audio valid dan diizinkan autoplay."}`);
+            });
+            console.log("MediaPlayerDisplay: Audio playing.");
+          }
+        }
+      } else if (activeMedia.file_type === "video") {
+        if (audioEl) { // Ensure audio is paused if video is active
+          audioEl.pause();
+          audioEl.src = ""; // Clear audio source
+        }
+        if (videoEl) {
+          if (videoEl.src !== publicUrl) { // Only set src if different
+            videoEl.src = publicUrl;
+            videoEl.load();
+          }
+          if (isOverlayActive) {
+            if (!videoEl.paused) {
+              videoEl.pause();
+              console.log("MediaPlayerDisplay: Video paused due to overlay.");
+            }
+          } else {
+            videoEl.play().catch(e => {
+              console.error("Error playing video:", e);
+              toast.error(`Gagal memutar video: ${e.message || "Pastikan file video valid dan diizinkan autoplay."}`);
+            });
+            console.log("MediaPlayerDisplay: Video playing.");
+          }
         }
       }
     } else {
       // If no active media, pause and clear both players
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
+      if (audioEl) {
+        audioEl.pause();
+        audioEl.src = "";
       }
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.src = "";
+      if (videoEl) {
+        videoEl.pause();
+        videoEl.src = "";
       }
+      console.log("MediaPlayerDisplay: No active media, players reset.");
     }
-  }, [activeMedia]);
+  }, [activeMedia, isOverlayActive]); // Dependencies
 
   const handleMediaEnded = useCallback(() => {
     // Loop the current media
