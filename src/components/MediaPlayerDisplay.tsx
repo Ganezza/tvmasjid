@@ -348,8 +348,8 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden">
-      <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-yellow-300">
+    <div className="bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden">
+      <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-0.5 text-yellow-300">
         {activeMedia.title || (activeMedia.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
       </h3>
       <div className="relative w-full flex-grow flex items-center justify-center">
@@ -390,22 +390,12 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
         ) : null}
         <Button 
           onClick={togglePlayback} 
-          className="absolute bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg"
+          className="absolute bg-blue-600/20 hover:bg-blue-700/40 text-white p-3 rounded-full shadow-lg"
           size="icon"
         >
           {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
         </Button>
       </div>
-      {!isPlaying && !isOverlayActive && (
-        <p className="text-xs text-gray-400 mt-2">
-          Klik tombol <PlayCircle className="inline-block h-3 w-3 relative -top-0.5" /> untuk memutar media.
-        </p>
-      )}
-      {activeMedia.file_type === "video" && (activeMedia.source_type === "upload" || activeMedia.source_type === "youtube") && (
-        <p className="text-xs text-gray-400 mt-1">
-          Catatan: Video mungkin dimulai dalam mode 'mute' karena batasan browser untuk autoplay.
-        </p>
-      )}
     </div>
   );
 });
