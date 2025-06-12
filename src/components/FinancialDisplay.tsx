@@ -29,7 +29,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
       const { data, error: fetchError } = await supabase
         .from("financial_records")
         .select("id, created_at, transaction_type, amount, description")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true }); // Changed to ascending: true
 
       if (fetchError) {
         console.error("Error fetching financial records for display:", fetchError);
@@ -114,13 +114,13 @@ const FinancialDisplay: React.FC = React.memo(() => {
           <div className="space-y-1">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-1 rounded-md shadow-sm text-left">
-                <p className="font-medium text-sm md:text-base text-blue-200">
+                <p className="font-medium text-base md:text-lg text-blue-200"> {/* Increased font size */}
                   {record.description}
                 </p>
-                <p className={`text-xs md:text-sm font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
+                <p className={`text-sm md:text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}> {/* Increased font size */}
                   {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs md:text-sm text-gray-400"> {/* Increased font size */}
                   {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
                 </p>
               </div>

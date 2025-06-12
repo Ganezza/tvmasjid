@@ -25,7 +25,7 @@ interface FinancialRecord {
 const financialRecordFormSchema = z.object({
   id: z.string().optional(),
   transaction_type: z.enum(["inflow", "outflow"], { message: "Tipe transaksi tidak valid." }),
-  amount: z.coerce.number().min(0.01, "Jumlah harus lebih besar dari 0."),
+  amount: z.coerce.number().min(0.01, "Jumlah harus lebih besar dari 0.").max(1000000000000, "Jumlah terlalu besar."), // Added max value
   description: z.string().min(1, "Deskripsi tidak boleh kosong.").max(255, "Deskripsi terlalu panjang."),
 });
 
@@ -57,7 +57,7 @@ const FinancialSettings: React.FC = () => {
     const { data, error } = await supabase
       .from("financial_records")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true }); // Changed to ascending: true
 
     if (error) {
       console.error("Error fetching financial records:", error);
@@ -194,10 +194,10 @@ const FinancialSettings: React.FC = () => {
                   <p className="font-medium text-lg text-blue-200">
                     {record.description}
                   </p>
-                  <p className={`text-sm font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
+                  <p className={`text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}> {/* Increased font size */}
                     {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm text-gray-400"> {/* Increased font size */}
                     {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
                   </p>
                 </div>
