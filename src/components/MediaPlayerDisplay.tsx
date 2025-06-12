@@ -243,89 +243,68 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
-        <p className="text-sm">Memuat media player...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
-        <p className="text-sm font-bold">Error Media:</p>
-        <p className="text-xs">{error}</p>
-        <p className="text-xs mt-0.5">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
-      </div>
-    );
-  }
-
-  if (!activeMedia) {
-    return (
-      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
-        <p className="text-sm text-gray-400">Tidak ada media yang dipilih untuk diputar.</p>
-        <p className="text-xs text-gray-400 mt-0.5">Pilih media di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
-      </div>
-    );
-  }
-
-  const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
-
-  if (!publicUrl) {
-    return (
-      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
-        <p className="text-sm font-bold">Error:</p>
-        <p className="text-xs">URL media tidak valid atau tidak dapat diakses.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden">
-      <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-yellow-300">
-        {activeMedia.title || (activeMedia.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
-      </h3>
-      <div className="relative w-full flex-grow flex items-center justify-center">
-        {activeMedia.file_type === "audio" ? (
-          <audio
-            ref={audioRef}
-            src={publicUrl}
-            controls={false} // Hide default controls
-            loop
-            className="hidden" // Hide audio element, control via custom button
-            onEnded={handleMediaEnded}
-            onError={handleMediaError}
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            src={publicUrl}
-            controls={false} // Hide default controls
-            loop
-            muted // Muted by default for autoplay compatibility in some browsers
-            className="w-full h-full object-contain"
-            onEnded={handleMediaEnded}
-            onError={handleMediaError}
-          />
-        )}
-        <Button 
-          onClick={togglePlayback} 
-          className="absolute bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg"
-          size="icon"
-        >
-          {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
-        </Button>
-      </div>
-      {!isPlaying && !isOverlayActive && (
-        <p className="text-xs text-gray-400 mt-2">
-          Klik tombol <PlayCircle className="inline-block h-3 w-3 relative -top-0.5" /> untuk memutar media.
-        </p>
-      )}
-      {activeMedia.file_type === "video" && (
-        <p className="text-xs text-gray-400 mt-1">
-          Catatan: Video mungkin dimulai dalam mode 'mute' karena batasan browser untuk autoplay.
-        </p>
+    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden border-4 border-red-500"> {/* Added red border for debugging */}
+      {isLoading ? (
+        <p className="text-sm text-white">Memuat media player...</p>
+      ) : error ? (
+        <div className="bg-red-800 bg-opacity-70 p-2 rounded-lg text-white">
+          <p className="text-sm font-bold">Error Media:</p>
+          <p className="text-xs">{error}</p>
+          <p className="text-xs mt-0.5">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+        </div>
+      ) : !activeMedia ? (
+        <div className="text-white">
+          <p className="text-sm text-gray-400">Tidak ada media yang dipilih untuk diputar.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Pilih media di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+        </div>
+      ) : (
+        <>
+          <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-yellow-300">
+            {activeMedia.title || (activeMedia.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
+          </h3>
+          <div className="relative w-full flex-grow flex items-center justify-center">
+            {activeMedia.file_type === "audio" ? (
+              <audio
+                ref={audioRef}
+                src={publicUrl}
+                controls={false} // Hide default controls
+                loop
+                className="hidden" // Hide audio element, control via custom button
+                onEnded={handleMediaEnded}
+                onError={handleMediaError}
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                src={publicUrl}
+                controls={false} // Hide default controls
+                loop
+                muted // Muted by default for autoplay compatibility in some browsers
+                className="w-full h-full object-contain"
+                onEnded={handleMediaEnded}
+                onError={handleMediaError}
+              />
+            )}
+            <Button 
+              onClick={togglePlayback} 
+              className="absolute bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg"
+              size="icon"
+            >
+              {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
+            </Button>
+          </div>
+          {!isPlaying && !isOverlayActive && (
+            <p className="text-xs text-gray-400 mt-2">
+              Klik tombol <PlayCircle className="inline-block h-3 w-3 relative -top-0.5" /> untuk memutar media.
+            </p>
+          )}
+          {activeMedia.file_type === "video" && (
+            <p className="text-xs text-gray-400 mt-1">
+              Catatan: Video mungkin dimulai dalam mode 'mute' karena batasan browser untuk autoplay.
+            </p>
+          )}
+        </>
       )}
     </div>
   );
