@@ -318,7 +318,18 @@ const Index = () => {
                 )}
               </div>
             </div>
-            <HijriCalendarDisplay />
+            <div className="flex items-center gap-2"> {/* Added flex and gap for alignment */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRefresh}
+                className="text-gray-400 hover:text-gray-200"
+                aria-label="Refresh Display"
+              >
+                <RefreshCw className="h-6 w-6" />
+              </Button>
+              <HijriCalendarDisplay />
+            </div>
           </div>
 
           {/* Main grid container for 3 columns on small screens, 3 on medium, 3 on large */}
@@ -353,17 +364,8 @@ const Index = () => {
         </div>
 
         <div
-          className="absolute bottom-2 left-2 z-50 flex space-x-2" // Added flex and space-x-2 for spacing
+          className="absolute bottom-2 left-2 z-50"
         >
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh} // Added onClick handler
-            className="text-gray-400 hover:text-gray-200"
-            aria-label="Refresh Display"
-          >
-            <RefreshCw className="h-6 w-6" />
-          </Button>
           <Button
             variant="ghost"
             size="icon"
