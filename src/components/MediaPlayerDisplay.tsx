@@ -222,14 +222,18 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
   }, []);
 
   const togglePlayback = () => {
+    console.log("MediaPlayerDisplay: Toggle playback button clicked."); // Log when button is clicked
     const mediaElement = activeMedia?.file_type === "audio" ? audioRef.current : videoRef.current;
     if (mediaElement) {
       if (isPlaying) {
         mediaElement.pause();
         setIsPlaying(false);
+        console.log("MediaPlayerDisplay: Media paused by user."); // Log when paused
       } else {
+        console.log("MediaPlayerDisplay: Attempting to play media..."); // Log when play is attempted
         mediaElement.play().then(() => {
           setIsPlaying(true);
+          console.log("MediaPlayerDisplay: Media started playing successfully."); // Log when play succeeds
         }).catch(e => {
           console.error("Error attempting to play media manually:", e);
           toast.error(`Gagal memutar media: ${e.message || "Terjadi kesalahan."}`);
