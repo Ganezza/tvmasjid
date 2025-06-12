@@ -103,7 +103,8 @@ const AudioSettings: React.FC = () => {
     const fileName = `${uuidv4()}.${fileExtension}`;
     const filePath = `audio/${fileName}`; // Path inside the 'audio' bucket
 
-    const uploadToastId = toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim').replace('adhanBeepAudioUrl', 'Adzan Beep').replace('iqomahBeepAudioUrl', 'Iqomah Beep').replace('imsakBeepAudioUrl', 'Imsak Beep')}...`);
+    const uploadToastId = toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim').replace('adhanBeepAudioUrl', 'Adzan Beep').replace('iqomahBeepAudioUrl', 'Iqomah Beep').replace('imsakBeepAudioUrl', 'Imsak Beep')}: 0%`);
+    const oldAudioUrl = form.getValues(fieldName); // Capture current URL before upload
 
     try {
       const { data, error } = await supabase.storage
@@ -111,6 +112,10 @@ const AudioSettings: React.FC = () => {
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
+          onUploadProgress: (event: ProgressEvent) => {
+            const percent = Math.round((event.loaded * 100) / event.total);
+            toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim').replace('adhanBeepAudioUrl', 'Adzan Beep').replace('iqomahBeepAudioUrl', 'Iqomah Beep').replace('imsakBeepAudioUrl', 'Imsak Beep')}: ${percent}%`, { id: uploadToastId });
+          },
         });
 
       if (error) {
@@ -125,6 +130,26 @@ const AudioSettings: React.FC = () => {
         setValue(fieldName, publicUrlData.publicUrl as any); // Cast to any because fieldName is dynamic
         toast.success("Audio berhasil diunggah!", { id: uploadToastId });
         toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file audio dioptimalkan (misal: format MP3, bitrate rendah).");
+
+        // Attempt to delete the old audio if it exists and is different
+        if (oldAudioUrl && oldAudioUrl !== publicUrlData.publicUrl) {
+          try {
+            const oldUrlParts = (oldAudioUrl as string).split('/');
+            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('audio') + 1).join('/');
+            const { error: deleteError } = await supabase.storage
+              .from('audio')
+              .remove([oldFileNameWithFolder]);
+            if (deleteError) {
+              console.warn("Gagal menghapus audio lama dari storage:", deleteError);
+              toast.warning("Gagal menghapus audio lama.");
+            } else {
+              console.log("Audio lama berhasil dihapus.");
+            }
+          } catch (e) {
+            console.warn("Error parsing old audio path for deletion:", e);
+          }
+        }
+
       } else {
         throw new Error("Gagal mendapatkan URL publik audio.");
       }
