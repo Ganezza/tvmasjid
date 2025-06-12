@@ -40,7 +40,6 @@ interface AppSettings {
   masjid_address: string | null;
   masjid_name_color: string | null;
   active_media_id: string | null;
-  // NEW FIELDS FOR PER-PRAYER MUROTTAL SETTINGS
   murottal_active_fajr: boolean;
   murottal_active_dhuhr: boolean;
   murottal_active_asr: boolean;
@@ -53,7 +52,8 @@ interface AppSettings {
   murottal_pre_adhan_duration_maghrib: number;
   murottal_pre_adhan_duration_isha: number;
   murottal_pre_adhan_duration_imsak: number;
-  adhan_duration_seconds: number; // New field for Adhan duration
+  adhan_duration_seconds: number;
+  maghrib_iqomah_countdown_duration: number; // New field for Maghrib Iqomah duration
 }
 
 interface AppSettingsContextType {
@@ -126,7 +126,6 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           masjid_address: null,
           masjid_name_color: "#34D399",
           active_media_id: null,
-          // Default values for new fields
           murottal_active_fajr: false,
           murottal_active_dhuhr: false,
           murottal_active_asr: false,
@@ -139,7 +138,8 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           murottal_pre_adhan_duration_maghrib: 10,
           murottal_pre_adhan_duration_isha: 10,
           murottal_pre_adhan_duration_imsak: 10,
-          adhan_duration_seconds: 120, // Default Adhan duration
+          adhan_duration_seconds: 120,
+          maghrib_iqomah_countdown_duration: 120, // Default to 120 seconds (2 minutes)
         };
         setSettings(defaultSettings);
         // Optionally, upsert default settings to DB if they don't exist
