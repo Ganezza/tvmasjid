@@ -323,17 +323,17 @@ const Index = () => {
           <div className="w-full flex justify-between items-center p-0.5">
             <div className="flex items-center gap-0.5">
               {masjidLogoUrl && (
-                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-12 md:h-18 lg:h-24 object-contain" />
+                <img src={masjidLogoUrl} alt="Masjid Logo" className="h-16 md:h-24 lg:h-32 object-contain" />
               )}
               <div>
                 <h1 
-                  className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold drop-shadow-lg text-left text-outline-black"
+                  className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold drop-shadow-lg text-left text-outline-black"
                   style={{ color: masjidNameColor }}
                 >
                   {masjidName}
                 </h1>
                 {masjidAddress && (
-                  <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-300 text-left mt-0.5 text-outline-black">
+                  <p className="text-base md:text-lg lg:text-xl xl:text-2xl text-gray-300 text-left mt-0.5 text-outline-black">
                     {masjidAddress}
                   </p>
                 )}
