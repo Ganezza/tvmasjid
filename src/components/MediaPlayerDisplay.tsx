@@ -313,9 +313,16 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
           {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
         </Button>
       </div>
-      <p className="text-xs text-gray-400 mt-2">
-        {activeMedia.file_type === "video" && "Catatan: Video mungkin dimulai dalam mode 'mute' karena batasan browser untuk autoplay."}
-      </p>
+      {!isPlaying && !isOverlayActive && (
+        <p className="text-xs text-gray-400 mt-2">
+          Klik tombol <PlayCircle className="inline-block h-3 w-3 relative -top-0.5" /> untuk memutar media.
+        </p>
+      )}
+      {activeMedia.file_type === "video" && (
+        <p className="text-xs text-gray-400 mt-1">
+          Catatan: Video mungkin dimulai dalam mode 'mute' karena batasan browser untuk autoplay.
+        </p>
+      )}
     </div>
   );
 });
