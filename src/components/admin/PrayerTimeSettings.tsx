@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
 
 // Define schema for form validation
 const formSchema = z.object({
@@ -41,6 +42,8 @@ const PRAYER_CALCULATION_METHODS = [
 ];
 
 const PrayerTimeSettings: React.FC = () => {
+  const { settings, isLoadingSettings, refetchSettings } = useAppSettings(); // Use the new hook
+
   const form = useForm<PrayerTimeSettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -59,30 +62,18 @@ const PrayerTimeSettings: React.FC = () => {
   const { handleSubmit, register, setValue, formState: { isSubmitting, errors } } = form;
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("latitude, longitude, calculation_method, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset")
-        .eq("id", 1) // Assuming a single row for app settings
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
-        console.error("Error fetching settings:", error);
-        toast.error("Gagal memuat pengaturan waktu sholat.");
-      } else if (data) {
-        setValue("latitude", data.latitude);
-        setValue("longitude", data.longitude);
-        setValue("calculationMethod", data.calculation_method);
-        setValue("fajrOffset", data.fajr_offset ?? 0);
-        setValue("dhuhrOffset", data.dhuhr_offset ?? 0);
-        setValue("asrOffset", data.asr_offset ?? 0);
-        setValue("maghribOffset", data.maghrib_offset ?? 0);
-        setValue("ishaOffset", data.isha_offset ?? 0);
-        setValue("imsakOffset", data.imsak_offset ?? 0);
-      }
-    };
-    fetchSettings();
-  }, [setValue]);
+    if (!isLoadingSettings && settings) {
+      setValue("latitude", settings.latitude);
+      setValue("longitude", settings.longitude);
+      setValue("calculationMethod", settings.calculation_method);
+      setValue("fajrOffset", settings.fajr_offset ?? 0);
+      setValue("dhuhrOffset", settings.dhuhr_offset ?? 0);
+      setValue("asrOffset", settings.asr_offset ?? 0);
+      setValue("maghribOffset", settings.maghrib_offset ?? 0);
+      setValue("ishaOffset", settings.isha_offset ?? 0);
+      setValue("imsakOffset", settings.imsak_offset ?? 0);
+    }
+  }, [settings, isLoadingSettings, setValue]);
 
   const onSubmit = async (values: PrayerTimeSettingsFormValues) => {
     const { data, error } = await supabase
@@ -109,6 +100,7 @@ const PrayerTimeSettings: React.FC = () => {
     } else {
       toast.success("Pengaturan waktu sholat berhasil disimpan!");
       console.log("Settings saved:", data);
+      refetchSettings(); // Manually refetch to ensure context is updated immediately
     }
   };
 

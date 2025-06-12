@@ -9,6 +9,7 @@ import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique file names
+import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
 
 const formSchema = z.object({
   backgroundImageUrl: z.string().nullable().optional(), // No longer strictly a URL for input, but will store URL
@@ -19,6 +20,8 @@ const formSchema = z.object({
 type DisplaySettingsFormValues = z.infer<typeof formSchema>;
 
 const DisplaySettings: React.FC = () => {
+  const { settings, isLoadingSettings, refetchSettings } = useAppSettings(); // Use the new hook
+
   const form = useForm<DisplaySettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -32,25 +35,13 @@ const DisplaySettings: React.FC = () => {
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("background_image_url, background_color, screensaver_idle_minutes")
-        .eq("id", 1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error("Error fetching display settings:", error);
-        toast.error("Gagal memuat pengaturan tampilan.");
-      } else if (data) {
-        setValue("backgroundImageUrl", data.background_image_url);
-        setCurrentImageUrl(data.background_image_url);
-        setValue("backgroundColor", data.background_color || "#0A0A0A");
-        setValue("screensaverIdleMinutes", data.screensaver_idle_minutes || 5);
-      }
-    };
-    fetchSettings();
-  }, [setValue]);
+    if (!isLoadingSettings && settings) {
+      setValue("backgroundImageUrl", settings.background_image_url);
+      setCurrentImageUrl(settings.background_image_url);
+      setValue("backgroundColor", settings.background_color || "#0A0A0A");
+      setValue("screensaverIdleMinutes", settings.screensaver_idle_minutes || 5);
+    }
+  }, [settings, isLoadingSettings, setValue]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -112,6 +103,7 @@ const DisplaySettings: React.FC = () => {
     } else {
       toast.success("Pengaturan tampilan berhasil disimpan!");
       console.log("Display settings saved:", data);
+      refetchSettings(); // Manually refetch to ensure context is updated immediately
     }
   };
 

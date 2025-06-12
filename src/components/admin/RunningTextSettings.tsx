@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
 
 // Define schema for form validation
 const formSchema = z.object({
@@ -18,6 +18,8 @@ const formSchema = z.object({
 type RunningTextSettingsFormValues = z.infer<typeof formSchema>;
 
 const RunningTextSettings: React.FC = () => {
+  const { settings, isLoadingSettings, refetchSettings } = useAppSettings(); // Use the new hook
+
   const form = useForm<RunningTextSettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -28,36 +30,10 @@ const RunningTextSettings: React.FC = () => {
   const { handleSubmit, register, setValue, formState: { isSubmitting, errors } } = form;
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("running_text")
-        .eq("id", 1) // Assuming a single row for app settings
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
-        console.error("Error fetching running text settings:", error);
-        toast.error("Gagal memuat teks berjalan.");
-      } else if (data) {
-        setValue("runningText", data.running_text || "");
-      }
-    };
-    fetchSettings();
-
-    const channel = supabase
-      .channel('running_text_settings_changes') // Unique channel name
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-        console.log('Running text settings change received!', payload);
-        fetchSettings(); // Re-fetch if settings change
-      })
-      .subscribe();
-    console.log("RunningTextSettings: Subscribed to channel 'running_text_settings_changes'.");
-
-    return () => {
-      supabase.removeChannel(channel);
-      console.log("RunningTextSettings: Unsubscribed from channel 'running_text_settings_changes'.");
-    };
-  }, [setValue]);
+    if (!isLoadingSettings && settings) {
+      setValue("runningText", settings.running_text || "");
+    }
+  }, [settings, isLoadingSettings, setValue]);
 
   const onSubmit = async (values: RunningTextSettingsFormValues) => {
     const { data, error } = await supabase
@@ -76,6 +52,7 @@ const RunningTextSettings: React.FC = () => {
     } else {
       toast.success("Teks berjalan berhasil disimpan!");
       console.log("Running text saved:", data);
+      refetchSettings(); // Manually refetch to ensure context is updated immediately
     }
   };
 
