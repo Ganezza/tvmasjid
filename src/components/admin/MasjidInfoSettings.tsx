@@ -10,6 +10,7 @@ import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique file names
+import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
 
 // Define schema for form validation
 const formSchema = z.object({
@@ -22,6 +23,8 @@ const formSchema = z.object({
 type MasjidInfoSettingsFormValues = z.infer<typeof formSchema>;
 
 const MasjidInfoSettings: React.FC = () => {
+  const { settings, isLoadingSettings, refetchSettings } = useAppSettings(); // Use the new hook
+
   const form = useForm<MasjidInfoSettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -36,26 +39,14 @@ const MasjidInfoSettings: React.FC = () => {
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("masjid_name, masjid_logo_url, masjid_address, masjid_name_color")
-        .eq("id", 1) // Assuming a single row for app settings
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
-        console.error("Error fetching masjid info settings:", error);
-        toast.error("Gagal memuat pengaturan informasi masjid.");
-      } else if (data) {
-        setValue("masjidName", data.masjid_name || "");
-        setValue("masjidLogoUrl", data.masjid_logo_url || "");
-        setCurrentLogoUrl(data.masjid_logo_url);
-        setValue("masjidAddress", data.masjid_address || "");
-        setValue("masjidNameColor", data.masjid_name_color || "#34D399");
-      }
-    };
-    fetchSettings();
-  }, [setValue]);
+    if (!isLoadingSettings && settings) {
+      setValue("masjidName", settings.masjid_name || "");
+      setValue("masjidLogoUrl", settings.masjid_logo_url || "");
+      setCurrentLogoUrl(settings.masjid_logo_url);
+      setValue("masjidAddress", settings.masjid_address || "");
+      setValue("masjidNameColor", settings.masjid_name_color || "#34D399");
+    }
+  }, [settings, isLoadingSettings, setValue]);
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -118,6 +109,7 @@ const MasjidInfoSettings: React.FC = () => {
       toast.error("Gagal menyimpan informasi masjid.");
     } else {
       toast.success("Informasi masjid berhasil disimpan!");
+      refetchSettings(); // Manually refetch to ensure context is updated immediately
     }
   };
 
@@ -178,8 +170,8 @@ const MasjidInfoSettings: React.FC = () => {
             {errors.masjidNameColor && <p className="text-red-400 text-sm mt-1">{errors.masjidNameColor.message}</p>}
             {form.watch("masjidNameColor") && (
               <div className="mt-2 flex items-center space-x-2">
-                <div 
-                  className="w-8 h-8 rounded-full border border-gray-600" 
+                <div
+                  className="w-8 h-8 rounded-full border border-gray-600"
                   style={{ backgroundColor: form.watch("masjidNameColor") || "#34D399" }}
                 ></div>
                 <span className="text-gray-400 text-sm">Pratinjau Warna</span>
