@@ -253,20 +253,25 @@ const MediaPlayerSettings: React.FC = () => {
   };
 
   const onSubmit = async (values: MediaFormValues) => {
+    console.log("onSubmit called with values:", values);
     let filePath = editingMedia?.file_path || null;
     let fileType: "audio" | "video" = editingMedia?.file_type || "video"; // Default to video for YouTube
     let sourceType: "upload" | "youtube" = values.source_type;
 
     if (sourceType === "upload") {
+      console.log("Source type is 'upload'. Checking file...");
       if (values.file && values.file.length > 0) {
         const file = values.file[0];
+        console.log("File selected:", file.name, file.type);
         const fileExtension = file.name.split('.').pop();
         const fileName = `${uuidv4()}.${fileExtension}`;
         filePath = `media/${fileName}`; // Store in 'media' subfolder within 'audio' bucket
+        console.log("Generated filePath for upload:", filePath);
 
         const uploadToastId = toast.loading("Mengunggah file media...");
 
         try {
+          console.log("Attempting Supabase storage upload...");
           const { data, error } = await supabase.storage
             .from('audio') // Use 'audio' bucket for all media
             .upload(filePath, file, {
@@ -275,8 +280,10 @@ const MediaPlayerSettings: React.FC = () => {
             });
 
           if (error) {
+            console.error("Supabase upload error:", error);
             throw error;
           }
+          console.log("Supabase upload successful:", data);
 
           // Determine file type based on MIME type or extension
           if (file.type.startsWith('audio/')) {
@@ -286,35 +293,42 @@ const MediaPlayerSettings: React.FC = () => {
           } else {
             throw new Error("Tipe file tidak didukung. Hanya audio dan video.");
           }
+          console.log("Determined fileType:", fileType);
 
           toast.success("File media berhasil diunggah!", { id: uploadToastId });
         } catch (error: any) {
-          console.error("Error uploading file:", error);
+          console.error("Error during file upload process:", error);
           toast.error(`Gagal mengunggah file: ${error.message}`, { id: uploadToastId });
           return; // Stop submission if upload fails
         }
       } else if (!editingMedia || editingMedia.source_type !== "upload") {
         // If not editing an existing upload, and no new file is provided, it's an error
+        console.log("No file provided for upload, and not editing an existing upload.");
         toast.error("File media harus diunggah.");
         return;
       }
     } else if (sourceType === "youtube") {
+      console.log("Source type is 'youtube'. Checking URL...");
       if (values.youtubeUrl) {
         const videoId = getYouTubeVideoId(values.youtubeUrl);
         if (videoId) {
           filePath = `https://www.youtube.com/embed/${videoId}`; // Store embed URL
           fileType = "video"; // YouTube is always video
+          console.log("YouTube video ID found. Embed URL:", filePath);
         } else {
+          console.log("Invalid YouTube URL.");
           toast.error("URL YouTube tidak valid.");
           return;
         }
       } else {
+        console.log("YouTube URL is empty.");
         toast.error("URL YouTube tidak boleh kosong.");
         return;
       }
     }
 
     if (!filePath || !fileType) {
+      console.error("Final check: filePath or fileType is null/undefined. filePath:", filePath, "fileType:", fileType);
       toast.error("File media atau tipe file tidak valid.");
       return;
     }
@@ -326,15 +340,17 @@ const MediaPlayerSettings: React.FC = () => {
       source_type: sourceType, // Include source_type in payload
       display_order: values.display_order,
     };
+    console.log("Payload for DB operation:", payload);
 
     if (editingMedia) {
+      console.log("Updating existing media with ID:", editingMedia.id);
       const { error } = await supabase
         .from("media_files")
         .update(payload)
         .eq("id", editingMedia.id);
 
       if (error) {
-        console.error("Error updating media:", error);
+        console.error("Error updating media in DB:", error);
         toast.error("Gagal memperbarui media.");
       } else {
         toast.success("Media berhasil diperbarui!");
@@ -342,12 +358,13 @@ const MediaPlayerSettings: React.FC = () => {
         fetchMediaAndSettings();
       }
     } else {
+      console.log("Inserting new media into DB.");
       const { error } = await supabase
         .from("media_files")
         .insert(payload);
 
       if (error) {
-        console.error("Error adding media:", error);
+        console.error("Error adding media to DB:", error);
         toast.error("Gagal menambahkan media.");
       } else {
         toast.success("Media berhasil ditambahkan!");
