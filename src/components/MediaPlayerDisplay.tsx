@@ -28,6 +28,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
   const fetchActiveMedia = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    console.log("MediaPlayerDisplay: Starting fetchActiveMedia...");
     try {
       // 1. Fetch active_media_id from app_settings
       const { data: settingsData, error: settingsError } = await supabase
@@ -38,15 +39,17 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
       if (settingsError && settingsError.code !== 'PGRST116') {
         console.error("MediaPlayerDisplay: Error fetching active_media_id:", settingsError);
-        setError("Gagal memuat pengaturan media aktif.");
+        setError(`Gagal memuat pengaturan media aktif: ${settingsError.message}`);
         setActiveMedia(null);
         setIsLoading(false);
         return;
       }
 
       const activeMediaId = settingsData?.active_media_id;
+      console.log("MediaPlayerDisplay: Fetched active_media_id:", activeMediaId);
 
       if (!activeMediaId) {
+        console.log("MediaPlayerDisplay: No active media ID found in app_settings.");
         setActiveMedia(null);
         setIsLoading(false);
         return;
@@ -61,19 +64,23 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
       if (mediaError) {
         console.error("MediaPlayerDisplay: Error fetching active media details:", mediaError);
-        setError("Gagal memuat detail media aktif.");
+        setError(`Gagal memuat detail media aktif: ${mediaError.message}`);
         setActiveMedia(null);
       } else if (mediaData) {
+        console.log("MediaPlayerDisplay: Fetched active media details:", mediaData);
         setActiveMedia(mediaData);
       } else {
+        console.log("MediaPlayerDisplay: Active media ID found, but no corresponding media file.");
         setActiveMedia(null); // Media not found
+        setError("Media aktif tidak ditemukan atau sudah dihapus.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("MediaPlayerDisplay: Unexpected error fetching active media:", err);
-      setError("Terjadi kesalahan saat memuat media.");
+      setError(`Terjadi kesalahan saat memuat media: ${err.message}`);
       setActiveMedia(null);
     } finally {
       setIsLoading(false);
+      console.log("MediaPlayerDisplay: fetchActiveMedia finished. isLoading:", false);
     }
   }, []);
 
@@ -155,6 +162,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
     if (activeMedia) {
       const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
+      console.log("MediaPlayerDisplay: Active media changed. Public URL:", publicUrl);
       if (!publicUrl) {
         setError("URL media tidak ditemukan.");
         return;
