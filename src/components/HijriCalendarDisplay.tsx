@@ -35,10 +35,10 @@ const HijriCalendarDisplay: React.FC = React.memo(() => {
   const gregorianDate = currentDate.locale('id').format("dddd, DD MMMM YYYY").replace('Minggu', 'Ahad');
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-1.5 rounded-xl shadow-2xl text-center text-lg md:text-xl lg:text-2xl xl:text-3xl font-semibold text-gray-200">
+    <div className="bg-gray-800 bg-opacity-70 p-1.5 rounded-xl shadow-2xl text-center text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold text-gray-200">
       <p className="text-outline-black">{gregorianDate}</p>
       <p className="text-green-300 text-outline-black">{hijriDate}</p>
-      <p className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mt-0.5 text-outline-black">{currentTime}</p>
+      <p className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mt-0.5 text-outline-black">{currentTime}</p>
     </div>
   );
 });
