@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { toast } from "sonner"; // Perbaikan di sini
+import { toast } from "sonner";
 import dayjs from "dayjs";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -55,9 +55,20 @@ const FinancialDisplay: React.FC = React.memo(() => {
     fetchFinancialSummary();
 
     const today = dayjs();
-    const currentDayIndex = today.day();
+    // Calculate last Friday's date
+    // day() returns 0 for Sunday, 1 for Monday, ..., 5 for Friday, 6 for Saturday
+    // If today is Friday (5) or Saturday (6), last Friday is today's Friday.
+    // If today is Sunday (0) to Thursday (4), last Friday is (today.day() + 2) days ago.
+    // A simpler way: subtract days until Friday (day 5). If today is before Friday, go back to last week's Friday.
+    const currentDayIndex = today.day(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+    let daysToSubtract = 0;
+    if (currentDayIndex >= 5) { // If today is Friday (5) or Saturday (6)
+      daysToSubtract = currentDayIndex - 5;
+    } else { // If today is Sunday (0) to Thursday (4)
+      daysToSubtract = currentDayIndex + 2; // e.g., Sunday (0) + 2 = 2 days back to Friday
+    }
+    const lastFriday = today.subtract(daysToSubtract, 'day');
 
-    const lastFriday = today.day(currentDayIndex >= 5 ? 5 : 5 - 7);
     setLastFridayDate(format(lastFriday.toDate(), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad'));
 
     const channel = supabase
@@ -101,7 +112,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
         Saldo Kas: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </p>
       <p className="text-xs md:text-sm lg:text-base text-gray-300 mb-1.5">
-        Data per: <span className="font-semibold">{format(new Date(), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')}</span>
+        Data per: <span className="font-semibold">{lastFridayDate}</span>
       </p>
 
       <h4 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-blue-300">
@@ -114,13 +125,13 @@ const FinancialDisplay: React.FC = React.memo(() => {
           <div className="space-y-1">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-1 rounded-md shadow-sm text-left">
-                <p className="font-medium text-lg md:text-xl text-blue-200"> {/* Increased font size */}
+                <p className="font-medium text-lg md:text-xl text-blue-200">
                   {record.description}
                 </p>
-                <p className={`text-base md:text-lg font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}> {/* Increased font size */}
+                <p className={`text-base md:text-lg font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
                   {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
-                <p className="text-sm md:text-base text-gray-400"> {/* Increased font size */}
+                <p className="text-sm md:text-base text-gray-400">
                   {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
                 </p>
               </div>
