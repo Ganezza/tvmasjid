@@ -57,7 +57,7 @@ const Index = () => {
   const [showImsakOverlay, setShowImsakOverlay] = useState(false);
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
   const [isScreensaverActive, setIsScreensaverActive] = useState(false);
-  const [isMurottalPlaying, setIsMurottalPlaying] = useState(false); // New state for MurottalPlayer status
+  const [isMurottalPlaying, setIsMurottalPlaying] = useState(false); // State for MurottalPlayer status
 
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
   const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
@@ -178,7 +178,7 @@ const Index = () => {
         }
         
         setNextPrayerName(foundNextPrayer?.name || null);
-        setNextPrayerTime(foundNextNextPrayer?.time || null);
+        setNextPrayerTime(foundNextPrayer?.time || null);
         console.log("Index: Next prayer determined:", foundNextPrayer?.name, foundNextPrayer?.time?.format('HH:mm:ss'));
       }
     } catch (err) {
@@ -221,7 +221,7 @@ const Index = () => {
       setTimeout(() => {
         setIsScreenDarkened(false);
         console.log("Index: Screen reverted to normal after prayer/khutbah.");
-      }, 5 * 60 * 1000);
+      }, 5 * 60 * 1000); // 5 minutes
     }
   }, [nextPrayerName]);
 
@@ -286,6 +286,7 @@ const Index = () => {
   }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive]);
 
   // Combine all conditions that should pause the MediaPlayerDisplay
+  const isOverlayActive = showPrayerOverlay || showJumuahOverlay || showImsakOverlay;
   const shouldMediaPlayerBePaused = isOverlayActive || isScreenDarkened || isScreensaverActive || isMurottalPlaying;
 
   return (
@@ -293,10 +294,6 @@ const Index = () => {
       <AppBackground>
         {/* MurottalPlayer now receives a callback to update its playing status */}
         <MurottalPlayer onPlayingChange={setIsMurottalPlaying} />
-
-        {/* MediaPlayerDisplay should always be mounted to avoid AbortError,
-            its playback will be controlled by shouldMediaPlayerBePaused prop */}
-        <MediaPlayerDisplay isOverlayActive={shouldMediaPlayerBePaused} />
 
         {isScreensaverActive && !isOverlayActive && !isScreenDarkened && (
           <Screensaver />
@@ -361,6 +358,8 @@ const Index = () => {
 
             <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <FinancialDisplay />
+              {/* MediaPlayerDisplay moved here, below FinancialDisplay */}
+              <MediaPlayerDisplay isOverlayActive={shouldMediaPlayerBePaused} />
             </div>
 
             <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
