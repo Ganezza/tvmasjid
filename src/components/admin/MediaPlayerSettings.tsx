@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"; // Import DialogDescription
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select components
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +16,6 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface MediaFile {
   id: string;
-  created_at: string;
   title: string | null;
   file_path: string;
   file_type: "audio" | "video";
@@ -412,6 +411,9 @@ const MediaPlayerSettings: React.FC = () => {
           <DialogContent className="bg-gray-800 text-white border-gray-700">
             <DialogHeader>
               <DialogTitle className="text-blue-300">{editingMedia ? "Edit Media" : "Tambah Media Baru"}</DialogTitle>
+              <DialogDescription>
+                {editingMedia ? "Perbarui detail media ini." : "Isi detail untuk media baru yang akan diputar di layar utama."}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
