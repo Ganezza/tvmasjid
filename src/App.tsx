@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { SessionProvider } from "./components/SessionProvider";
 import React from "react"; // Import React
+import { AppSettingsProvider } from "./contexts/AppSettingsContext"; // Import AppSettingsProvider
 
 // Menggunakan React.lazy untuk memuat komponen secara dinamis
 const AdminPanel = React.lazy(() => import("./pages/AdminPanel"));
@@ -21,36 +22,38 @@ const App = () => (
       <Sonner />
       <BrowserRouter basename="/tvmasjid/">
         <SessionProvider>
-          {/* Wrapper untuk skala global */}
-          <div style={{ 
-            transform: 'scale(0.61875)', // Skala diperbesar 10% dari 0.5625
-            transformOrigin: 'top left', 
-            width: 'calc(100% / 0.61875)', 
-            height: 'calc(100% / 0.61875)' 
-          }}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              {/* Menggunakan Suspense untuk lazy-loaded components */}
-              <Route 
-                path="/admin" 
-                element={
-                  <React.Suspense fallback={<div>Memuat Admin Panel...</div>}>
-                    <AdminPanel />
-                  </React.Suspense>
-                } 
-              />
-              <Route 
-                path="/login" 
-                element={
-                  <React.Suspense fallback={<div>Memuat Halaman Login...</div>}>
-                    <Login />
-                  </React.Suspense>
-                } 
-              />
-              {/* TAMBAHKAN SEMUA RUTE KUSTOM DI ATAS RUTE CATCH-ALL "*" */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
+          <AppSettingsProvider> {/* Wrap with AppSettingsProvider */}
+            {/* Wrapper untuk skala global */}
+            <div style={{ 
+              transform: 'scale(0.61875)', // Skala diperbesar 10% dari 0.5625
+              transformOrigin: 'top left', 
+              width: 'calc(100% / 0.61875)', 
+              height: 'calc(100% / 0.61875)' 
+            }}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                {/* Menggunakan Suspense untuk lazy-loaded components */}
+                <Route 
+                  path="/admin" 
+                  element={
+                    <React.Suspense fallback={<div>Memuat Admin Panel...</div>}>
+                      <AdminPanel />
+                    </React.Suspense>
+                  } 
+                />
+                <Route 
+                  path="/login" 
+                  element={
+                    <React.Suspense fallback={<div>Memuat Halaman Login...</div>}>
+                      <Login />
+                    </React.Suspense>
+                  } 
+                />
+                {/* TAMBAHKAN SEMUA RUTE KUSTOM DI ATAS RUTE CATCH-ALL "*" */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+          </AppSettingsProvider>
         </SessionProvider>
       </BrowserRouter>
     </TooltipProvider>
