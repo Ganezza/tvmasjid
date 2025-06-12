@@ -79,6 +79,8 @@ const DisplaySettings: React.FC = () => {
       if (publicUrlData?.publicUrl) {
         setValue("backgroundImageUrl", publicUrlData.publicUrl);
         setCurrentImageUrl(publicUrlData.publicUrl);
+        // Explicitly update to 100% before success
+        toast.loading("Mengunggah gambar latar belakang: 100%", { id: uploadToastId });
         toast.success("Gambar latar belakang berhasil diunggah!", { id: uploadToastId });
         toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file gambar dioptimalkan (misal: format WebP, resolusi sesuai kebutuhan).");
 
