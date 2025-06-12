@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { PlayCircle, PauseCircle } from "lucide-react"; // Import icons
+import { Button } from "@/components/ui/button"; // Import Button component
 
 interface MediaFile {
   id: string;
@@ -11,13 +13,14 @@ interface MediaFile {
 }
 
 interface MediaPlayerDisplayProps {
-  isOverlayActive: boolean; // New prop to indicate if an overlay is active
+  isOverlayActive: boolean; // Prop to indicate if an overlay is active (including murottal playing)
 }
 
 const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOverlayActive }) => {
   const [activeMedia, setActiveMedia] = useState<MediaFile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false); // New state for manual play/pause
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -108,10 +111,47 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
     };
   }, [fetchActiveMedia, activeMedia]); // Add activeMedia to dependencies to re-evaluate subscription if activeMedia changes
 
+  // Effect to handle playback based on isPlaying and isOverlayActive
   useEffect(() => {
-    // Handle playback when activeMedia or isOverlayActive changes
+    const mediaElement = activeMedia?.file_type === "audio" ? audioRef.current : videoRef.current;
+
+    if (!mediaElement) return;
+
+    if (isOverlayActive) {
+      if (!mediaElement.paused) {
+        mediaElement.pause();
+        console.log("MediaPlayerDisplay: Media paused due to overlay/murottal.");
+      }
+    } else {
+      if (isPlaying && mediaElement.paused) {
+        mediaElement.play().catch(e => {
+          console.error("Error playing media:", e);
+          toast.error(`Gagal memutar media: ${e.message || "Pastikan file media valid dan diizinkan autoplay."}`);
+          setIsPlaying(false); // Reset playing state on error
+        });
+        console.log("MediaPlayerDisplay: Media resumed.");
+      } else if (!isPlaying && !mediaElement.paused) {
+        mediaElement.pause();
+        console.log("MediaPlayerDisplay: Media paused by user or no longer intended to play.");
+      }
+    }
+  }, [isPlaying, isOverlayActive, activeMedia]);
+
+  // Effect to set media source when activeMedia changes
+  useEffect(() => {
     const audioEl = audioRef.current;
     const videoEl = videoRef.current;
+
+    // Pause and clear all media elements first
+    if (audioEl) {
+      audioEl.pause();
+      audioEl.src = "";
+    }
+    if (videoEl) {
+      videoEl.pause();
+      videoEl.src = "";
+    }
+    setIsPlaying(false); // Reset playing state when media changes
 
     if (activeMedia) {
       const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
@@ -120,75 +160,31 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
         return;
       }
 
-      if (activeMedia.file_type === "audio") {
-        if (videoEl) { // Ensure video is paused if audio is active
-          videoEl.pause();
-          videoEl.src = ""; // Clear video source
-        }
-        if (audioEl) {
-          if (audioEl.src !== publicUrl) { // Only set src if different
-            audioEl.src = publicUrl;
-            audioEl.load();
-          }
-          if (isOverlayActive) {
-            if (!audioEl.paused) {
-              audioEl.pause();
-              console.log("MediaPlayerDisplay: Audio paused due to overlay.");
-            }
-          } else {
-            audioEl.play().catch(e => {
-              console.error("Error playing audio:", e);
-              toast.error(`Gagal memutar audio: ${e.message || "Pastikan file audio valid dan diizinkan autoplay."}`);
-            });
-            console.log("MediaPlayerDisplay: Audio playing.");
-          }
-        }
-      } else if (activeMedia.file_type === "video") {
-        if (audioEl) { // Ensure audio is paused if video is active
-          audioEl.pause();
-          audioEl.src = ""; // Clear audio source
-        }
-        if (videoEl) {
-          if (videoEl.src !== publicUrl) { // Only set src if different
-            videoEl.src = publicUrl;
-            videoEl.load();
-          }
-          if (isOverlayActive) {
-            if (!videoEl.paused) {
-              videoEl.pause();
-              console.log("MediaPlayerDisplay: Video paused due to overlay.");
-            }
-          } else {
-            videoEl.play().catch(e => {
-              console.error("Error playing video:", e);
-              toast.error(`Gagal memutar video: ${e.message || "Pastikan file video valid dan diizinkan autoplay."}`);
-            });
-            console.log("MediaPlayerDisplay: Video playing.");
-          }
-        }
+      if (activeMedia.file_type === "audio" && audioEl) {
+        audioEl.src = publicUrl;
+        audioEl.load();
+      } else if (activeMedia.file_type === "video" && videoEl) {
+        videoEl.src = publicUrl;
+        videoEl.load();
       }
-    } else {
-      // If no active media, pause and clear both players
-      if (audioEl) {
-        audioEl.pause();
-        audioEl.src = "";
-      }
-      if (videoEl) {
-        videoEl.pause();
-        videoEl.src = "";
-      }
-      console.log("MediaPlayerDisplay: No active media, players reset.");
-    }
-  }, [activeMedia, isOverlayActive]); // Dependencies
-
-  const handleMediaEnded = useCallback(() => {
-    // Loop the current media
-    if (activeMedia?.file_type === "audio" && audioRef.current) {
-      audioRef.current.play().catch(e => console.error("Error looping audio:", e));
-    } else if (activeMedia?.file_type === "video" && videoRef.current) {
-      videoRef.current.play().catch(e => console.error("Error looping video:", e));
     }
   }, [activeMedia]);
+
+
+  const handleMediaEnded = useCallback(() => {
+    // Loop the current media only if it was manually started
+    if (isPlaying) {
+      if (activeMedia?.file_type === "audio" && audioRef.current) {
+        audioRef.current.play().catch(e => console.error("Error looping audio:", e));
+      } else if (activeMedia?.file_type === "video" && videoRef.current) {
+        videoRef.current.play().catch(e => console.error("Error looping video:", e));
+      }
+    } else {
+      // If not playing manually, just ensure it's paused
+      if (audioRef.current) audioRef.current.pause();
+      if (videoRef.current) videoRef.current.pause();
+    }
+  }, [isPlaying, activeMedia]);
 
   const handleMediaError = useCallback((event: React.SyntheticEvent<HTMLMediaElement, Event>) => {
     console.error("Media playback error:", event.currentTarget.error);
@@ -214,7 +210,26 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
     toast.error(errorMessage);
     setError(errorMessage);
     setActiveMedia(null); // Clear active media on error
+    setIsPlaying(false); // Stop trying to play
   }, []);
+
+  const togglePlayback = () => {
+    const mediaElement = activeMedia?.file_type === "audio" ? audioRef.current : videoRef.current;
+    if (mediaElement) {
+      if (isPlaying) {
+        mediaElement.pause();
+        setIsPlaying(false);
+      } else {
+        mediaElement.play().then(() => {
+          setIsPlaying(true);
+        }).catch(e => {
+          console.error("Error attempting to play media manually:", e);
+          toast.error(`Gagal memutar media: ${e.message || "Terjadi kesalahan."}`);
+          setIsPlaying(false);
+        });
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -259,30 +274,37 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
       <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-yellow-300">
         {activeMedia.title || (activeMedia.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
       </h3>
-      {activeMedia.file_type === "audio" ? (
-        <audio
-          ref={audioRef}
-          src={publicUrl}
-          controls
-          loop
-          autoPlay
-          className="w-full max-w-md mt-2"
-          onEnded={handleMediaEnded}
-          onError={handleMediaError}
-        />
-      ) : (
-        <video
-          ref={videoRef}
-          src={publicUrl}
-          controls
-          loop
-          autoPlay
-          muted // Muted by default for autoplay compatibility in some browsers
-          className="w-full h-full object-contain mt-2"
-          onEnded={handleMediaEnded}
-          onError={handleMediaError}
-        />
-      )}
+      <div className="relative w-full flex-grow flex items-center justify-center">
+        {activeMedia.file_type === "audio" ? (
+          <audio
+            ref={audioRef}
+            src={publicUrl}
+            controls={false} // Hide default controls
+            loop
+            className="hidden" // Hide audio element, control via custom button
+            onEnded={handleMediaEnded}
+            onError={handleMediaError}
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            src={publicUrl}
+            controls={false} // Hide default controls
+            loop
+            muted // Muted by default for autoplay compatibility in some browsers
+            className="w-full h-full object-contain"
+            onEnded={handleMediaEnded}
+            onError={handleMediaError}
+          />
+        )}
+        <Button 
+          onClick={togglePlayback} 
+          className="absolute bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg"
+          size="icon"
+        >
+          {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
+        </Button>
+      </div>
       <p className="text-xs text-gray-400 mt-2">
         {activeMedia.file_type === "video" && "Catatan: Video mungkin dimulai dalam mode 'mute' karena batasan browser untuk autoplay."}
       </p>
