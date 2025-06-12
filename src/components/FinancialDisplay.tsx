@@ -104,7 +104,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
         Data per: <span className="font-semibold">{format(new Date(), "EEEE, dd MMMM yyyy", { locale: id }).replace('Minggu', 'Ahad')}</span>
       </p>
 
-      <h4 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-blue-300">
+      <h4 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 text-blue-300"> {/* Increased font size here */}
         Rincian Transaksi Terbaru
       </h4>
       {recentRecords.length === 0 ? (

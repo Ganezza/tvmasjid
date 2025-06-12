@@ -133,17 +133,17 @@
      1.5px  1.5px 0 #FFD700;
 }
 
-/* New keyframes for auto-scrolling financial records */
-@keyframes auto-scroll-up {
+/* New keyframes for auto-scrolling financial records (downwards) */
+@keyframes auto-scroll-down {
   0% { transform: translateY(0%); }
-  100% { transform: translateY(-50%); } /* Scrolls up by half the duplicated content height */
+  100% { transform: translateY(50%); } /* Scrolls down by half the duplicated content height */
 }
 
 .auto-scroll-content {
   /* Ensure content takes up necessary space for scrolling */
   display: block; 
   white-space: normal; 
-  animation-name: auto-scroll-up;
+  animation-name: auto-scroll-down; /* Changed to auto-scroll-down */
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
