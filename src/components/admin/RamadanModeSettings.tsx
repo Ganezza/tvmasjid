@@ -4,34 +4,23 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
 
 const RamadanModeSettings: React.FC = () => {
+  const { settings, isLoadingSettings, refetchSettings } = useAppSettings(); // Use the new hook
   const [isRamadanModeActive, setIsRamadanModeActive] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("is_ramadan_mode_active")
-        .eq("id", 1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error("Error fetching Ramadan mode settings:", error);
-        toast.error("Gagal memuat pengaturan mode Ramadan.");
-      } else if (data) {
-        setIsRamadanModeActive(data.is_ramadan_mode_active);
-      } else {
-        // If no settings found, assume default (false) and potentially create it
-        setIsRamadanModeActive(false);
-        // Optionally, upsert default here if it doesn't exist
-      }
+    if (!isLoadingSettings && settings) {
+      setIsRamadanModeActive(settings.is_ramadan_mode_active);
       setIsLoading(false);
-    };
-    fetchSettings();
-  }, []);
+    } else if (!isLoadingSettings && !settings) {
+      // Handle case where settings might not be loaded (e.g., initial empty DB)
+      setIsRamadanModeActive(false);
+      setIsLoading(false);
+    }
+  }, [settings, isLoadingSettings]);
 
   const handleToggleRamadanMode = async (checked: boolean) => {
     setIsRamadanModeActive(checked);
@@ -51,6 +40,7 @@ const RamadanModeSettings: React.FC = () => {
       setIsRamadanModeActive(!checked); // Revert on error
     } else {
       toast.success(`Mode Ramadan ${checked ? "diaktifkan" : "dinonaktifkan"}.`);
+      refetchSettings(); // Manually refetch to ensure context is updated immediately
     }
   };
 

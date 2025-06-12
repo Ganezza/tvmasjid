@@ -17,7 +17,7 @@ import DarkScreenOverlay from "@/components/DarkScreenOverlay";
 import ImsakOverlay from "@/components/ImsakOverlay";
 import Screensaver from "@/components/Screensaver";
 import MediaPlayerDisplay from "@/components/MediaPlayerDisplay";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase"; // Keep supabase import for other uses
 import { toast } from "sonner";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
@@ -25,7 +25,7 @@ import isBetween from "dayjs/plugin/isBetween";
 import * as Adhan from "adhan";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
 
 dayjs.extend(duration);
 dayjs.extend(isBetween);
@@ -39,6 +39,7 @@ const IMSAK_OVERLAY_DURATION_SECONDS = 10;
 
 const Index = () => {
   const navigate = useNavigate();
+  const { settings, isLoadingSettings } = useAppSettings(); // Use the new hook
 
   const [masjidName, setMasjidName] = useState<string>("Masjid Digital TV");
   const [masjidLogoUrl, setMasjidLogoUrl] = useState<string | null>(null);
@@ -63,7 +64,6 @@ const Index = () => {
   const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
 
   const activityTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const settingsChannelRef = useRef<RealtimeChannel | null>(null);
 
   const resetActivityTimer = useCallback(() => {
     if (activityTimerRef.current) {
@@ -99,123 +99,89 @@ const Index = () => {
     };
   }, [resetActivityTimer]);
 
-  const fetchMasjidInfoAndSettings = useCallback(async () => {
-    try {
-      console.log("Index: Fetching masjid info and settings...");
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("masjid_name, masjid_logo_url, masjid_address, latitude, longitude, calculation_method, iqomah_countdown_duration, khutbah_duration_minutes, is_ramadan_mode_active, masjid_name_color, fajr_offset, dhuhr_offset, asr_offset, maghrib_offset, isha_offset, imsak_offset, screensaver_idle_minutes")
-        .eq("id", 1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error("Index: Error fetching masjid info and settings:", error);
-        toast.error("Gagal memuat informasi masjid & pengaturan.");
-      } else if (data) {
-        setMasjidName(data.masjid_name || "Masjid Digital TV");
-        setMasjidLogoUrl(data.masjid_logo_url);
-        setMasjidAddress(data.masjid_address);
-        setIqomahCountdownDuration(data.iqomah_countdown_duration || 300);
-        setKhutbahDurationMinutes(data.khutbah_duration_minutes || 45);
-        setIsRamadanModeActive(data.is_ramadan_mode_active || false);
-        setMasjidNameColor(data.masjid_name_color || "#34D399");
-        setScreensaverIdleMinutes(data.screensaver_idle_minutes || 5);
-        console.log("Index: Settings fetched:", data);
-
-        const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
-        const params = Adhan.CalculationMethod[data.calculation_method as keyof typeof Adhan.CalculationMethod]();
-        const today = dayjs();
-        const times = new Adhan.PrayerTimes(coordinates, today.toDate(), params);
-
-        const adjustedFajr = dayjs(times.fajr).add(data.fajr_offset ?? 0, 'minute');
-        const adjustedDhuhr = dayjs(times.dhuhr).add(data.dhuhr_offset ?? 0, 'minute');
-        const adjustedAsr = dayjs(times.asr).add(data.asr_offset ?? 0, 'minute');
-        const adjustedMaghrib = dayjs(times.maghrib).add(data.maghrib_offset ?? 0, 'minute');
-        const adjustedIsha = dayjs(times.isha).add(data.isha_offset ?? 0, 'minute');
-        const calculatedImsakTime = dayjs(times.fajr).subtract(10, 'minute').add(data.imsak_offset ?? 0, 'minute');
-
-        const isFriday = today.day() === 5;
-
-        const prayerTimesList = [
-          { name: "Subuh", time: adjustedFajr },
-          { name: "Syuruq", time: dayjs(times.sunrise) },
-          { name: isFriday ? "Jum'at" : "Dzuhur", time: adjustedDhuhr },
-          { name: "Ashar", time: adjustedAsr },
-          { name: "Maghrib", time: adjustedMaghrib },
-          { name: "Isya", time: adjustedIsha },
-        ];
-
-        if (isFriday) {
-          setJumuahDhuhrTime(adjustedDhuhr);
-          console.log("Index: Jumuah Dhuhr Time set:", adjustedDhuhr.format('HH:mm:ss'));
-        } else {
-          setJumuahDhuhrTime(null);
-        }
-
-        if (data.is_ramadan_mode_active) {
-          setImsakTime(calculatedImsakTime);
-          console.log("Index: Imsak Time set (Ramadan mode active):", calculatedImsakTime.format('HH:mm:ss'));
-        } else {
-          setImsakTime(null);
-        }
-
-        let foundNextPrayer: { name: string; time: dayjs.Dayjs } | null = null;
-        let minDiff = Infinity;
-        const now = dayjs();
-
-        for (const prayer of prayerTimesList) {
-          if (prayer.name === "Syuruq") continue;
-
-          let prayerDateTime = prayer.time;
-          if (prayerDateTime.isBefore(now)) {
-            prayerDateTime = prayerDateTime.add(1, 'day');
-          }
-          const diff = prayerDateTime.diff(now);
-          if (diff > 0 && diff < minDiff) {
-            minDiff = diff;
-            foundNextPrayer = { name: prayer.name, time: prayerDateTime };
-          }
-        }
-        
-        setNextPrayerName(foundNextPrayer?.name || null);
-        setNextPrayerTime(foundNextPrayer?.time || null);
-        console.log("Index: Next prayer determined:", foundNextPrayer?.name, foundNextPrayer?.time?.format('HH:mm:ss'));
-      }
-    } catch (err) {
-      console.error("Index: Unexpected error fetching masjid info and settings:", err);
-      toast.error("Terjadi kesalahan saat memuat informasi masjid & pengaturan.");
-    }
-  }, []);
-
   useEffect(() => {
-    fetchMasjidInfoAndSettings();
-
-    if (!settingsChannelRef.current) {
-      settingsChannelRef.current = supabase
-        .channel('masjid_info_and_settings_changes')
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-          console.log('Index: Masjid info and settings change received!', payload);
-          fetchMasjidInfoAndSettings();
-        })
-        .subscribe();
-      console.log("Index: Subscribed to channel 'masjid_info_and_settings_changes'.");
+    if (isLoadingSettings || !settings) {
+      console.log("Index: Settings still loading or not available.");
+      return;
     }
 
-    return () => {
-      if (settingsChannelRef.current) {
-        supabase.removeChannel(settingsChannelRef.current);
-        console.log("Index: Unsubscribed from channel 'masjid_info_and_settings_changes'.");
-        settingsChannelRef.current = null;
+    console.log("Index: Settings available, updating state and calculating prayer times.");
+    setMasjidName(settings.masjid_name || "Masjid Digital TV");
+    setMasjidLogoUrl(settings.masjid_logo_url);
+    setMasjidAddress(settings.masjid_address);
+    setIqomahCountdownDuration(settings.iqomah_countdown_duration || 300);
+    setKhutbahDurationMinutes(settings.khutbah_duration_minutes || 45);
+    setIsRamadanModeActive(settings.is_ramadan_mode_active || false);
+    setMasjidNameColor(settings.masjid_name_color || "#34D399");
+    setScreensaverIdleMinutes(settings.screensaver_idle_minutes || 5);
+
+    const coordinates = new Adhan.Coordinates(settings.latitude || -6.2088, settings.longitude || 106.8456);
+    const params = Adhan.CalculationMethod[settings.calculation_method as keyof typeof Adhan.CalculationMethod]();
+    const today = dayjs();
+    const times = new Adhan.PrayerTimes(coordinates, today.toDate(), params);
+
+    const adjustedFajr = dayjs(times.fajr).add(settings.fajr_offset ?? 0, 'minute');
+    const adjustedDhuhr = dayjs(times.dhuhr).add(settings.dhuhr_offset ?? 0, 'minute');
+    const adjustedAsr = dayjs(times.asr).add(settings.asr_offset ?? 0, 'minute');
+    const adjustedMaghrib = dayjs(times.maghrib).add(settings.maghrib_offset ?? 0, 'minute');
+    const adjustedIsha = dayjs(times.isha).add(settings.isha_offset ?? 0, 'minute');
+    const calculatedImsakTime = dayjs(times.fajr).subtract(10, 'minute').add(settings.imsak_offset ?? 0, 'minute');
+
+    const isFriday = today.day() === 5;
+
+    const prayerTimesList = [
+      { name: "Subuh", time: adjustedFajr },
+      { name: "Syuruq", time: dayjs(times.sunrise) },
+      { name: isFriday ? "Jum'at" : "Dzuhur", time: adjustedDhuhr },
+      { name: "Ashar", time: adjustedAsr },
+      { name: "Maghrib", time: adjustedMaghrib },
+      { name: "Isya", time: adjustedIsha },
+    ];
+
+    if (isFriday) {
+      setJumuahDhuhrTime(adjustedDhuhr);
+      console.log("Index: Jumuah Dhuhr Time set:", adjustedDhuhr.format('HH:mm:ss'));
+    } else {
+      setJumuahDhuhrTime(null);
+    }
+
+    if (settings.is_ramadan_mode_active) {
+      setImsakTime(calculatedImsakTime);
+      console.log("Index: Imsak Time set (Ramadan mode active):", calculatedImsakTime.format('HH:mm:ss'));
+    } else {
+      setImsakTime(null);
+    }
+
+    let foundNextPrayer: { name: string; time: dayjs.Dayjs } | null = null;
+    let minDiff = Infinity;
+    const now = dayjs();
+
+    for (const prayer of prayerTimesList) {
+      if (prayer.name === "Syuruq") continue; // Syuruq is not a prayer with countdown/overlay
+
+      let prayerDateTime = prayer.time;
+      // If the prayer time for today has already passed, consider it for tomorrow
+      if (prayerDateTime.isBefore(now)) {
+        prayerDateTime = prayerDateTime.add(1, 'day');
       }
-    };
-  }, [fetchMasjidInfoAndSettings]);
+      const diff = prayerDateTime.diff(now);
+      if (diff > 0 && diff < minDiff) {
+        minDiff = diff;
+        foundNextPrayer = { name: prayer.name, time: prayerDateTime };
+      }
+    }
+    
+    setNextPrayerName(foundNextPrayer?.name || null);
+    setNextPrayerTime(foundNextPrayer?.time || null);
+    console.log("Index: Next prayer determined:", foundNextPrayer?.name, foundNextPrayer?.time?.format('HH:mm:ss'));
+  }, [isLoadingSettings, settings]); // Depend on settings and its loading state
 
   const handlePrayerOrKhutbahEnd = useCallback(() => {
     console.log("Index: handlePrayerOrKhutbahEnd called.");
     setShowPrayerOverlay(false);
     setShowJumuahOverlay(false);
 
-    if (nextPrayerName !== "Imsak") {
+    if (nextPrayerName !== "Imsak") { // Imsak doesn't darken the screen
       setIsScreenDarkened(true);
       console.log("Index: Screen darkened for prayer/khutbah. Will revert in 5 minutes.");
       setTimeout(() => {
