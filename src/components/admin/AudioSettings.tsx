@@ -10,6 +10,7 @@ import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique file names
+import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
 
 const formSchema = z.object({
   murottalActive: z.boolean().default(false),
@@ -43,6 +44,8 @@ const PRAYER_AUDIO_FIELDS = [
 ];
 
 const AudioSettings: React.FC = () => {
+  const { settings, isLoadingSettings, refetchSettings } = useAppSettings(); // Use the new hook
+
   const form = useForm<AudioSettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -69,38 +72,26 @@ const AudioSettings: React.FC = () => {
   const { handleSubmit, register, setValue, formState: { isSubmitting, errors } } = form;
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("murottal_active, tarhim_active, iqomah_countdown_duration, murottal_pre_adhan_duration, tarhim_pre_adhan_duration, murottal_audio_url_fajr, murottal_audio_url_dhuhr, murottal_audio_url_asr, murottal_audio_url_maghrib, murottal_audio_url_isha, murottal_audio_url_imsak, tarhim_audio_url, khutbah_duration_minutes, is_master_audio_active, adhan_beep_audio_url, iqomah_beep_audio_url, imsak_beep_audio_url")
-        .eq("id", 1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error("Error fetching audio settings:", error);
-        toast.error("Gagal memuat pengaturan audio.");
-      } else if (data) {
-        setValue("murottalActive", data.murottal_active);
-        setValue("tarhimActive", data.tarhim_active);
-        setValue("iqomahCountdownDuration", data.iqomah_countdown_duration);
-        setValue("murottalPreAdhanDuration", data.murottal_pre_adhan_duration || 10);
-        setValue("tarhimPreAdhanDuration", data.tarhim_pre_adhan_duration || 300);
-        setValue("murottalAudioUrlFajr", data.murottal_audio_url_fajr);
-        setValue("murottalAudioUrlDhuhr", data.murottal_audio_url_dhuhr);
-        setValue("murottalAudioUrlAsr", data.murottal_audio_url_asr);
-        setValue("murottalAudioUrlMaghrib", data.murottal_audio_url_maghrib);
-        setValue("murottalAudioUrlIsha", data.murottal_audio_url_isha);
-        setValue("murottalAudioUrlImsak", data.murottal_audio_url_imsak);
-        setValue("tarhimAudioUrl", data.tarhim_audio_url);
-        setValue("khutbahDurationMinutes", data.khutbah_duration_minutes || 45);
-        setValue("isMasterAudioActive", data.is_master_audio_active ?? true); // Set new field, default to true if null
-        setValue("adhanBeepAudioUrl", data.adhan_beep_audio_url); // Set new field
-        setValue("iqomahBeepAudioUrl", data.iqomah_beep_audio_url); // Set new field
-        setValue("imsakBeepAudioUrl", data.imsak_beep_audio_url); // SET NEW FIELD
-      }
-    };
-    fetchSettings();
-  }, [setValue]);
+    if (!isLoadingSettings && settings) {
+      setValue("murottalActive", settings.murottal_active);
+      setValue("tarhimActive", settings.tarhim_active);
+      setValue("iqomahCountdownDuration", settings.iqomah_countdown_duration);
+      setValue("murottalPreAdhanDuration", settings.murottal_pre_adhan_duration || 10);
+      setValue("tarhimPreAdhanDuration", settings.tarhim_pre_adhan_duration || 300);
+      setValue("murottalAudioUrlFajr", settings.murottal_audio_url_fajr);
+      setValue("murottalAudioUrlDhuhr", settings.murottal_audio_url_dhuhr);
+      setValue("murottalAudioUrlAsr", settings.murottal_audio_url_asr);
+      setValue("murottalAudioUrlMaghrib", settings.murottal_audio_url_maghrib);
+      setValue("murottalAudioUrlIsha", settings.murottal_audio_url_isha);
+      setValue("murottalAudioUrlImsak", settings.murottal_audio_url_imsak);
+      setValue("tarhimAudioUrl", settings.tarhim_audio_url);
+      setValue("khutbahDurationMinutes", settings.khutbah_duration_minutes || 45);
+      setValue("isMasterAudioActive", settings.is_master_audio_active ?? true); // Set new field, default to true if null
+      setValue("adhanBeepAudioUrl", settings.adhan_beep_audio_url); // Set new field
+      setValue("iqomahBeepAudioUrl", settings.iqomah_beep_audio_url); // Set new field
+      setValue("imsakBeepAudioUrl", settings.imsak_beep_audio_url); // SET NEW FIELD
+    }
+  }, [settings, isLoadingSettings, setValue]);
 
   const handleAudioUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: keyof AudioSettingsFormValues) => {
     const file = event.target.files?.[0];
@@ -206,6 +197,7 @@ const AudioSettings: React.FC = () => {
     } else {
       toast.success("Pengaturan audio berhasil disimpan!");
       console.log("Audio settings saved:", data);
+      refetchSettings(); // Manually refetch to ensure context is updated immediately
     }
   };
 
@@ -286,9 +278,9 @@ const AudioSettings: React.FC = () => {
                   {form.watch(field.name as keyof AudioSettingsFormValues) && (
                     <div className="mt-2 flex items-center space-x-2">
                       <audio controls src={form.watch(field.name as keyof AudioSettingsFormValues) as string} className="w-full max-w-xs" />
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
+                      <Button
+                        variant="destructive"
+                        size="sm"
                         onClick={() => handleRemoveAudio(field.name as keyof AudioSettingsFormValues)}
                         className="bg-red-600 hover:bg-red-700 text-white"
                       >
@@ -313,9 +305,9 @@ const AudioSettings: React.FC = () => {
                 {form.watch("tarhimAudioUrl") && (
                   <div className="mt-2 flex items-center space-x-2">
                     <audio controls src={form.watch("tarhimAudioUrl") as string} className="w-full max-w-xs" />
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
+                    <Button
+                      variant="destructive"
+                      size="sm"
                       onClick={() => handleRemoveAudio("tarhimAudioUrl")}
                       className="bg-red-600 hover:bg-red-700 text-white"
                     >
@@ -375,9 +367,9 @@ const AudioSettings: React.FC = () => {
               {form.watch("imsakBeepAudioUrl") && (
                 <div className="mt-2 flex items-center space-x-2">
                   <audio controls src={form.watch("imsakBeepAudioUrl") as string} className="w-full max-w-xs" />
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={() => handleRemoveAudio("imsakBeepAudioUrl")}
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
@@ -399,9 +391,9 @@ const AudioSettings: React.FC = () => {
               {form.watch("adhanBeepAudioUrl") && (
                 <div className="mt-2 flex items-center space-x-2">
                   <audio controls src={form.watch("adhanBeepAudioUrl") as string} className="w-full max-w-xs" />
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={() => handleRemoveAudio("adhanBeepAudioUrl")}
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
@@ -423,9 +415,9 @@ const AudioSettings: React.FC = () => {
               {form.watch("iqomahBeepAudioUrl") && (
                 <div className="mt-2 flex items-center space-x-2">
                   <audio controls src={form.watch("iqomahBeepAudioUrl") as string} className="w-full max-w-xs" />
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={() => handleRemoveAudio("iqomahBeepAudioUrl")}
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
