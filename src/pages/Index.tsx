@@ -317,27 +317,28 @@ const Index = () => {
             <HijriCalendarDisplay />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 w-full px-0.5 py-0.5 md:py-1 flex-grow">
-            {/* Kolom 1: Jadwal Sholat & Keuangan */}
-            <div className="col-span-full md:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
+          {/* Main grid container for 3 columns on small screens, 2 on medium, 3 on large */}
+          <div className="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-1 w-full px-0.5 py-0.5 md:py-1 flex-grow">
+            {/* Kolom 1: Jadwal Sholat, Imam, Hari Besar Islam, Tarawih */}
+            <div className="col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <PrayerTimesDisplay hideCountdown={isOverlayActive} />
-              <FinancialDisplay />
+              <ImamMuezzinDisplay />
+              <IslamicHolidayCountdown />
+              <TarawihScheduleDisplay />
             </div>
 
-            {/* Kolom 2: Imam/Muadzin, Notifikasi/Kajian, Info Slides */}
-            <div className="col-span-full md:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
-              <ImamMuezzinDisplay />
-              <NotificationStudyDisplay />
+            {/* Kolom 2: Slide, Pengumuman, Media Player */}
+            <div className="col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <React.Suspense fallback={<div>Memuat Info Slides...</div>}>
                 <InfoSlides />
               </React.Suspense>
+              <NotificationStudyDisplay />
+              <MediaPlayerDisplay isOverlayActive={shouldMediaPlayerBePaused} />
             </div>
 
-            {/* Kolom 3: Hari Besar Islam, Jadwal Tarawih, Media Player */}
-            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
-              <IslamicHolidayCountdown />
-              <TarawihScheduleDisplay />
-              <MediaPlayerDisplay isOverlayActive={shouldMediaPlayerBePaused} />
+            {/* Kolom 3: Informasi Keuangan Masjid */}
+            <div className="col-span-1 flex flex-col gap-1 flex-grow min-h-0">
+              <FinancialDisplay />
             </div>
           </div>
 
