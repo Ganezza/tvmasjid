@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+import { toast } => "sonner";
 import dayjs from "dayjs";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -114,13 +114,13 @@ const FinancialDisplay: React.FC = React.memo(() => {
           <div className="space-y-1">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-1 rounded-md shadow-sm text-left">
-                <p className="font-medium text-base md:text-lg text-blue-200"> {/* Increased font size */}
+                <p className="font-medium text-lg md:text-xl text-blue-200"> {/* Increased font size */}
                   {record.description}
                 </p>
-                <p className={`text-sm md:text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}> {/* Increased font size */}
+                <p className={`text-base md:text-lg font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}> {/* Increased font size */}
                   {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
-                <p className="text-xs md:text-sm text-gray-400"> {/* Increased font size */}
+                <p className="text-sm md:text-base text-gray-400"> {/* Increased font size */}
                   {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
                 </p>
               </div>

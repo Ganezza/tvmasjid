@@ -189,15 +189,15 @@ const FinancialSettings: React.FC = () => {
             <p className="text-gray-400 text-center">Belum ada catatan keuangan. Tambahkan yang pertama!</p>
           ) : (
             records.map((record) => (
-              <div key={record.id} className="flex items-center justify-between bg-gray-700 p-3 rounded-md shadow-sm">
+              <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm">
                 <div>
-                  <p className="font-medium text-lg text-blue-200">
+                  <p className="font-medium text-xl text-blue-200"> {/* Increased font size */}
                     {record.description}
                   </p>
-                  <p className={`text-base font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}> {/* Increased font size */}
+                  <p className={`text-lg font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}> {/* Increased font size */}
                     {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </p>
-                  <p className="text-sm text-gray-400"> {/* Increased font size */}
+                  <p className="text-base text-gray-400"> {/* Increased font size */}
                     {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
                   </p>
                 </div>
