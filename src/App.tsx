@@ -23,10 +23,10 @@ const App = () => (
         <SessionProvider>
           {/* Wrapper untuk skala global */}
           <div style={{ 
-            transform: 'scale(0.75)', 
+            transform: 'scale(0.5625)', // Skala diperkecil 25% lagi (0.75 * 0.75 = 0.5625)
             transformOrigin: 'top left', 
-            width: 'calc(100% / 0.75)', 
-            height: 'calc(100% / 0.75)' 
+            width: 'calc(100% / 0.5625)', 
+            height: 'calc(100% / 0.5625)' 
           }}>
             <Routes>
               <Route path="/" element={<Index />} />
