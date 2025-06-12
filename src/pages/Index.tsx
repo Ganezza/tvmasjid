@@ -328,15 +328,17 @@ const Index = () => {
               <MediaPlayerDisplay isOverlayActive={shouldMediaPlayerBePaused} />
             </div>
 
+            {/* Moved InfoSlides here, next to ImamMuezzinDisplay and NotificationStudyDisplay */}
             <div className="col-span-full md:col-span-1 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <ImamMuezzinDisplay />
               <NotificationStudyDisplay />
-            </div>
-
-            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <React.Suspense fallback={<div>Memuat Info Slides...</div>}>
                 <InfoSlides />
               </React.Suspense>
+            </div>
+
+            {/* Adjusted col-span for the remaining components */}
+            <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
             </div>
