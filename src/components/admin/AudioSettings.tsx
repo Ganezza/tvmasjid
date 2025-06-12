@@ -16,6 +16,7 @@ const formSchema = z.object({
   murottalActive: z.boolean().default(false),
   tarhimActive: z.boolean().default(false),
   iqomahCountdownDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(300), // in seconds
+  maghribIqomahCountdownDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(120), // New field
   murottalPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(10), // in minutes
   tarhimPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(300), // Changed default to 300 seconds (5 minutes)
   murottalAudioUrlFajr: z.string().nullable().optional(),
@@ -53,6 +54,7 @@ const AudioSettings: React.FC = () => {
       murottalActive: false,
       tarhimActive: false,
       iqomahCountdownDuration: 300,
+      maghribIqomahCountdownDuration: 120, // Default for new field
       murottalPreAdhanDuration: 10,
       tarhimPreAdhanDuration: 300,
       murottalAudioUrlFajr: null,
@@ -78,6 +80,7 @@ const AudioSettings: React.FC = () => {
       setValue("murottalActive", settings.murottal_active);
       setValue("tarhimActive", settings.tarhim_active);
       setValue("iqomahCountdownDuration", settings.iqomah_countdown_duration);
+      setValue("maghribIqomahCountdownDuration", settings.maghrib_iqomah_countdown_duration ?? 120); // Set new field
       setValue("murottalPreAdhanDuration", settings.murottal_pre_adhan_duration || 10);
       setValue("tarhimPreAdhanDuration", settings.tarhim_pre_adhan_duration || 300);
       setValue("murottalAudioUrlFajr", settings.murottal_audio_url_fajr);
@@ -203,6 +206,7 @@ const AudioSettings: React.FC = () => {
           murottal_active: values.murottalActive,
           tarhim_active: values.tarhimActive,
           iqomah_countdown_duration: values.iqomahCountdownDuration,
+          maghrib_iqomah_countdown_duration: values.maghribIqomahCountdownDuration, // Save new field
           murottal_pre_adhan_duration: values.murottalPreAdhanDuration,
           tarhim_pre_adhan_duration: values.tarhimPreAdhanDuration,
           murottal_audio_url_fajr: values.murottalAudioUrlFajr,
@@ -279,6 +283,18 @@ const AudioSettings: React.FC = () => {
               placeholder="Contoh: 300 (untuk 5 menit)"
             />
             {errors.iqomahCountdownDuration && <p className="text-red-400 text-sm mt-1">{errors.iqomahCountdownDuration.message}</p>}
+          </div>
+          {/* New field for Maghrib Iqomah Duration */}
+          <div>
+            <Label htmlFor="maghribIqomahCountdownDuration" className="text-gray-300">Durasi Hitung Mundur Iqomah Maghrib (detik)</Label>
+            <Input
+              id="maghribIqomahCountdownDuration"
+              type="number"
+              {...register("maghribIqomahCountdownDuration")}
+              className="bg-gray-700 border-gray-600 text-white mt-1"
+              placeholder="Contoh: 120 (untuk 2 menit)"
+            />
+            {errors.maghribIqomahCountdownDuration && <p className="text-red-400 text-sm mt-1">{errors.maghribIqomahCountdownDuration.message}</p>}
           </div>
           
           {/* New Adhan Duration Setting */}
