@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { cn } from "@/lib/utils";
+import { ScrollBar } from "@/components/ui/scroll-area"; // Import ScrollBar from the shadcn/ui scroll-area component
 
 const ScrollAreaWithViewportRef = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
@@ -21,7 +22,7 @@ const ScrollAreaWithViewportRef = React.forwardRef<
     >
       {children}
     </ScrollAreaPrimitive.Viewport>
-    <ScrollAreaPrimitive.ScrollBar orientation="vertical" />
+    <ScrollBar /> {/* Use the imported ScrollBar component */}
     <ScrollAreaPrimitive.Corner />
   </ScrollAreaPrimitive.Root>
 ));
