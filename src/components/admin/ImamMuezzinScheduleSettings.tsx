@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"; // Import DialogDescription
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -247,6 +247,9 @@ const ImamMuezzinScheduleSettings: React.FC = () => {
           <DialogContent className="bg-gray-800 text-white border-gray-700">
             <DialogHeader>
               <DialogTitle className="text-blue-300">{editingSchedule ? "Edit Jadwal" : "Tambah Jadwal Baru"}</DialogTitle>
+              <DialogDescription>
+                {editingSchedule ? "Perbarui detail jadwal imam dan muadzin." : "Isi detail untuk jadwal imam dan muadzin baru."}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
