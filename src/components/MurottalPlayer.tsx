@@ -304,17 +304,28 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ onPlayingChange }) => {
         setPausedMurottalInfo(null); // Clear any paused murottal info
       } 
       
-      // For any audio that ends (including murottal that finished playing), save its position
+      // Check if the ended audio was a murottal and should loop
       const endedMurottalConfig = PRAYER_CONFIGS.find(config => endedAudioSrc.includes(settings[config.audioUrlField]?.split('/').pop() || ''));
       if (endedMurottalConfig) {
-        savePlaybackPosition(endedMurottalConfig.adhanName as string, audioRef.current.currentTime);
-        console.log(`MurottalPlayer: Murottal for ${endedMurottalConfig.adhanName} ended. Saved position: ${audioRef.current.currentTime}s.`);
+        // Murottal ended, loop it from the beginning
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().then(() => {
+          onPlayingChange(true);
+          console.log(`MurottalPlayer: Murottal for ${endedMurottalConfig.name} looped from beginning.`);
+        }).catch(e => {
+          console.error(`MurottalPlayer: Error looping murottal for ${endedMurottalConfig.name}:`, e);
+          audioRef.current?.pause();
+          audioRef.current.src = "";
+          onPlayingChange(false);
+        });
+        return; // Exit after handling murottal loop
       }
 
+      // For non-murottal audio (or if looping failed), pause and clear source
       audioRef.current.pause();
       audioRef.current.src = "";
       onPlayingChange(false);
-      console.log("MurottalPlayer: Audio playback ended. Resetting audio source.");
+      console.log("MurottalPlayer: Non-murottal audio playback ended or murottal looping failed. Resetting audio source.");
     };
 
     const handleAudioPause = () => {
