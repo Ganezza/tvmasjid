@@ -53,7 +53,7 @@ const DisplaySettings: React.FC = () => {
     const fileName = `${uuidv4()}.${fileExtension}`; // Generate unique file name
     const filePath = `backgrounds/${fileName}`; // Path inside the bucket
 
-    const uploadToastId = toast.loading("Mengunggah gambar latar belakang...");
+    const uploadToastId = toast.loading("Mengunggah gambar latar belakang: 0%");
 
     try {
       const { data, error } = await supabase.storage
@@ -61,6 +61,10 @@ const DisplaySettings: React.FC = () => {
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false, // Do not upsert, create new file
+          onUploadProgress: (event: ProgressEvent) => {
+            const percent = Math.round((event.loaded * 100) / event.total);
+            toast.loading(`Mengunggah gambar latar belakang: ${percent}%`, { id: uploadToastId });
+          },
         });
 
       if (error) {

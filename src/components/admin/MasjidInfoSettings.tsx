@@ -58,7 +58,7 @@ const MasjidInfoSettings: React.FC = () => {
     const fileName = `${uuidv4()}.${fileExtension}`; // Generate unique file name
     const filePath = `logos/${fileName}`; // Path inside the bucket
 
-    const uploadToastId = toast.loading("Mengunggah logo masjid...");
+    const uploadToastId = toast.loading("Mengunggah logo masjid: 0%");
 
     try {
       const { data, error } = await supabase.storage
@@ -66,6 +66,10 @@ const MasjidInfoSettings: React.FC = () => {
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
+          onUploadProgress: (event: ProgressEvent) => {
+            const percent = Math.round((event.loaded * 100) / event.total);
+            toast.loading(`Mengunggah logo masjid: ${percent}%`, { id: uploadToastId });
+          },
         });
 
       if (error) {
