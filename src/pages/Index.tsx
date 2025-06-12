@@ -16,6 +16,7 @@ import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import DarkScreenOverlay from "@/components/DarkScreenOverlay";
 import ImsakOverlay from "@/components/ImsakOverlay";
 import Screensaver from "@/components/Screensaver";
+import MediaPlayerDisplay from "@/components/MediaPlayerDisplay"; // Import new component
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -363,6 +364,8 @@ const Index = () => {
               </React.Suspense>
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
+              {/* New Media Player Display */}
+              <MediaPlayerDisplay /> 
             </div>
           </div>
 
