@@ -16,7 +16,7 @@ import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import DarkScreenOverlay from "@/components/DarkScreenOverlay";
 import ImsakOverlay from "@/components/ImsakOverlay";
 import Screensaver from "@/components/Screensaver";
-import MediaPlayerDisplay from "@/components/MediaPlayerDisplay"; // Import new component
+import MediaPlayerDisplay from "@/components/MediaPlayerDisplay";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -30,7 +30,6 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 dayjs.extend(duration);
 dayjs.extend(isBetween);
 
-// Menggunakan React.lazy untuk memuat komponen InfoSlides secara dinamis
 const InfoSlides = React.lazy(() => import("@/components/InfoSlides"));
 
 const ADHAN_DURATION_SECONDS = 120;
@@ -58,6 +57,7 @@ const Index = () => {
   const [showImsakOverlay, setShowImsakOverlay] = useState(false);
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
   const [isScreensaverActive, setIsScreensaverActive] = useState(false);
+  const [isMurottalPlaying, setIsMurottalPlaying] = useState(false); // New state for MurottalPlayer status
 
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
   const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
@@ -178,7 +178,7 @@ const Index = () => {
         }
         
         setNextPrayerName(foundNextPrayer?.name || null);
-        setNextPrayerTime(foundNextPrayer?.time || null);
+        setNextPrayerTime(foundNextNextPrayer?.time || null);
         console.log("Index: Next prayer determined:", foundNextPrayer?.name, foundNextPrayer?.time?.format('HH:mm:ss'));
       }
     } catch (err) {
@@ -230,23 +230,26 @@ const Index = () => {
       const now = dayjs();
       const isFriday = now.day() === 5;
 
+      // Reset all overlays first
       setShowPrayerOverlay(false);
       setShowJumuahOverlay(false);
       setShowImsakOverlay(false);
-      setIsScreenDarkened(false);
+      setIsScreenDarkened(false); // Reset darkened state here, it will be set again if needed
 
       console.log(`Index: updateOverlayVisibility - Current Time: ${now.format('HH:mm:ss')}`);
 
+      // Priority 1: Imsak Overlay (if Ramadan mode active)
       if (isRamadanModeActive && imsakTime) {
         const imsakEndTime = imsakTime.add(IMSAK_OVERLAY_DURATION_SECONDS, 'second');
         console.log(`Index: Checking Imsak Overlay. Imsak Time: ${imsakTime.format('HH:mm:ss')}, End Time: ${imsakEndTime.format('HH:mm:ss')}`);
         if (now.isBetween(imsakTime, imsakEndTime, null, '[)')) {
           setShowImsakOverlay(true);
           console.log("Index: Imsak Overlay is active.");
-          return;
+          return; // Stop checking other overlays
         }
       }
 
+      // Priority 2: Jumuah Overlay (if Friday and Dhuhr time)
       if (isFriday && jumuahDhuhrTime) {
         const PRE_ADHAN_JUMUAH_SECONDS_LOCAL = 300;
         const adhanEndTime = jumuahDhuhrTime.add(ADHAN_JUMUAH_DURATION_SECONDS, 'second');
@@ -257,10 +260,11 @@ const Index = () => {
         if (now.isBetween(preAdhanStartTime, khutbahEndTime, null, '[)')) {
           setShowJumuahOverlay(true);
           console.log("Index: Jumuah Overlay is active.");
-          return;
+          return; // Stop checking other overlays
         }
       }
 
+      // Priority 3: Regular Prayer Countdown Overlay
       if (nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
         const overlayStartTime = nextPrayerTime.subtract(PRE_ADHAN_COUNTDOWN_SECONDS, 'second');
         const overlayEndTime = nextPrayerTime.add(ADHAN_DURATION_SECONDS + iqomahCountdownDuration, 'second');
@@ -269,7 +273,7 @@ const Index = () => {
         if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
           setShowPrayerOverlay(true);
           console.log("Index: Prayer Countdown Overlay is active.");
-          return;
+          return; // Stop checking other overlays
         }
       }
       console.log("Index: No prayer/Jumuah/Imsak overlay is active.");
@@ -281,16 +285,18 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, imsakTime, isRamadanModeActive]);
 
-  const isOverlayActive = showPrayerOverlay || showJumuahOverlay || showImsakOverlay;
+  // Combine all conditions that should pause the MediaPlayerDisplay
+  const shouldMediaPlayerBePaused = isOverlayActive || isScreenDarkened || isScreensaverActive || isMurottalPlaying;
 
   return (
     <>
       <AppBackground>
-        <MurottalPlayer />
+        {/* MurottalPlayer now receives a callback to update its playing status */}
+        <MurottalPlayer onPlayingChange={setIsMurottalPlaying} />
 
         {/* MediaPlayerDisplay should always be mounted to avoid AbortError,
-            its playback will be controlled by isOverlayActive prop */}
-        <MediaPlayerDisplay isOverlayActive={isOverlayActive || isScreenDarkened || isScreensaverActive} />
+            its playback will be controlled by shouldMediaPlayerBePaused prop */}
+        <MediaPlayerDisplay isOverlayActive={shouldMediaPlayerBePaused} />
 
         {isScreensaverActive && !isOverlayActive && !isScreenDarkened && (
           <Screensaver />
@@ -324,7 +330,8 @@ const Index = () => {
 
         {isScreenDarkened && <DarkScreenOverlay />}
 
-        <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || isScreenDarkened || isScreensaverActive ? 'hidden' : ''}`}>
+        {/* Main content div, hidden if any overlay or screensaver/dark screen is active */}
+        <div className={`w-full flex flex-col items-center justify-between flex-grow ${shouldMediaPlayerBePaused ? 'hidden' : ''}`}>
           <div className="w-full flex justify-between items-center p-0.5">
             <div className="flex items-center gap-0.5">
               {masjidLogoUrl && (
@@ -362,13 +369,11 @@ const Index = () => {
             </div>
 
             <div className="col-span-full md:col-span-2 lg:col-span-1 flex flex-col gap-1 flex-grow min-h-0">
-              {/* Menggunakan Suspense untuk lazy-loaded InfoSlides */}
               <React.Suspense fallback={<div>Memuat Info Slides...</div>}>
                 <InfoSlides />
               </React.Suspense>
               <IslamicHolidayCountdown />
               <TarawihScheduleDisplay />
-              {/* MediaPlayerDisplay dipindahkan ke luar div kondisional */}
             </div>
           </div>
 
