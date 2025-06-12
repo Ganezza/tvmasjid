@@ -42,8 +42,8 @@ const Screensaver: React.FC = () => {
   const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
   const [jumuahSchedule, setJumuahSchedule] = useState<any | null>(null);
   const contentChannelRef = useRef<RealtimeChannel | null>(null);
-  const financialChannelRef = useRef<RealtimeChannel | null>(contentChannelRef); // Use contentChannelRef for financial as well
-  const jumuahScheduleChannelRef = useRef<RealtimeChannel | null>(contentChannelRef); // Use contentChannelRef for jumuah as well
+  const financialChannelRef = useRef<RealtimeChannel | null>(null);
+  const jumuahScheduleChannelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchScreensaverContent = useCallback(async () => {
     setIsLoadingContent(true);
@@ -92,7 +92,7 @@ const Screensaver: React.FC = () => {
 
   const fetchJumuahSchedule = useCallback(async () => {
     const today = dayjs();
-    const isFriday = today.day() === 5; // 0 for Sunday, 5 for Friday
+    const isFriday = today.day() === 5; // 0 for Sunday, 1 for Monday, ..., 5 for Friday, 6 for Saturday
 
     if (!isFriday) {
       setJumuahSchedule(null);
@@ -226,7 +226,7 @@ const Screensaver: React.FC = () => {
     );
   }
 
-  const slideDuration = settings?.screensaver_slide_duration || 10000; // Default to 10 seconds
+  const slideDuration = (settings?.screensaver_slide_duration || 10) * 1000; // Convert seconds to milliseconds for Swiper
 
   return (
     <div className="fixed inset-0 bg-gray-950 flex flex-col items-center justify-center z-[100] text-white p-4">
