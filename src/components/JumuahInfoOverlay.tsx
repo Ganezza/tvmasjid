@@ -291,19 +291,21 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
         )}
 
         {displayPhase === "khutbah" && (
-          <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
-            <h3 className="text-6xl md:text-7xl lg:text-8xl font-bold text-green-400 text-outline-black">
-              KHUTBAH JUMAT
-            </h3>
-            {jumuahSchedule?.khatib_name && (
-              <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-blue-400 mt-4 text-outline-black">
-                {jumuahSchedule.khatib_name}
-              </p>
-            )}
+          <>
+            <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
+              <h3 className="text-6xl md:text-7xl lg:text-8xl font-bold text-green-400 text-outline-black">
+                KHUTBAH JUMAT
+              </h3>
+              {jumuahSchedule?.khatib_name && (
+                <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-blue-400 mt-4 text-outline-black">
+                  {jumuahSchedule.khatib_name}
+                </p>
+              )}
+            </div>
             <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-red-400 mt-8 text-outline-black">
               Matikan Smartphone dan Jangan Bicara
             </p>
-          </div>
+          </>
         )}
       </div>
     </div>
