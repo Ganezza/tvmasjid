@@ -113,6 +113,11 @@ const MurottalPlayer: React.FC<MurottalPlayerProps> = ({ isAudioEnabled }) => {
         ];
 
         for (const tarhimConfig of tarhimPrayers) {
+          // Skip Tarhim for Jumuah (Dhuhr on Friday)
+          if (now.day() === 5 && tarhimConfig.adhanTime.isSame(dayjs(prayerTimes.dhuhr), 'minute')) {
+            continue; 
+          }
+
           const tarhimPlaybackTime = tarhimConfig.adhanTime.subtract(TARHIM_PLAYBACK_MINUTES_BEFORE_PRAYER, 'minute');
           const timeUntilTarhim = tarhimPlaybackTime.diff(now);
 

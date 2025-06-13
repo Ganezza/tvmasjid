@@ -14,7 +14,7 @@ import MurottalPlayer from "@/components/MurottalPlayer";
 import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
 import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
-import AudioEnablerOverlay from "@/components/AudioEnablerOverlay"; // Import the new component
+import AudioEnablerOverlay from "@/components/AudioEnablerOverlay";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -40,7 +40,10 @@ const Index = () => {
 
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false); // New state for audio permission
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+
+  // New state to hold Jumuah Dhuhr time
+  const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
 
   const fetchMasjidInfoAndSettings = useCallback(async () => {
     try {
@@ -73,6 +76,13 @@ const Index = () => {
           { name: "Maghrib", time: dayjs(times.maghrib) },
           { name: "Isha", time: dayjs(times.isha) },
         ];
+
+        // Set Jumuah Dhuhr time if today is Friday
+        if (dayjs().day() === 5) { // Friday
+          setJumuahDhuhrTime(dayjs(times.dhuhr));
+        } else {
+          setJumuahDhuhrTime(null);
+        }
 
         let foundNextPrayer: { name: string; time: dayjs.Dayjs } | null = null;
         let minDiff = Infinity;
@@ -120,29 +130,41 @@ const Index = () => {
       const now = dayjs();
       const isFriday = now.day() === 5;
 
-      const isJumuahTimeWindow = isFriday && now.hour() >= 11 && now.hour() <= 14;
+      // Jumuah Overlay logic
+      if (isFriday && jumuahDhuhrTime) {
+        const PRE_ADHAN_JUMUAH_SECONDS = 300; // 5 minutes
+        const ADHAN_JUMUAH_DURATION_SECONDS = 90; // 1.5 minutes
 
-      if (isJumuahTimeWindow) {
-        setShowJumuahOverlay(true);
-        setShowPrayerOverlay(false);
+        const preAdhanStartTime = jumuahDhuhrTime.subtract(PRE_ADHAN_JUMUAH_SECONDS, 'second');
+        const adhanEndTime = jumuahDhuhrTime.add(ADHAN_JUMUAH_DURATION_SECONDS, 'second');
+        const khutbahEndTime = adhanEndTime.add(khutbahDurationMinutes, 'minute');
+
+        // Check if within the entire Jumuah sequence window
+        if (now.isBetween(preAdhanStartTime, khutbahEndTime, null, '[)')) {
+          setShowJumuahOverlay(true);
+          setShowPrayerOverlay(false); // Ensure prayer overlay is hidden
+        } else {
+          setShowJumuahOverlay(false);
+        }
       } else {
         setShowJumuahOverlay(false);
+      }
 
-        if (nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
-          const ADHAN_DURATION_SECONDS = 90;
-          const PRE_ADHAN_COUNTDOWN_SECONDS = 30;
+      // Prayer Countdown Overlay logic (only if Jumuah overlay is NOT active)
+      if (!showJumuahOverlay && nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
+        const ADHAN_DURATION_SECONDS = 90;
+        const PRE_ADHAN_COUNTDOWN_SECONDS = 30;
 
-          const overlayStartTime = nextPrayerTime.subtract(PRE_ADHAN_COUNTDOWN_SECONDS, 'second');
-          const overlayEndTime = nextPrayerTime.add(ADHAN_DURATION_SECONDS + iqomahCountdownDuration, 'second');
+        const overlayStartTime = nextPrayerTime.subtract(PRE_ADHAN_COUNTDOWN_SECONDS, 'second');
+        const overlayEndTime = nextPrayerTime.add(ADHAN_DURATION_SECONDS + iqomahCountdownDuration, 'second');
 
-          if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
-            setShowPrayerOverlay(true);
-          } else {
-            setShowPrayerOverlay(false);
-          }
+        if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
+          setShowPrayerOverlay(true);
         } else {
           setShowPrayerOverlay(false);
         }
+      } else if (showJumuahOverlay) {
+        setShowPrayerOverlay(false); // Explicitly hide if Jumuah overlay is active
       }
     };
 
@@ -150,7 +172,7 @@ const Index = () => {
     updateOverlayVisibility();
 
     return () => clearInterval(interval);
-  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes]);
+  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes, jumuahDhuhrTime, showJumuahOverlay]); // Add jumuahDhuhrTime and showJumuahOverlay to dependencies
 
   useEffect(() => {
     if (clickCount >= 5) {
@@ -187,7 +209,7 @@ const Index = () => {
   return (
     <AppBackground>
       {!isAudioEnabled && <AudioEnablerOverlay onEnable={handleEnableAudio} />}
-      <MurottalPlayer isAudioEnabled={isAudioEnabled} /> {/* Pass the new prop */}
+      <MurottalPlayer isAudioEnabled={isAudioEnabled} />
 
       {/* Overlays */}
       {showPrayerOverlay && (
@@ -199,8 +221,9 @@ const Index = () => {
           isJumuah={false}
         />
       )}
-      {showJumuahOverlay && (
+      {showJumuahOverlay && jumuahDhuhrTime && ( // Pass jumuahDhuhrTime
         <JumuahInfoOverlay
+          jumuahDhuhrTime={jumuahDhuhrTime}
           khutbahDurationMinutes={khutbahDurationMinutes}
           onClose={() => setShowJumuahOverlay(false)}
         />
