@@ -302,7 +302,7 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
                 </p>
               )}
             </div>
-            <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-red-400 mt-8 text-outline-black uppercase">
+            <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-red-400 mt-8 text-outline-black uppercase text-center">
               Matikan Smartphone dan Jangan Bicara
             </p>
           </>
