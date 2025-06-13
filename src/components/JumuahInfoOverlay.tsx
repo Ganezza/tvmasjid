@@ -295,9 +295,15 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
             <h3 className="text-6xl md:text-7xl lg:text-8xl font-bold text-green-400 text-outline-black">
               KHUTBAH JUMAT
             </h3>
-            <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-blue-400 mt-4 text-outline-black">
-              Sisa Waktu: {countdownText}
-            </p>
+            {jumuahSchedule?.khatib_name ? (
+              <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-blue-400 mt-4 text-outline-black">
+                Khatib: {jumuahSchedule.khatib_name}
+              </p>
+            ) : (
+              <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-blue-400 mt-4 text-outline-black">
+                Khatib: (Belum Ditentukan)
+              </p>
+            )}
           </div>
         )}
       </div>
