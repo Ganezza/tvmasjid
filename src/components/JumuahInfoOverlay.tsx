@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
+import isBetween from "dayjs/plugin/isBetween"; // Import isBetween plugin
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -9,6 +10,7 @@ import AutoScrollingFinancialRecords from "@/components/AutoScrollingFinancialRe
 import { cn } from "@/lib/utils";
 
 dayjs.extend(duration);
+dayjs.extend(isBetween); // Extend dayjs with isBetween plugin
 
 interface Schedule {
   id: string;
@@ -30,19 +32,24 @@ interface FinancialRecord {
 }
 
 interface JumuahInfoOverlayProps {
+  jumuahDhuhrTime: dayjs.Dayjs; // Exact Dhuhr time for Friday
   khutbahDurationMinutes: number;
   onClose: () => void;
 }
 
-const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ khutbahDurationMinutes, onClose }) => {
+const PRE_ADHAN_JUMUAH_SECONDS = 300; // 5 minutes before Adhan
+const ADHAN_JUMUAH_DURATION_SECONDS = 90; // Approx 1.5 minutes for Adhan
+
+const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, khutbahDurationMinutes, onClose }) => {
   const [jumuahSchedule, setJumuahSchedule] = useState<Schedule | null>(null);
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [khutbahCountdown, setKhutbahCountdown] = useState<string>("");
-  const khutbahStartTimeRef = useRef<dayjs.Dayjs | null>(null);
-  const khutbahIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [displayPhase, setDisplayPhase] = useState<"pre-adhan" | "adhan" | "khutbah" | "hidden">("hidden");
+  const [countdownText, setCountdownText] = useState<string>("");
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchJumuahInfo = useCallback(async () => {
     setIsLoading(true);
@@ -120,52 +127,62 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ khutbahDurationMi
     };
   }, [fetchJumuahInfo]);
 
-  // Khutbah Countdown Logic
+  // Jumuah Countdown and Phase Logic
   useEffect(() => {
-    const now = dayjs();
-    const currentDayIndex = now.day(); // 0 for Sunday, 5 for Friday
-
-    // Only activate countdown if it's Friday and around Dhuhr time (Jumuah)
-    // This is a simplified check; a more robust solution might involve prayer times
-    const isFridayDhuhrTime = currentDayIndex === 5 && now.hour() >= 11 && now.hour() <= 14; // Roughly 11 AM to 2 PM
-
-    if (isFridayDhuhrTime && !khutbahStartTimeRef.current) {
-      // Assume khutbah starts now for simplicity, or could be triggered by an event
-      khutbahStartTimeRef.current = now;
-    } else if (!isFridayDhuhrTime && khutbahStartTimeRef.current) {
-      // Reset if not Friday Dhuhr time anymore
-      khutbahStartTimeRef.current = null;
-      setKhutbahCountdown("");
-      if (khutbahIntervalRef.current) clearInterval(khutbahIntervalRef.current);
-      onClose(); // Close overlay if Jumuah time passes
+    if (!jumuahDhuhrTime) {
+      setDisplayPhase("hidden");
+      setCountdownText("");
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      onClose();
       return;
     }
 
-    if (khutbahStartTimeRef.current) {
-      if (khutbahIntervalRef.current) clearInterval(khutbahIntervalRef.current);
+    const adhanTime = jumuahDhuhrTime;
+    const preAdhanStartTime = adhanTime.subtract(PRE_ADHAN_JUMUAH_SECONDS, 'second');
+    const adhanEndTime = adhanTime.add(ADHAN_JUMUAH_DURATION_SECONDS, 'second');
+    const khutbahEndTime = adhanEndTime.add(khutbahDurationMinutes, 'minute');
 
-      khutbahIntervalRef.current = setInterval(() => {
-        const elapsedSeconds = dayjs().diff(khutbahStartTimeRef.current, 'second');
-        const remainingSeconds = (khutbahDurationMinutes * 60) - elapsedSeconds;
+    const updatePhaseAndCountdown = () => {
+      const now = dayjs();
 
-        if (remainingSeconds <= 0) {
-          setKhutbahCountdown("Khutbah Selesai");
-          if (khutbahIntervalRef.current) clearInterval(khutbahIntervalRef.current);
-          // Optionally, keep the overlay for a few more seconds then close
-          setTimeout(onClose, 10000); // Keep for 10 seconds after khutbah ends
-        } else {
-          const durationRemaining = dayjs.duration(remainingSeconds, 'second');
-          const minutes = String(durationRemaining.minutes()).padStart(2, '0');
-          const seconds = String(durationRemaining.seconds()).padStart(2, '0');
-          setKhutbahCountdown(`${minutes}:${seconds}`);
-        }
-      }, 1000);
-    }
+      if (now.isBefore(preAdhanStartTime)) {
+        setDisplayPhase("hidden");
+        setCountdownText("");
+        return;
+      }
+
+      if (now.isBetween(preAdhanStartTime, adhanTime, null, '[)')) {
+        setDisplayPhase("pre-adhan");
+        const diff = adhanTime.diff(now);
+        const durationRemaining = dayjs.duration(diff);
+        setCountdownText(`${String(durationRemaining.minutes()).padStart(2, '0')}:${String(durationRemaining.seconds()).padStart(2, '0')}`);
+      } else if (now.isBetween(adhanTime, adhanEndTime, null, '[)')) {
+        setDisplayPhase("adhan");
+        setCountdownText(""); // No countdown during adhan
+      } else if (now.isBetween(adhanEndTime, khutbahEndTime, null, '[)')) {
+        setDisplayPhase("khutbah");
+        const diff = khutbahEndTime.diff(now);
+        const durationRemaining = dayjs.duration(diff);
+        setCountdownText(`${String(durationRemaining.minutes()).padStart(2, '0')}:${String(durationRemaining.seconds()).padStart(2, '0')}`);
+      } else if (now.isAfter(khutbahEndTime)) {
+        // After khutbah, hide the overlay
+        setDisplayPhase("hidden");
+        setCountdownText("");
+        onClose(); // Notify parent to close
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        return;
+      }
+    };
+
+    // Clear any existing interval before setting a new one
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(updatePhaseAndCountdown, 1000);
+    updatePhaseAndCountdown(); // Initial call
 
     return () => {
-      if (khutbahIntervalRef.current) clearInterval(khutbahIntervalRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [khutbahDurationMinutes, onClose]); // Depend on khutbahDurationMinutes and onClose
+  }, [jumuahDhuhrTime, khutbahDurationMinutes, onClose]);
 
   if (isLoading) {
     return (
@@ -184,12 +201,7 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ khutbahDurationMi
     );
   }
 
-  // Only show overlay if it's Friday and within the Jumuah time window
-  const now = dayjs();
-  const isFriday = now.day() === 5; // Friday is day 5
-  const isJumuahActive = isFriday && now.hour() >= 11 && now.hour() <= 14; // Roughly 11 AM to 2 PM
-
-  if (!isJumuahActive) {
+  if (displayPhase === "hidden") {
     return null;
   }
 
@@ -200,74 +212,94 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ khutbahDurationMi
           JUMAT MUBARAK
         </h2>
 
-        {jumuahSchedule ? (
+        {displayPhase === "pre-adhan" && (
+          <>
+            {jumuahSchedule ? (
+              <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
+                <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 text-green-300">
+                  Jadwal Sholat Jumat
+                </h3>
+                <p className="text-3xl md:text-4xl lg:text-5xl text-blue-200">
+                  Imam: <span className="font-semibold">{jumuahSchedule.imam_name}</span>
+                </p>
+                {jumuahSchedule.khatib_name && (
+                  <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
+                    Khatib: <span className="font-medium">{jumuahSchedule.khatib_name}</span>
+                  </p>
+                )}
+                {jumuahSchedule.bilal_name && (
+                  <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
+                    Bilal: <span className="font-medium">{jumuahSchedule.bilal_name}</span>
+                  </p>
+                )}
+                {jumuahSchedule.muezzin_name && (
+                  <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
+                    Muadzin: <span className="font-medium">{jumuahSchedule.muezzin_name}</span>
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
+                <p className="text-2xl text-gray-400">Jadwal Jumat tidak ditemukan.</p>
+              </div>
+            )}
+
+            <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
+              <h4 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-blue-300">
+                Informasi Kas Masjid
+              </h4>
+              <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-green-400 mb-2">
+                Saldo: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </p>
+              {recentRecords.length > 0 && (
+                <>
+                  <h4 className="text-2xl md:text-3xl lg:text-4xl font-bold mt-6 mb-3 text-yellow-300">
+                    Transaksi Terbaru
+                  </h4>
+                  <AutoScrollingFinancialRecords heightClass="h-48 md:h-64">
+                    <div className="space-y-3">
+                      {recentRecords.map((record) => (
+                        <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
+                          <p className="font-medium text-xl md:text-2xl text-blue-200">
+                            {record.description}
+                          </p>
+                          <p className={`text-lg md:text-xl font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
+                            {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </AutoScrollingFinancialRecords>
+                </>
+              )}
+            </div>
+            <h5 className="text-4xl md:text-5xl lg:text-6xl font-bold text-red-400 text-outline-black">
+              Menuju Adzan: {countdownText}
+            </h5>
+          </>
+        )}
+
+        {displayPhase === "adhan" && (
           <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
-            <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 text-green-300">
-              Jadwal Sholat Jumat
+            <h3 className="text-6xl md:text-7xl lg:text-8xl font-bold text-red-400 text-outline-black">
+              ADZAN JUMAT
             </h3>
-            <p className="text-3xl md:text-4xl lg:text-5xl text-blue-200">
-              Imam: <span className="font-semibold">{jumuahSchedule.imam_name}</span>
-            </p>
-            {jumuahSchedule.khatib_name && (
-              <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
-                Khatib: <span className="font-medium">{jumuahSchedule.khatib_name}</span>
-              </p>
-            )}
-            {jumuahSchedule.bilal_name && (
-              <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
-                Bilal: <span className="font-medium">{jumuahSchedule.bilal_name}</span>
-              </p>
-            )}
-            {jumuahSchedule.muezzin_name && (
-              <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 mt-1">
-                Muadzin: <span className="font-medium">{jumuahSchedule.muezzin_name}</span>
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
-            <p className="text-2xl text-gray-400">Jadwal Jumat tidak ditemukan.</p>
           </div>
         )}
 
-        <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
-          <h4 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-blue-300">
-            Informasi Kas Masjid
-          </h4>
-          <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-green-400 mb-2">
-            Saldo: Rp {totalBalance.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </p>
-          <h5 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 text-yellow-300">
-            Durasi Khutbah
-          </h5>
-          <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-red-400">
-            {khutbahCountdown || "Menunggu Khutbah"}
-          </p>
-          {recentRecords.length > 0 && (
-            <>
-              <h4 className="text-2xl md:text-3xl lg:text-4xl font-bold mt-6 mb-3 text-blue-300">
-                Transaksi Terbaru
-              </h4>
-              <AutoScrollingFinancialRecords heightClass="h-48 md:h-64">
-                <div className="space-y-3">
-                  {recentRecords.map((record) => (
-                    <div key={record.id} className="flex flex-col items-start bg-gray-700 p-3 rounded-md shadow-sm text-left">
-                      <p className="font-medium text-xl md:text-2xl text-blue-200">
-                        {record.description}
-                      </p>
-                      <p className={`text-lg md:text-xl font-semibold ${record.transaction_type === "inflow" ? "text-green-400" : "text-red-400"}`}>
-                        {record.transaction_type === "inflow" ? "Pemasukan" : "Pengeluaran"}: Rp {record.amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {format(new Date(record.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </AutoScrollingFinancialRecords>
-            </>
-          )}
-        </div>
+        {displayPhase === "khutbah" && (
+          <div className="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-2xl w-full max-w-4xl text-center mb-8">
+            <h3 className="text-6xl md:text-7xl lg:text-8xl font-bold text-green-400 text-outline-black">
+              KHUTBAH JUMAT
+            </h3>
+            <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-blue-400 mt-4 text-outline-black">
+              Sisa Waktu: {countdownText}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
