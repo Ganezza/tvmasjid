@@ -297,7 +297,7 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
             </h3>
             {jumuahSchedule?.khatib_name && (
               <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-blue-400 mt-4 text-outline-black">
-                Khatib: {jumuahSchedule.khatib_name}
+                {jumuahSchedule.khatib_name}
               </p>
             )}
           </div>
