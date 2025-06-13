@@ -15,6 +15,7 @@ import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
 import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import AudioEnablerOverlay from "@/components/AudioEnablerOverlay";
+import DarkScreenOverlay from "@/components/DarkScreenOverlay"; // Import the new component
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -41,6 +42,7 @@ const Index = () => {
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const [isScreenDarkened, setIsScreenDarkened] = useState(false); // New state for screen darkening
 
   // New state to hold Jumuah Dhuhr time
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
@@ -125,6 +127,18 @@ const Index = () => {
     };
   }, [fetchMasjidInfoAndSettings]);
 
+  // Function to handle the end of prayer/khutbah and trigger screen darkening
+  const handlePrayerOrKhutbahEnd = useCallback(() => {
+    setShowPrayerOverlay(false);
+    setShowJumuahOverlay(false);
+    setIsScreenDarkened(true);
+    console.log("Screen darkened for prayer/khutbah. Will revert in 5 minutes.");
+    setTimeout(() => {
+      setIsScreenDarkened(false);
+      console.log("Screen reverted to normal after prayer/khutbah.");
+    }, 5 * 60 * 1000); // 5 minutes
+  }, []);
+
   useEffect(() => {
     const updateOverlayVisibility = () => {
       const now = dayjs();
@@ -143,6 +157,7 @@ const Index = () => {
         if (now.isBetween(preAdhanStartTime, khutbahEndTime, null, '[)')) {
           setShowJumuahOverlay(true);
           setShowPrayerOverlay(false); // Ensure prayer overlay is hidden
+          setIsScreenDarkened(false); // Ensure screen is not darkened during Jumuah overlay
         } else {
           setShowJumuahOverlay(false);
         }
@@ -160,6 +175,7 @@ const Index = () => {
 
         if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
           setShowPrayerOverlay(true);
+          setIsScreenDarkened(false); // Ensure screen is not darkened during prayer overlay
         } else {
           setShowPrayerOverlay(false);
         }
@@ -217,20 +233,23 @@ const Index = () => {
           nextPrayerName={nextPrayerName}
           nextPrayerTime={nextPrayerTime}
           iqomahCountdownDuration={iqomahCountdownDuration}
-          onClose={() => setShowPrayerOverlay(false)}
+          onClose={handlePrayerOrKhutbahEnd} // Use the new handler
           isJumuah={false}
         />
       )}
-      {showJumuahOverlay && jumuahDhuhrTime && ( // Pass jumuahDhuhrTime
+      {showJumuahOverlay && jumuahDhuhrTime && (
         <JumuahInfoOverlay
           jumuahDhuhrTime={jumuahDhuhrTime}
           khutbahDurationMinutes={khutbahDurationMinutes}
-          onClose={() => setShowJumuahOverlay(false)}
+          onClose={handlePrayerOrKhutbahEnd} // Use the new handler
         />
       )}
 
-      {/* Main Content (hidden when overlay is active or audio not enabled) */}
-      <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || !isAudioEnabled ? 'hidden' : ''}`}>
+      {/* Dark Screen Overlay */}
+      {isScreenDarkened && <DarkScreenOverlay />}
+
+      {/* Main Content (hidden when overlay is active, audio not enabled, or screen is darkened) */}
+      <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || !isAudioEnabled || isScreenDarkened ? 'hidden' : ''}`}>
         {/* Header Section */}
         <div className="w-full flex justify-between items-center p-4">
           <div className="flex items-center gap-4">
