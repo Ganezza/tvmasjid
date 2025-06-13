@@ -12,15 +12,16 @@ import TarawihScheduleDisplay from "@/components/TarawihScheduleDisplay";
 import AppBackground from "@/components/AppBackground";
 import MurottalPlayer from "@/components/MurottalPlayer";
 import IslamicHolidayCountdown from "@/components/IslamicHolidayCountdown";
-import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay"; // Import new overlay
-import JumuahInfoOverlay from "@/components/JumuahInfoOverlay"; // Import new Jumuah overlay
+import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
+import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
+import AudioEnablerOverlay from "@/components/AudioEnablerOverlay"; // Import the new component
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-import duration from "dayjs/plugin/duration"; // Import duration plugin
-import * as Adhan from "adhan"; // Import Adhan for prayer time calculation
+import duration from "dayjs/plugin/duration";
+import * as Adhan from "adhan";
 
-dayjs.extend(duration); // Extend dayjs with duration plugin
+dayjs.extend(duration);
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,15 +32,15 @@ const Index = () => {
   const [masjidLogoUrl, setMasjidLogoUrl] = useState<string | null>(null);
   const [masjidAddress, setMasjidAddress] = useState<string | null>(null);
 
-  // States for prayer time and settings needed by overlays
   const [nextPrayerName, setNextPrayerName] = useState<string | null>(null);
   const [nextPrayerTime, setNextPrayerTime] = useState<dayjs.Dayjs | null>(null);
-  const [iqomahCountdownDuration, setIqomahCountdownDuration] = useState<number>(300); // Default 5 minutes
-  const [khutbahDurationMinutes, setKhutbahDurationMinutes] = useState<number>(45); // Default 45 minutes
+  const [iqomahCountdownDuration, setIqomahCountdownDuration] = useState<number>(300);
+  const [khutbahDurationMinutes, setKhutbahDurationMinutes] = useState<number>(45);
   const [isRamadanModeActive, setIsRamadanModeActive] = useState(false);
 
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false); // New state for audio permission
 
   const fetchMasjidInfoAndSettings = useCallback(async () => {
     try {
@@ -60,7 +61,6 @@ const Index = () => {
         setKhutbahDurationMinutes(data.khutbah_duration_minutes || 45);
         setIsRamadanModeActive(data.is_ramadan_mode_active || false);
 
-        // Calculate prayer times to determine next prayer for overlay
         const coordinates = new Adhan.Coordinates(data.latitude || -6.2088, data.longitude || 106.8456);
         const params = Adhan.CalculationMethod[data.calculation_method as keyof typeof Adhan.CalculationMethod]();
         const today = new Date();
@@ -74,14 +74,12 @@ const Index = () => {
           { name: "Isha", time: dayjs(times.isha) },
         ];
 
-        // Find the next upcoming prayer
         let foundNextPrayer: { name: string; time: dayjs.Dayjs } | null = null;
         let minDiff = Infinity;
         const now = dayjs();
 
         for (const prayer of prayerTimesList) {
           let prayerDateTime = prayer.time;
-          // If prayer already passed today, consider it for tomorrow
           if (prayerDateTime.isBefore(now)) {
             prayerDateTime = prayerDateTime.add(1, 'day');
           }
@@ -108,7 +106,6 @@ const Index = () => {
       .channel('masjid_info_and_settings_changes')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
         console.log('Masjid info and settings change received!', payload);
-        // Re-fetch all settings to ensure consistency
         fetchMasjidInfoAndSettings();
       })
       .subscribe();
@@ -118,15 +115,12 @@ const Index = () => {
     };
   }, [fetchMasjidInfoAndSettings]);
 
-  // Logic for displaying overlays
   useEffect(() => {
     const updateOverlayVisibility = () => {
       const now = dayjs();
-      const isFriday = now.day() === 5; // Friday is day 5 (0=Sunday, 1=Monday, ..., 5=Friday)
+      const isFriday = now.day() === 5;
 
-      // Check for Jumuah Overlay (highest priority)
-      // Jumuah is typically around Dhuhr time on Friday
-      const isJumuahTimeWindow = isFriday && now.hour() >= 11 && now.hour() <= 14; // Roughly 11 AM to 2 PM
+      const isJumuahTimeWindow = isFriday && now.hour() >= 11 && now.hour() <= 14;
 
       if (isJumuahTimeWindow) {
         setShowJumuahOverlay(true);
@@ -134,13 +128,9 @@ const Index = () => {
       } else {
         setShowJumuahOverlay(false);
 
-        // Check for Prayer Countdown Overlay
         if (nextPrayerTime && nextPrayerName && nextPrayerName !== "Syuruq") {
-          // Define the window for the prayer countdown overlay to appear
-          // This window starts PRE_ADHAN_COUNTDOWN_SECONDS before Adhan
-          // and ends after Iqomah (Adhan + ADHAN_DURATION_SECONDS + iqomahCountdownDuration)
-          const ADHAN_DURATION_SECONDS = 90; // From PrayerCountdownOverlay
-          const PRE_ADHAN_COUNTDOWN_SECONDS = 30; // From PrayerCountdownOverlay
+          const ADHAN_DURATION_SECONDS = 90;
+          const PRE_ADHAN_COUNTDOWN_SECONDS = 30;
 
           const overlayStartTime = nextPrayerTime.subtract(PRE_ADHAN_COUNTDOWN_SECONDS, 'second');
           const overlayEndTime = nextPrayerTime.add(ADHAN_DURATION_SECONDS + iqomahCountdownDuration, 'second');
@@ -156,16 +146,16 @@ const Index = () => {
       }
     };
 
-    const interval = setInterval(updateOverlayVisibility, 1000); // Check every second
-    updateOverlayVisibility(); // Initial call
+    const interval = setInterval(updateOverlayVisibility, 1000);
+    updateOverlayVisibility();
 
     return () => clearInterval(interval);
-  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes]); // Re-run if these change
+  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, khutbahDurationMinutes]);
 
   useEffect(() => {
     if (clickCount >= 5) {
       navigate("/admin");
-      setClickCount(0); // Reset count after navigation
+      setClickCount(0);
     }
 
     if (clickCount > 0) {
@@ -173,8 +163,8 @@ const Index = () => {
         clearTimeout(clickTimerRef.current);
       }
       clickTimerRef.current = setTimeout(() => {
-        setClickCount(0); // Reset count if clicks are too slow
-      }, 1000); // 1 second window for 5 clicks
+        setClickCount(0);
+      }, 1000);
     }
 
     return () => {
@@ -188,11 +178,16 @@ const Index = () => {
     setClickCount((prev) => prev + 1);
   };
 
+  const handleEnableAudio = () => {
+    setIsAudioEnabled(true);
+  };
+
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay;
 
   return (
     <AppBackground>
-      <MurottalPlayer />
+      {!isAudioEnabled && <AudioEnablerOverlay onEnable={handleEnableAudio} />}
+      <MurottalPlayer isAudioEnabled={isAudioEnabled} /> {/* Pass the new prop */}
 
       {/* Overlays */}
       {showPrayerOverlay && (
@@ -201,7 +196,7 @@ const Index = () => {
           nextPrayerTime={nextPrayerTime}
           iqomahCountdownDuration={iqomahCountdownDuration}
           onClose={() => setShowPrayerOverlay(false)}
-          isJumuah={false} // This overlay is not for Jumuah
+          isJumuah={false}
         />
       )}
       {showJumuahOverlay && (
@@ -211,8 +206,8 @@ const Index = () => {
         />
       )}
 
-      {/* Main Content (hidden when overlay is active) */}
-      <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive ? 'hidden' : ''}`}>
+      {/* Main Content (hidden when overlay is active or audio not enabled) */}
+      <div className={`w-full flex flex-col items-center justify-between flex-grow ${isOverlayActive || !isAudioEnabled ? 'hidden' : ''}`}>
         {/* Header Section */}
         <div className="w-full flex justify-between items-center p-4">
           <div className="flex items-center gap-4">
@@ -237,7 +232,7 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 py-4 md:py-6">
           {/* Prayer Times Display - Now full width */}
           <div className="col-span-full">
-            <PrayerTimesDisplay hideCountdown={isOverlayActive} /> {/* Pass prop to hide countdown */}
+            <PrayerTimesDisplay hideCountdown={isOverlayActive} />
           </div>
 
           {/* Left Column (FinancialDisplay) */}
