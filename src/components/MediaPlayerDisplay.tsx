@@ -124,9 +124,14 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
   // Effect to handle playback based on isPlaying and isOverlayActive
   useEffect(() => {
-    if (!activeMedia) return;
+    console.log(`MediaPlayerDisplay: Playback Effect Triggered. isPlaying: ${isPlaying}, isOverlayActive: ${isOverlayActive}, activeMedia: ${activeMedia?.title || 'none'}`);
+    if (!activeMedia) {
+      console.log("MediaPlayerDisplay: No active media, skipping playback handling.");
+      return;
+    }
 
     const handlePlayback = (play: boolean) => {
+      console.log(`MediaPlayerDisplay: handlePlayback called with play: ${play}`);
       if (activeMedia.source_type === "youtube" && youtubeIframeRef.current) {
         const player = youtubeIframeRef.current;
         if (player && player.contentWindow) {
@@ -190,6 +195,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
       youtubeIframeEl.src = ""; // Clear YouTube iframe src
     }
     setIsPlaying(false); // Reset playing state when media changes
+    console.log("MediaPlayerDisplay: activeMedia changed. Resetting player sources and isPlaying state.");
   }, [activeMedia]);
 
 
@@ -197,10 +203,12 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
   useEffect(() => {
     const isVideo = activeMedia?.file_type === "video";
     onIsVideoPlayingChange(isVideo && isPlaying && !isOverlayActive);
+    console.log(`MediaPlayerDisplay: Reporting video playing status: ${isVideo && isPlaying && !isOverlayActive}`);
   }, [activeMedia, isPlaying, isOverlayActive, onIsVideoPlayingChange]);
 
 
   const handleMediaEnded = useCallback(() => {
+    console.log("MediaPlayerDisplay: Media ended event triggered.");
     // For uploaded media, loop if isPlaying is true
     if (activeMedia?.source_type === "upload") {
       if (isPlaying) {
@@ -251,7 +259,10 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
   const togglePlayback = () => {
     console.log("MediaPlayerDisplay: Toggle playback button clicked.");
-    if (!activeMedia) return;
+    if (!activeMedia) {
+      console.log("MediaPlayerDisplay: No active media to toggle playback.");
+      return;
+    }
 
     if (activeMedia.source_type === "youtube" && youtubeIframeRef.current) {
       const player = youtubeIframeRef.current;
@@ -335,7 +346,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
             <iframe
               ref={youtubeIframeRef}
               className="w-full h-full object-contain rounded-md border border-gray-600"
-              src={`${mediaSourceUrl}?autoplay=0&controls=1&modestbranding=1&rel=0&enablejsapi=1&loop=1&playlist=${mediaSourceUrl.split('/').pop()}`}
+              src={`${mediaSourceUrl}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&loop=1&playlist=${mediaSourceUrl.split('/').pop()}`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
