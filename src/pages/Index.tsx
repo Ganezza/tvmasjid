@@ -15,18 +15,17 @@ import PrayerCountdownOverlay from "@/components/PrayerCountdownOverlay";
 import JumuahInfoOverlay from "@/components/JumuahInfoOverlay";
 import DarkScreenOverlay from "@/components/DarkScreenOverlay";
 import ImsakOverlay from "@/components/ImsakOverlay";
-// import Screensaver from "@/components/Screensaver"; // Dihapus
 import MediaPlayerDisplay from "@/components/MediaPlayerDisplay";
-import { supabase } from "@/lib/supabase"; // Keep supabase import for other uses
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import * as Adhan from "adhan";
-import { Settings, RefreshCw } from "lucide-react"; // Import RefreshCw icon
+import { Settings, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
-import { cn } from "@/lib/utils"; // Import cn utility
+import { useAppSettings } from "@/contexts/AppSettingsContext";
+import { cn } from "@/lib/utils";
 
 dayjs.extend(duration);
 dayjs.extend(isBetween);
@@ -38,7 +37,7 @@ const IMSAK_OVERLAY_DURATION_SECONDS = 10;
 
 const Index = () => {
   const navigate = useNavigate();
-  const { settings, isLoadingSettings } = useAppSettings(); // Use the new hook
+  const { settings, isLoadingSettings } = useAppSettings();
 
   const [masjidName, setMasjidName] = useState<string>("");
   const [masjidLogoUrl, setMasjidLogoUrl] = useState<string | null>(null);
@@ -48,63 +47,20 @@ const Index = () => {
   const [nextPrayerName, setNextPrayerName] = useState<string | null>(null);
   const [nextPrayerTime, setNextPrayerTime] = useState<dayjs.Dayjs | null>(null);
   const [iqomahCountdownDuration, setIqomahCountdownDuration] = useState<number>(300);
-  const [maghribIqomahCountdownDuration, setMaghribIqomahCountdownDuration] = useState<number>(120); // New state for Maghrib Iqomah duration
+  const [maghribIqomahCountdownDuration, setMaghribIqomahCountdownDuration] = useState<number>(120);
   const [khutbahDurationMinutes, setKhutbahDurationMinutes] = useState<number>(45);
-  const [adhanDurationSeconds, setAdhanDurationSeconds] = useState<number>(120); // New state for Adhan duration
+  const [adhanDurationSeconds, setAdhanDurationSeconds] = useState<number>(120);
   const [isRamadanModeActive, setIsRamadanModeActive] = useState(false);
-  // const [screensaverIdleMinutes, setScreensaverIdleMinutes] = useState<number>(5); // Dihapus
 
   const [showPrayerOverlay, setShowPrayerOverlay] = useState(false);
   const [showJumuahOverlay, setShowJumuahOverlay] = useState(false);
   const [showImsakOverlay, setShowImsakOverlay] = useState(false);
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
-  // const [isScreensaverActive, setIsScreensaverActive] = useState(false); // Dihapus
-  const [isMurottalPlaying, setIsMurottalPlaying] = useState(false); // State for MurottalPlayer status
-  // const [isMediaPlayerVideoActive, setIsMediaPlayerVideoActive] = useState(false); // REMOVED: New state for video player status
+  const [isMurottalPlaying, setIsMurottalPlaying] = useState(false);
+  const [isMediaPlayerVideoPlaying, setIsMediaPlayerVideoPlaying] = useState(false); // New state for video player status
 
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
   const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
-
-  // const activityTimerRef = useRef<NodeJS.Timeout | null>(null); // Dihapus
-
-  // const resetActivityTimer = useCallback(() => { // Dihapus
-  //   console.log("Index: resetActivityTimer called. Clearing existing timer.");
-  //   if (activityTimerRef.current) {
-  //     clearTimeout(activityTimerRef.current);
-  //   }
-  //   if (screensaverIdleMinutes > 0) {
-  //     const timeoutDuration = screensaverIdleMinutes * 60 * 1000;
-  //     activityTimerRef.current = setTimeout(() => {
-  //       setIsScreensaverActive(true);
-  //       console.log(`Index: Screensaver activated due to inactivity (${screensaverIdleMinutes} minutes).`);
-  //     }, timeoutDuration);
-  //     console.log(`Index: New screensaver timer set for ${screensaverIdleMinutes} minutes.`);
-  //   } else {
-  //     console.log("Index: screensaverIdleMinutes is 0 or less. Screensaver will not activate automatically.");
-  //   }
-  //   if (isScreensaverActive) {
-  //     setIsScreensaverActive(false);
-  //     console.log("Index: Activity detected, screensaver deactivated.");
-  //   }
-  // }, [screensaverIdleMinutes, isScreensaverActive]); // Dihapus
-
-  useEffect(() => {
-    // resetActivityTimer(); // Dihapus
-
-    // const events = ['mousemove', 'keydown', 'click', 'scroll']; // Dihapus
-    // events.forEach(event => { // Dihapus
-    //   window.addEventListener(event, resetActivityTimer); // Dihapus
-    // }); // Dihapus
-
-    return () => {
-      // if (activityTimerRef.current) { // Dihapus
-      //   clearTimeout(activityTimerRef.current); // Dihapus
-      // } // Dihapus
-      // events.forEach(event => { // Dihapus
-      //   window.removeEventListener(event, resetActivityTimer); // Dihapus
-      // }); // Dihapus
-    };
-  }, []); // Dihapus: [resetActivityTimer]
 
   useEffect(() => {
     if (isLoadingSettings || !settings) {
@@ -113,18 +69,15 @@ const Index = () => {
     }
 
     console.log("Index: Settings available, updating state and calculating prayer times.");
-    setMasjidName(settings.masjid_name || ""); // Ensure it's an empty string if null
+    setMasjidName(settings.masjid_name || "");
     setMasjidLogoUrl(settings.masjid_logo_url);
     setMasjidAddress(settings.masjid_address);
     setIqomahCountdownDuration(settings.iqomah_countdown_duration || 300);
-    setMaghribIqomahCountdownDuration(settings.maghrib_iqomah_countdown_duration || 120); // Set Maghrib Iqomah duration
+    setMaghribIqomahCountdownDuration(settings.maghrib_iqomah_countdown_duration || 120);
     setKhutbahDurationMinutes(settings.khutbah_duration_minutes || 45);
-    setAdhanDurationSeconds(settings.adhan_duration_seconds || 120); // Set Adhan duration from settings
+    setAdhanDurationSeconds(settings.adhan_duration_seconds || 120);
     setIsRamadanModeActive(settings.is_ramadan_mode_active || false);
     setMasjidNameColor(settings.masjid_name_color || "#34D399");
-    // setScreensaverIdleMinutes(settings.screensaver_idle_minutes || 5); // Dihapus
-    // console.log("Index: screensaverIdleMinutes from settings:", settings.screensaver_idle_minutes); // Dihapus
-
 
     const coordinates = new Adhan.Coordinates(settings.latitude || -6.2088, settings.longitude || 106.8456);
     const params = Adhan.CalculationMethod[settings.calculation_method as keyof typeof Adhan.CalculationMethod]();
@@ -185,7 +138,7 @@ const Index = () => {
     setNextPrayerName(foundNextPrayer?.name || null);
     setNextPrayerTime(foundNextPrayer?.time || null);
     console.log("Index: Next prayer determined:", foundNextPrayer?.name, foundNextPrayer?.time?.format('HH:mm:ss'));
-  }, [isLoadingSettings, settings]); // Depend on settings and its loading state
+  }, [isLoadingSettings, settings]);
 
   const handlePrayerOrKhutbahEnd = useCallback(() => {
     console.log("Index: handlePrayerOrKhutbahEnd called.");
@@ -212,11 +165,9 @@ const Index = () => {
       setShowJumuahOverlay(false);
       setShowImsakOverlay(false);
       // Do NOT reset isScreenDarkened here, it's managed by handlePrayerOrKhutbahEnd
-      // setIsScreenDarkened(false); // Removed this line
 
       console.log(`Index: updateOverlayVisibility - Current Time: ${now.format('HH:mm:ss')}`);
-      console.log(`Index: Current Overlay States - Prayer: ${showPrayerOverlay}, Jumuah: ${showJumuahOverlay}, Imsak: ${showImsakOverlay}, Darkened: ${isScreenDarkened}`); // Dihapus: Screensaver
-
+      console.log(`Index: Current Overlay States - Prayer: ${showPrayerOverlay}, Jumuah: ${showJumuahOverlay}, Imsak: ${showImsakOverlay}, Darkened: ${isScreenDarkened}`);
 
       // Priority 1: Imsak Overlay (if Ramadan mode active)
       if (isRamadanModeActive && imsakTime) {
@@ -232,7 +183,7 @@ const Index = () => {
       // Priority 2: Jumuah Overlay (if Friday and Dhuhr time)
       if (isFriday && jumuahDhuhrTime) {
         const PRE_ADHAN_JUMUAH_SECONDS_LOCAL = 300;
-        const adhanEndTime = jumuahDhuhrTime.add(adhanDurationSeconds, 'second'); // Use adhanDurationSeconds
+        const adhanEndTime = jumuahDhuhrTime.add(adhanDurationSeconds, 'second');
         const preAdhanStartTime = jumuahDhuhrTime.subtract(PRE_ADHAN_JUMUAH_SECONDS_LOCAL, 'second');
         const khutbahEndTime = adhanEndTime.add(khutbahDurationMinutes, 'minute');
 
@@ -253,7 +204,7 @@ const Index = () => {
           ? maghribIqomahCountdownDuration 
           : iqomahCountdownDuration;
 
-        const overlayEndTime = nextPrayerTime.add(adhanDurationSeconds + currentIqomahDuration, 'second'); // Use adhanDurationSeconds and dynamic iqomah duration
+        const overlayEndTime = nextPrayerTime.add(adhanDurationSeconds + currentIqomahDuration, 'second');
 
         console.log(`Index: Checking Prayer Overlay. Next Prayer: ${nextPrayerName} at ${nextPrayerTime.format('HH:mm:ss')}. Overlay Start: ${overlayStartTime.format('HH:mm:ss')}, Overlay End: ${overlayEndTime.format('HH:mm:ss')}. Using Iqomah Duration: ${currentIqomahDuration}s`);
         if (now.isBetween(overlayStartTime, overlayEndTime, null, '[)')) {
@@ -269,15 +220,13 @@ const Index = () => {
     updateOverlayVisibility();
 
     return () => clearInterval(interval);
-  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, maghribIqomahCountdownDuration, khutbahDurationMinutes, adhanDurationSeconds, jumuahDhuhrTime, imsakTime, isRamadanModeActive, isScreenDarkened]); // Dihapus: isScreensaverActive
+  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, maghribIqomahCountdownDuration, khutbahDurationMinutes, adhanDurationSeconds, jumuahDhuhrTime, imsakTime, isRamadanModeActive, isScreenDarkened]);
 
   // Combine all conditions that should pause the MediaPlayerDisplay
   const isOverlayActive = showPrayerOverlay || showJumuahOverlay || showImsakOverlay;
-  const shouldMediaPlayerBePaused = isOverlayActive || isScreenDarkened || isMurottalPlaying; // Dihapus: isScreensaverActive
+  const shouldMediaPlayerBePaused = isOverlayActive || isScreenDarkened || isMurottalPlaying;
 
-
-  console.log(`Index: Render - isOverlayActive: ${isOverlayActive}, isScreenDarkened: ${isScreenDarkened}, shouldMediaPlayerBePaused: ${shouldMediaPlayerBePaused}`); // Dihapus: isScreensaverActive
-
+  console.log(`Index: Render - isOverlayActive: ${isOverlayActive}, isScreenDarkened: ${isScreenDarkened}, isMurottalPlaying: ${isMurottalPlaying}, isMediaPlayerVideoPlaying: ${isMediaPlayerVideoPlaying}, shouldMediaPlayerBePaused: ${shouldMediaPlayerBePaused}`);
 
   const handleRefresh = () => {
     window.location.reload();
@@ -294,10 +243,6 @@ const Index = () => {
         {/* MurottalPlayer now receives a callback to update its playing status */}
         <MurottalPlayer onPlayingChange={setIsMurottalPlaying} />
 
-        {/* {isScreensaverActive && !isOverlayActive && !isScreenDarkened && ( // Dihapus
-          <Screensaver /> // Dihapus
-        )} */}
-
         {showImsakOverlay && isRamadanModeActive && imsakTime && (
           <ImsakOverlay
             imsakTime={imsakTime}
@@ -311,7 +256,7 @@ const Index = () => {
           <PrayerCountdownOverlay
             nextPrayerName={nextPrayerName}
             nextPrayerTime={nextPrayerTime}
-            iqomahCountdownDuration={currentPrayerIqomahDuration} // Pass the determined duration
+            iqomahCountdownDuration={currentPrayerIqomahDuration}
             onClose={handlePrayerOrKhutbahEnd}
             isJumuah={false}
             adhanDurationSeconds={adhanDurationSeconds}
@@ -328,7 +273,7 @@ const Index = () => {
 
         {isScreenDarkened && <DarkScreenOverlay />}
 
-        {/* Main content div, hidden if any overlay or screensaver/dark screen is active */}
+        {/* Main content div, hidden if any overlay or dark screen is active */}
         <div className={`w-full flex flex-col items-center justify-between flex-grow ${shouldMediaPlayerBePaused ? 'hidden' : ''}`}>
           <div className="w-full flex justify-between items-center p-0.5">
             <div className="flex items-center gap-0.5">
@@ -336,7 +281,7 @@ const Index = () => {
                 <img src={masjidLogoUrl} alt="Masjid Logo" className="h-20 md:h-28 lg:h-36 object-contain" />
               )}
               <div>
-                {masjidName && ( // Only render if masjidName is not empty
+                {masjidName && (
                   <h1 
                     className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold drop-shadow-lg text-left text-outline-black"
                     style={{ color: masjidNameColor }}
@@ -351,7 +296,7 @@ const Index = () => {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2"> {/* Added flex and gap for alignment */}
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
@@ -387,10 +332,15 @@ const Index = () => {
             <div className="col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <MediaPlayerDisplay 
                 isOverlayActive={shouldMediaPlayerBePaused} 
-                className="flex-[2]" // Set fixed flex ratio
+                onIsVideoPlayingChange={setIsMediaPlayerVideoPlaying} // Pass the callback
+                className={cn(
+                  isMediaPlayerVideoPlaying ? "flex-[3]" : "flex-[2]" // Dynamic sizing
+                )}
               />
               <FinancialDisplay 
-                className="flex-[1]" // Set fixed flex ratio
+                className={cn(
+                  isMediaPlayerVideoPlaying ? "flex-[1]" : "flex-[1]" // Dynamic sizing
+                )}
               />
             </div>
           </div>
