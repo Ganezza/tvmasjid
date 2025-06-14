@@ -60,7 +60,7 @@ const Index = () => {
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
   // const [isScreensaverActive, setIsScreensaverActive] = useState(false); // Dihapus
   const [isMurottalPlaying, setIsMurottalPlaying] = useState(false); // State for MurottalPlayer status
-  const [isMediaPlayerVideoActive, setIsMediaPlayerVideoActive] = useState(false); // New state for video player status
+  // const [isMediaPlayerVideoActive, setIsMediaPlayerVideoActive] = useState(false); // REMOVED: New state for video player status
 
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
   const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
@@ -387,11 +387,11 @@ const Index = () => {
             <div className="col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <MediaPlayerDisplay 
                 isOverlayActive={shouldMediaPlayerBePaused} 
-                onIsVideoActiveChange={setIsMediaPlayerVideoActive}
-                className={cn(isMediaPlayerVideoActive ? "flex-[3]" : "flex-[1]")} // Dynamic sizing
+                // REMOVED: onIsVideoActiveChange={setIsMediaPlayerVideoActive}
+                // REMOVED: className={cn(isMediaPlayerVideoActive ? "flex-[3]" : "flex-[1]")}
               />
               <FinancialDisplay 
-                className={cn(isMediaPlayerVideoActive ? "flex-[1]" : "flex-[2]")} // Dynamic sizing
+                // REMOVED: className={cn(isMediaPlayerVideoActive ? "flex-[1]" : "flex-[2]")}
               />
             </div>
           </div>
