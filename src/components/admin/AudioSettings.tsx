@@ -135,6 +135,7 @@ const AudioSettings: React.FC = () => {
           upsert: false,
           onUploadProgress: (event: ProgressEvent) => {
             const percent = Math.round((event.loaded * 100) / event.total);
+            console.log(`Upload progress for ${fieldName}: ${percent}%`); // ADDED LOG
             toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim').replace('adhanBeepAudioUrl', 'Adzan Beep').replace('iqomahBeepAudioUrl', 'Iqomah Beep').replace('imsakBeepAudioUrl', 'Imsak Beep')}: ${percent}%`, { id: uploadToastId });
           },
         });
