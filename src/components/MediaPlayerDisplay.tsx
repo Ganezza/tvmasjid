@@ -299,20 +299,55 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
   // Determine the source URL for the media player
   const getMediaSourceUrl = useCallback(() => {
-    if (!activeMedia) return "";
-    if (activeMedia.source_type === "upload") {
-      return supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl || "";
-    } else if (activeMedia.source_type === "youtube") {
-      // For YouTube, file_path already contains the embed URL
-      return activeMedia.file_path;
+    if (!activeMedia) {
+      console.log("MediaPlayerDisplay: getMediaSourceUrl - activeMedia is null, returning empty string.");
+      return "";
     }
-    return "";
+    let url = "";
+    if (activeMedia.source_type === "upload") {
+      url = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl || "";
+      console.log(`MediaPlayerDisplay: getMediaSourceUrl - Uploaded media URL: ${url}`);
+    } else if (activeMedia.source_type === "youtube") {
+      url = activeMedia.file_path;
+      console.log(`MediaPlayerDisplay: getMediaSourceUrl - YouTube URL: ${url}`);
+    }
+    if (!url) {
+      console.warn(`MediaPlayerDisplay: getMediaSourceUrl - Generated URL is empty for activeMedia:`, activeMedia);
+    }
+    return url;
   }, [activeMedia]);
 
   const mediaSourceUrl = getMediaSourceUrl();
 
   // Determine if the current active media is a video
   const isCurrentMediaVideo = activeMedia?.file_type === "video";
+
+  if (isLoading) {
+    return (
+      <div className={cn("bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden")}>
+        <p className="text-sm text-gray-400">Memuat media...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={cn("bg-red-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden")}>
+        <p className="text-sm font-bold text-red-200">Error Memuat Media:</p>
+        <p className="text-xs text-red-200 text-center">{error}</p>
+        <p className="text-xs text-red-200 text-center mt-1">Pastikan media aktif sudah diatur di Admin Panel dan file tersedia.</p>
+      </div>
+    );
+  }
+
+  if (!activeMedia || !mediaSourceUrl) {
+    return (
+      <div className={cn("bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden")}>
+        <p className="text-sm text-gray-400">Tidak ada media aktif yang dipilih atau URL tidak valid.</p>
+        <p className="text-xs text-gray-500 mt-1">Silakan pilih media di Admin Panel.</p>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden")}>
