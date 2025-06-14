@@ -137,7 +137,10 @@ const AudioSettings: React.FC = () => {
         if (oldAudioUrl && oldAudioUrl !== publicUrlData.publicUrl) {
           try {
             const oldUrlParts = (oldAudioUrl as string).split('/');
-            const oldFileNameWithFolder = oldUrlParts.slice(urlParts.indexOf('audio') + 1).join('/');
+            // Correctly extract the path within the bucket
+            const publicIndex = oldUrlParts.indexOf('public');
+            const oldFileNameWithFolder = oldUrlParts.slice(publicIndex + 2).join('/');
+            
             const { error: deleteError } = await supabase.storage
               .from('audio')
               .remove([oldFileNameWithFolder]);
@@ -172,21 +175,49 @@ const AudioSettings: React.FC = () => {
     const deleteToastId = toast.loading("Menghapus audio...");
 
     try {
+      // 1. Extract file path from public URL
       const urlParts = (currentUrl as string).split('/');
-      const fileNameWithFolder = urlParts.slice(urlParts.indexOf('audio') + 1).join('/');
-      
-      const { error } = await supabase.storage
-        .from('audio')
-        .remove([fileNameWithFolder]);
+      const publicIndex = urlParts.indexOf('public');
+      if (publicIndex === -1 || publicIndex + 2 >= urlParts.length) {
+        throw new Error("Invalid URL format for deletion.");
+      }
+      const bucketName = urlParts[publicIndex + 1]; // Should be 'audio'
+      const filePathInStorage = urlParts.slice(publicIndex + 2).join('/'); // Path within the bucket
 
-      if (error) {
-        throw error;
+      // 2. Delete file from Supabase Storage
+      console.log(`Attempting to delete file from storage: bucket=${bucketName}, path=${filePathInStorage}`);
+      const { error: storageError } = await supabase.storage
+        .from(bucketName)
+        .remove([filePathInStorage]);
+
+      if (storageError) {
+        console.warn("Error deleting file from storage (continuing to update DB):", storageError);
+        toast.warning(`Gagal menghapus file dari penyimpanan: ${storageError.message}`, { id: deleteToastId });
+      } else {
+        console.log("File successfully deleted from storage.");
       }
 
+      // 3. Update the app_settings table to clear the audio URL
+      const payload: Partial<AudioSettingsFormValues> & { id: number } = { id: 1 };
+      (payload as any)[fieldName] = null; // Set the specific audio URL field to null
+
+      console.log("Attempting to update app_settings to clear audio URL:", payload);
+      const { error: dbError } = await supabase
+        .from("app_settings")
+        .upsert(payload, { onConflict: "id" });
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      // 4. Update form state and refetch global settings
       setValue(fieldName, null as any); // Clear the URL in the form
       toast.success("Audio berhasil dihapus!", { id: deleteToastId });
+      refetchSettings(); // This will trigger a re-render of components using app settings
+      console.log("Audio URL cleared in DB and settings refetched.");
+
     } catch (error: any) {
-      console.error("Error removing audio:", error);
+      console.error("Caught error during audio removal process:", error);
       toast.error(`Gagal menghapus audio: ${error.message}`, { id: deleteToastId });
     }
   };
