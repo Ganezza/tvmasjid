@@ -43,6 +43,27 @@ const PRAYER_AUDIO_FIELDS = [
   { name: "murottalAudioUrlImsak", label: "Audio Murottal Imsak (Mode Ramadan)" },
 ];
 
+// Mapping from camelCase form field names to snake_case database column names
+const fieldNameToDbColumnMap: Record<keyof AudioSettingsFormValues, string> = {
+  murottalActive: "murottal_active",
+  tarhimActive: "tarhim_active",
+  iqomahCountdownDuration: "iqomah_countdown_duration",
+  murottalPreAdhanDuration: "murottal_pre_adhan_duration",
+  tarhimPreAdhanDuration: "tarhim_pre_adhan_duration",
+  murottalAudioUrlFajr: "murottal_audio_url_fajr",
+  murottalAudioUrlDhuhr: "murottal_audio_url_dhuhr",
+  murottalAudioUrlAsr: "murottal_audio_url_asr",
+  murottalAudioUrlMaghrib: "murottal_audio_url_maghrib",
+  murottalAudioUrlIsha: "murottal_audio_url_isha",
+  murottalAudioUrlImsak: "murottal_audio_url_imsak",
+  tarhimAudioUrl: "tarhim_audio_url",
+  khutbahDurationMinutes: "khutbah_duration_minutes",
+  isMasterAudioActive: "is_master_audio_active",
+  adhanBeepAudioUrl: "adhan_beep_audio_url",
+  iqomahBeepAudioUrl: "iqomah_beep_audio_url",
+  imsakBeepAudioUrl: "imsak_beep_audio_url",
+};
+
 const AudioSettings: React.FC = () => {
   const { settings, isLoadingSettings, refetchSettings } = useAppSettings(); // Use the new hook
 
@@ -199,7 +220,11 @@ const AudioSettings: React.FC = () => {
 
       // 3. Update the app_settings table to clear the audio URL
       const payload: Partial<AudioSettingsFormValues> & { id: number } = { id: 1 };
-      (payload as any)[fieldName] = null; // Set the specific audio URL field to null
+      const dbColumnName = fieldNameToDbColumnMap[fieldName]; // Use the mapping here
+      if (!dbColumnName) {
+        throw new Error(`Unknown field name: ${fieldName}`);
+      }
+      (payload as any)[dbColumnName] = null; // Set the specific audio URL field to null using mapped name
 
       console.log("Attempting to update app_settings to clear audio URL:", payload);
       const { error: dbError } = await supabase
