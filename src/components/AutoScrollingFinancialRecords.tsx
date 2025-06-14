@@ -22,21 +22,22 @@ const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps
       const viewportHeight = viewportRef.current.clientHeight;
 
       console.log("AutoScrollingFinancialRecords Debug:");
+      console.log("  totalContentHeight (duplicated):", totalContentHeight);
       console.log("  originalContentHeight:", originalContentHeight);
       console.log("  viewportHeight:", viewportHeight);
 
       if (originalContentHeight > viewportHeight && viewportHeight > 0) {
         const durationSeconds = originalContentHeight / scrollSpeedPxPerSecond;
         setAnimationDuration(`${durationSeconds}s`);
-        console.log("  Animation will run. Duration:", `${durationSeconds}s`);
+        console.log("  Animation will run. Calculated Duration:", `${durationSeconds}s`);
       } else {
         setAnimationDuration('0s');
-        console.log("  Animation will NOT run (content fits or viewport is 0).");
+        console.log("  Animation will NOT run (content fits or viewport is 0). Current animationDuration:", animationDuration);
       }
     } else {
       console.log("AutoScrollingFinancialRecords Debug: contentRef or viewportRef not ready.");
     }
-  }, [children, viewportRef]); // Re-run when children or viewportRef changes
+  }, [children, viewportRef, animationDuration]); // Re-run when children, viewportRef, or animationDuration changes
 
   return (
     <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow", className)} viewportRef={viewportRef}>
