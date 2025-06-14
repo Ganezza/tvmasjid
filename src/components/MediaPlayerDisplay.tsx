@@ -16,11 +16,10 @@ interface MediaFile {
 
 interface MediaPlayerDisplayProps {
   isOverlayActive: boolean; // Prop to indicate if an overlay is active (including murottal playing)
-  // Removed: onIsVideoActiveChange: (isVideo: boolean) => void;
-  // Removed: className?: string;
+  onIsVideoPlayingChange: (isVideo: boolean) => void; // New prop to report video playing status
 }
 
-const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOverlayActive /* Removed: , onIsVideoActiveChange, className */ }) => {
+const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOverlayActive, onIsVideoPlayingChange }) => {
   const [activeMedia, setActiveMedia] = useState<MediaFile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -218,6 +217,12 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
     }
   }, [activeMedia]);
 
+  // Effect to report video playing status to parent
+  useEffect(() => {
+    const isVideo = activeMedia?.file_type === "video";
+    onIsVideoPlayingChange(isVideo && isPlaying && !isOverlayActive);
+  }, [activeMedia, isPlaying, isOverlayActive, onIsVideoPlayingChange]);
+
 
   const handleMediaEnded = useCallback(() => {
     // For uploaded media, loop if isPlaying is true
@@ -305,58 +310,16 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className={cn("bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center")}>
-        <p className="text-sm">Memuat media player...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={cn("bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center")}>
-        <p className="text-sm font-bold">Error Media:</p>
-        <p className="text-xs">{error}</p>
-        <p className="text-xs mt-0.5">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
-      </div>
-    );
-  }
-
-  if (!activeMedia) {
-    return (
-      <div className={cn("bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center")}>
-        <p className="text-sm text-gray-400">Tidak ada media yang dipilih untuk diputar.</p>
-        <p className="text-xs text-gray-400 mt-0.5">Pilih media di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
-      </div>
-    );
-  }
-
-  // Determine the source URL based on source_type
-  let mediaSourceUrl: string | undefined;
-  if (activeMedia.source_type === "upload") {
-    mediaSourceUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
-  } else if (activeMedia.source_type === "youtube") {
-    // For YouTube, file_path already contains the embed URL
-    mediaSourceUrl = activeMedia.file_path;
-  }
-
-  if (!mediaSourceUrl) {
-    return (
-      <div className={cn("bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center")}>
-        <p className="text-sm font-bold">Error:</p>
-        <p className="text-xs">URL media tidak valid atau tidak dapat diakses.</p>
-      </div>
-    );
-  }
+  // Determine if the current active media is a video
+  const isCurrentMediaVideo = activeMedia?.file_type === "video";
 
   return (
     <div className={cn("bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden")}>
       <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-0.5 text-yellow-300">
-        {activeMedia.title || (activeMedia.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
+        {activeMedia?.title || (activeMedia?.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
       </h3>
       <div className="relative w-full flex-grow flex items-center justify-center">
-        {activeMedia.source_type === "upload" && activeMedia.file_type === "audio" ? (
+        {activeMedia?.source_type === "upload" && activeMedia.file_type === "audio" ? (
           <audio
             ref={audioRef}
             src={mediaSourceUrl}
@@ -366,7 +329,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
             onEnded={handleMediaEnded}
             onError={handleMediaError}
           />
-        ) : activeMedia.source_type === "upload" && activeMedia.file_type === "video" ? (
+        ) : activeMedia?.source_type === "upload" && activeMedia.file_type === "video" ? (
           <video
             ref={videoRef}
             src={mediaSourceUrl}
@@ -377,7 +340,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
             onEnded={handleMediaEnded}
             onError={handleMediaError}
           />
-        ) : activeMedia.source_type === "youtube" ? (
+        ) : activeMedia?.source_type === "youtube" ? (
           <div className="relative w-full h-full flex items-center justify-center">
             <iframe
               ref={youtubeIframeRef}
@@ -391,13 +354,16 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
             ></iframe>
           </div>
         ) : null}
-        <Button 
-          onClick={togglePlayback} 
-          className="absolute bg-blue-600/20 hover:bg-blue-700/40 text-white p-3 rounded-full shadow-lg"
-          size="icon"
-        >
-          {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
-        </Button>
+        {/* Only show play/pause button if there's active media and it's not an overlay */}
+        {activeMedia && !isOverlayActive && (
+          <Button 
+            onClick={togglePlayback} 
+            className="absolute bg-blue-600/20 hover:bg-blue-700/40 text-white p-3 rounded-full shadow-lg"
+            size="icon"
+          >
+            {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
+          </Button>
+        )}
       </div>
     </div>
   );
