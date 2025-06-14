@@ -387,11 +387,10 @@ const Index = () => {
             <div className="col-span-1 flex flex-col gap-1 flex-grow min-h-0">
               <MediaPlayerDisplay 
                 isOverlayActive={shouldMediaPlayerBePaused} 
-                // REMOVED: onIsVideoActiveChange={setIsMediaPlayerVideoActive}
-                // REMOVED: className={cn(isMediaPlayerVideoActive ? "flex-[3]" : "flex-[1]")}
+                className="flex-[2]" // Set fixed flex ratio
               />
               <FinancialDisplay 
-                // REMOVED: className={cn(isMediaPlayerVideoActive ? "flex-[1]" : "flex-[2]")}
+                className="flex-[1]" // Set fixed flex ratio
               />
             </div>
           </div>
