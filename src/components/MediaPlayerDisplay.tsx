@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { RealtimeChannel } from "@supabase/supabase-js";
 import { PlayCircle, PauseCircle } from "lucide-react"; // Import icons
-import { Button } "@/components/ui/button"; // Import Button component
-import { cn } from "@/lib/utils"; // Import cn utility
-import { RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
+import { Button } from "@/components/ui/button"; // Import Button component
 
 interface MediaFile {
   id: string;
@@ -16,10 +15,9 @@ interface MediaFile {
 
 interface MediaPlayerDisplayProps {
   isOverlayActive: boolean; // Prop to indicate if an overlay is active (including murottal playing)
-  onIsVideoPlayingChange: (isVideo: boolean) => void; // New prop to report video playing status
 }
 
-const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOverlayActive, onIsVideoPlayingChange }) => {
+const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOverlayActive }) => {
   const [activeMedia, setActiveMedia] = useState<MediaFile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,18 +118,13 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
         channelRef.current = null;
       }
     };
-  }, [fetchActiveMedia]);
+  }, [fetchActiveMedia]); // Only fetchActiveMedia (stable useCallback) as dependency
 
   // Effect to handle playback based on isPlaying and isOverlayActive
   useEffect(() => {
-    console.log(`MediaPlayerDisplay: Playback Effect Triggered. isPlaying: ${isPlaying}, isOverlayActive: ${isOverlayActive}, activeMedia: ${activeMedia?.title || 'none'}`);
-    if (!activeMedia) {
-      console.log("MediaPlayerDisplay: No active media, skipping playback handling.");
-      return;
-    }
+    if (!activeMedia) return;
 
     const handlePlayback = (play: boolean) => {
-      console.log(`MediaPlayerDisplay: handlePlayback called with play: ${play}`);
       if (activeMedia.source_type === "youtube" && youtubeIframeRef.current) {
         const player = youtubeIframeRef.current;
         if (player && player.contentWindow) {
@@ -176,7 +169,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
     }
   }, [isPlaying, isOverlayActive, activeMedia]);
 
-  // Effect to clear media source when activeMedia changes (to prevent old media from playing)
+  // Effect to set media source when activeMedia changes
   useEffect(() => {
     const audioEl = audioRef.current;
     const videoEl = videoRef.current;
@@ -195,20 +188,35 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
       youtubeIframeEl.src = ""; // Clear YouTube iframe src
     }
     setIsPlaying(false); // Reset playing state when media changes
-    console.log("MediaPlayerDisplay: activeMedia changed. Resetting player sources and isPlaying state.");
+
+    if (activeMedia) {
+      if (activeMedia.source_type === "upload") {
+        const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
+        console.log("MediaPlayerDisplay: Active media changed (Upload). Public URL:", publicUrl);
+        if (!publicUrl) {
+          setError("URL media tidak ditemukan.");
+          return;
+        }
+
+        if (activeMedia.file_type === "audio" && audioEl) {
+          audioEl.src = publicUrl;
+          audioEl.load();
+        } else if (activeMedia.file_type === "video" && videoEl) {
+          videoEl.src = publicUrl;
+          videoEl.load();
+        }
+      } else if (activeMedia.source_type === "youtube" && youtubeIframeEl) {
+        // For YouTube, file_path already contains the embed URL
+        const youtubeEmbedUrl = activeMedia.file_path;
+        console.log("MediaPlayerDisplay: Active media changed (YouTube). Embed URL:", youtubeEmbedUrl);
+        // Add enablejsapi=1 to allow programmatic control
+        youtubeIframeEl.src = `${youtubeEmbedUrl}?autoplay=0&controls=1&modestbranding=1&rel=0&enablejsapi=1&loop=1&playlist=${youtubeEmbedUrl.split('/').pop()}`;
+      }
+    }
   }, [activeMedia]);
 
 
-  // Effect to report video playing status to parent
-  useEffect(() => {
-    const isVideo = activeMedia?.file_type === "video";
-    onIsVideoPlayingChange(isVideo && isPlaying && !isOverlayActive);
-    console.log(`MediaPlayerDisplay: Reporting video playing status: ${isVideo && isPlaying && !isOverlayActive}`);
-  }, [activeMedia, isPlaying, isOverlayActive, onIsVideoPlayingChange]);
-
-
   const handleMediaEnded = useCallback(() => {
-    console.log("MediaPlayerDisplay: Media ended event triggered.");
     // For uploaded media, loop if isPlaying is true
     if (activeMedia?.source_type === "upload") {
       if (isPlaying) {
@@ -259,10 +267,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
   const togglePlayback = () => {
     console.log("MediaPlayerDisplay: Toggle playback button clicked.");
-    if (!activeMedia) {
-      console.log("MediaPlayerDisplay: No active media to toggle playback.");
-      return;
-    }
+    if (!activeMedia) return;
 
     if (activeMedia.source_type === "youtube" && youtubeIframeRef.current) {
       const player = youtubeIframeRef.current;
@@ -297,67 +302,58 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
     }
   };
 
-  // Determine the source URL for the media player
-  const getMediaSourceUrl = useCallback(() => {
-    if (!activeMedia) {
-      console.log("MediaPlayerDisplay: getMediaSourceUrl - activeMedia is null, returning empty string.");
-      return "";
-    }
-    console.log(`MediaPlayerDisplay: getMediaSourceUrl - activeMedia type: ${activeMedia.file_type}, source: ${activeMedia.source_type}, path: ${activeMedia.file_path}`); // NEW LOG
-    let url = "";
-    if (activeMedia.source_type === "upload") {
-      url = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl || "";
-      console.log(`MediaPlayerDisplay: getMediaSourceUrl - Uploaded media URL: ${url}`);
-    } else if (activeMedia.source_type === "youtube") {
-      url = activeMedia.file_path;
-      console.log(`MediaPlayerDisplay: getMediaSourceUrl - YouTube URL: ${url}`);
-    }
-    if (!url) {
-      console.warn(`MediaPlayerDisplay: getMediaSourceUrl - Generated URL is empty for activeMedia:`, activeMedia);
-    }
-    return url;
-  }, [activeMedia]);
-
-  const mediaSourceUrl = getMediaSourceUrl();
-
-  // Determine if the current active media is a video
-  const isCurrentMediaVideo = activeMedia?.file_type === "video";
-
   if (isLoading) {
     return (
-      <div className={cn("bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden")}>
-        <p className="text-sm text-gray-400">Memuat media...</p>
+      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+        <p className="text-sm">Memuat media player...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={cn("bg-red-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden")}>
-        <p className="text-sm font-bold text-red-200">Error Memuat Media:</p>
-        <p className="text-xs text-red-200 text-center">{error}</p>
-        <p className="text-xs text-red-200 text-center mt-1">Pastikan media aktif sudah diatur di Admin Panel dan file tersedia.</p>
+      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+        <p className="text-sm font-bold">Error Media:</p>
+        <p className="text-xs">{error}</p>
+        <p className="text-xs mt-0.5">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
       </div>
     );
   }
 
-  if (!activeMedia || !mediaSourceUrl) {
+  if (!activeMedia) {
     return (
-      <div className={cn("bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden")}>
-        <p className="text-sm text-gray-400">Tidak ada media aktif yang dipilih atau URL tidak valid.</p>
-        <p className="text-xs text-gray-500 mt-1">Silakan pilih media di Admin Panel.</p>
+      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+        <p className="text-sm text-gray-400">Tidak ada media yang dipilih untuk diputar.</p>
+        <p className="text-xs text-gray-400 mt-0.5">Pilih media di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
+      </div>
+    );
+  }
+
+  // Determine the source URL based on source_type
+  let mediaSourceUrl: string | undefined;
+  if (activeMedia.source_type === "upload") {
+    mediaSourceUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
+  } else if (activeMedia.source_type === "youtube") {
+    // For YouTube, file_path already contains the embed URL
+    mediaSourceUrl = activeMedia.file_path;
+  }
+
+  if (!mediaSourceUrl) {
+    return (
+      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+        <p className="text-sm font-bold">Error:</p>
+        <p className="text-xs">URL media tidak valid atau tidak dapat diakses.</p>
       </div>
     );
   }
 
   return (
-    <div className={cn("bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden")}>
+    <div className="bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden">
       <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-0.5 text-yellow-300">
-        {activeMedia?.title || (activeMedia?.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
+        {activeMedia.title || (activeMedia.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
       </h3>
       <div className="relative w-full flex-grow flex items-center justify-center">
-        {console.log(`MediaPlayerDisplay: Attempting to render. Type: ${activeMedia.file_type}, Source: ${activeMedia.source_type}, URL: ${mediaSourceUrl}`)} {/* NEW LOG */}
-        {activeMedia?.source_type === "upload" && activeMedia.file_type === "audio" ? (
+        {activeMedia.source_type === "upload" && activeMedia.file_type === "audio" ? (
           <audio
             ref={audioRef}
             src={mediaSourceUrl}
@@ -367,7 +363,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
             onEnded={handleMediaEnded}
             onError={handleMediaError}
           />
-        ) : activeMedia?.source_type === "upload" && activeMedia.file_type === "video" ? (
+        ) : activeMedia.source_type === "upload" && activeMedia.file_type === "video" ? (
           <video
             ref={videoRef}
             src={mediaSourceUrl}
@@ -378,12 +374,12 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
             onEnded={handleMediaEnded}
             onError={handleMediaError}
           />
-        ) : activeMedia?.source_type === "youtube" ? (
+        ) : activeMedia.source_type === "youtube" ? (
           <div className="relative w-full h-full flex items-center justify-center">
             <iframe
               ref={youtubeIframeRef}
               className="w-full h-full object-contain rounded-md border border-gray-600"
-              src={`${mediaSourceUrl}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&loop=1&playlist=${mediaSourceUrl.split('/').pop()}`}
+              src={`${mediaSourceUrl}?autoplay=0&controls=1&modestbranding=1&rel=0&enablejsapi=1&loop=1&playlist=${mediaSourceUrl.split('/').pop()}`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -392,16 +388,13 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
             ></iframe>
           </div>
         ) : null}
-        {/* Only show play/pause button if there's active media and it's not an overlay */}
-        {activeMedia && !isOverlayActive && (
-          <Button 
-            onClick={togglePlayback} 
-            className="absolute bg-blue-600/20 hover:bg-blue-700/40 text-white p-3 rounded-full shadow-lg"
-            size="icon"
-          >
-            {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
-          </Button>
-        )}
+        <Button 
+          onClick={togglePlayback} 
+          className="absolute bg-blue-600/20 hover:bg-blue-700/40 text-white p-3 rounded-full shadow-lg"
+          size="icon"
+        >
+          {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
+        </Button>
       </div>
     </div>
   );

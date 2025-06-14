@@ -11,9 +11,9 @@ interface PrayerCountdownOverlayProps {
   iqomahCountdownDuration: number; // in seconds
   onClose: () => void; // Callback to notify parent to close the overlay
   isJumuah: boolean; // New prop to disable for Jumuah
-  adhanDurationSeconds: number; // New prop for Adhan duration
 }
 
+const ADHAN_DURATION_SECONDS = 120; // Changed from 90 to 120 seconds (2 minutes)
 const PRE_ADHAN_COUNTDOWN_SECONDS = 30;
 
 const PrayerCountdownOverlay: React.FC<PrayerCountdownOverlayProps> = ({
@@ -22,7 +22,6 @@ const PrayerCountdownOverlay: React.FC<PrayerCountdownOverlayProps> = ({
   iqomahCountdownDuration,
   onClose,
   isJumuah,
-  adhanDurationSeconds, // Destructure new prop
 }) => {
   const [displayPhase, setDisplayPhase] = useState<"pre-adhan" | "adhan" | "pre-iqomah" | "iqomah" | "hidden">("hidden");
   const [countdownText, setCountdownText] = useState<string>("");
@@ -39,7 +38,7 @@ const PrayerCountdownOverlay: React.FC<PrayerCountdownOverlayProps> = ({
 
     const adhanTime = nextPrayerTime;
     const preAdhanTime = adhanTime.subtract(PRE_ADHAN_COUNTDOWN_SECONDS, 'second');
-    const adhanEndTime = adhanTime.add(adhanDurationSeconds, 'second'); // Use adhanDurationSeconds
+    const adhanEndTime = adhanTime.add(ADHAN_DURATION_SECONDS, 'second');
     const iqomahTime = adhanEndTime; // Iqomah starts right after Adhan ends
     const iqomahEndTime = iqomahTime.add(iqomahCountdownDuration, 'second');
 
@@ -83,7 +82,7 @@ const PrayerCountdownOverlay: React.FC<PrayerCountdownOverlayProps> = ({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, onClose, isJumuah, adhanDurationSeconds]); // Add adhanDurationSeconds to dependencies
+  }, [nextPrayerTime, nextPrayerName, iqomahCountdownDuration, onClose, isJumuah]);
 
   if (displayPhase === "hidden") {
     return null;

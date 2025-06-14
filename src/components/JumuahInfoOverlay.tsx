@@ -35,12 +35,12 @@ interface JumuahInfoOverlayProps {
   jumuahDhuhrTime: dayjs.Dayjs; // Exact Dhuhr time for Friday
   khutbahDurationMinutes: number;
   onClose: () => void;
-  adhanDurationSeconds: number; // New prop for Adhan duration
 }
 
 const PRE_ADHAN_JUMUAH_SECONDS = 300; // 5 minutes before Adhan
+const ADHAN_JUMUAH_DURATION_SECONDS = 90; // Approx 1.5 minutes for Adhan
 
-const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, khutbahDurationMinutes, onClose, adhanDurationSeconds }) => {
+const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, khutbahDurationMinutes, onClose }) => {
   const [jumuahSchedule, setJumuahSchedule] = useState<Schedule | null>(null);
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
@@ -132,13 +132,13 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
       setDisplayPhase("hidden");
       setCountdownText("");
       if (intervalRef.current) clearInterval(intervalRef.current);
-      onClose(); // Ensure parent knows to close
+      onClose();
       return;
     }
 
     const adhanTime = jumuahDhuhrTime;
     const preAdhanStartTime = adhanTime.subtract(PRE_ADHAN_JUMUAH_SECONDS, 'second');
-    const adhanEndTime = adhanTime.add(adhanDurationSeconds, 'second'); // Use adhanDurationSeconds
+    const adhanEndTime = adhanTime.add(ADHAN_JUMUAH_DURATION_SECONDS, 'second');
     const khutbahEndTime = adhanEndTime.add(khutbahDurationMinutes, 'minute');
 
     const updatePhaseAndCountdown = () => {
@@ -181,7 +181,7 @@ const JumuahInfoOverlay: React.FC<JumuahInfoOverlayProps> = ({ jumuahDhuhrTime, 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [jumuahDhuhrTime, khutbahDurationMinutes, onClose, adhanDurationSeconds]); // Add adhanDurationSeconds to dependencies
+  }, [jumuahDhuhrTime, khutbahDurationMinutes, onClose]);
 
   if (isLoading) {
     return (

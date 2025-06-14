@@ -6,11 +6,12 @@ import { cn } from "@/lib/utils";
 
 interface AutoScrollingFinancialRecordsProps {
   children: React.ReactNode;
+  heightClass?: string; // New prop for height control
   className?: string; // Allow passing additional classes
   viewportRef: React.RefObject<HTMLDivElement>; // Explicitly require viewportRef
 }
 
-const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children, className, viewportRef }) => {
+const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children, heightClass, className, viewportRef }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [animationDuration, setAnimationDuration] = useState('0s');
   const scrollSpeedPxPerSecond = 20; // Kecepatan scroll dalam piksel per detik
@@ -22,25 +23,24 @@ const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps
       const viewportHeight = viewportRef.current.clientHeight;
 
       console.log("AutoScrollingFinancialRecords Debug:");
-      console.log("  totalContentHeight (duplicated):", totalContentHeight);
       console.log("  originalContentHeight:", originalContentHeight);
       console.log("  viewportHeight:", viewportHeight);
 
       if (originalContentHeight > viewportHeight && viewportHeight > 0) {
         const durationSeconds = originalContentHeight / scrollSpeedPxPerSecond;
         setAnimationDuration(`${durationSeconds}s`);
-        console.log("  Animation will run. Calculated Duration:", `${durationSeconds}s`);
+        console.log("  Animation will run. Duration:", `${durationSeconds}s`);
       } else {
         setAnimationDuration('0s');
-        console.log("  Animation will NOT run (content fits or viewport is 0). Current animationDuration:", animationDuration);
+        console.log("  Animation will NOT run (content fits or viewport is 0).");
       }
     } else {
       console.log("AutoScrollingFinancialRecords Debug: contentRef or viewportRef not ready.");
     }
-  }, [children, viewportRef, animationDuration]); // Re-run when children, viewportRef, or animationDuration changes
+  }, [children, heightClass, viewportRef]); // Re-run when children, heightClass, or viewportRef changes
 
   return (
-    <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow", className)} viewportRef={viewportRef}>
+    <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow", heightClass, className)} viewportRef={viewportRef}>
       <div
         ref={contentRef}
         className="auto-scroll-content"
