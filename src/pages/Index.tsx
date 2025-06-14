@@ -339,6 +339,7 @@ const Index = () => {
               />
               <FinancialDisplay 
                 className={cn(
+                  "max-h-[250px]", // Batasi tinggi FinancialDisplay
                   isMediaPlayerVideoPlaying ? "flex-[1]" : "flex-[1]" // Dynamic sizing
                 )}
               />
