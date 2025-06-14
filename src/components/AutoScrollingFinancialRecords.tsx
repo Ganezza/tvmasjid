@@ -6,12 +6,11 @@ import { cn } from "@/lib/utils";
 
 interface AutoScrollingFinancialRecordsProps {
   children: React.ReactNode;
-  heightClass?: string; // New prop for height control
   className?: string; // Allow passing additional classes
   viewportRef: React.RefObject<HTMLDivElement>; // Explicitly require viewportRef
 }
 
-const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children, heightClass, className, viewportRef }) => {
+const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps> = ({ children, className, viewportRef }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [animationDuration, setAnimationDuration] = useState('0s');
   const scrollSpeedPxPerSecond = 20; // Kecepatan scroll dalam piksel per detik
@@ -37,10 +36,10 @@ const AutoScrollingFinancialRecords: React.FC<AutoScrollingFinancialRecordsProps
     } else {
       console.log("AutoScrollingFinancialRecords Debug: contentRef or viewportRef not ready.");
     }
-  }, [children, heightClass, viewportRef]); // Re-run when children, heightClass, or viewportRef changes
+  }, [children, viewportRef]); // Re-run when children or viewportRef changes
 
   return (
-    <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow", heightClass, className)} viewportRef={viewportRef}>
+    <ScrollAreaWithViewportRef className={cn("w-full pr-4 flex-grow", className)} viewportRef={viewportRef}>
       <div
         ref={contentRef}
         className="auto-scroll-content"

@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import AutoScrollingFinancialRecords from "@/components/AutoScrollingFinancialRecords";
+import { cn } from "@/lib/utils"; // Import cn utility
 
 interface FinancialRecord {
   id: string;
@@ -14,7 +15,11 @@ interface FinancialRecord {
   description: string;
 }
 
-const FinancialDisplay: React.FC = React.memo(() => {
+interface FinancialDisplayProps {
+  className?: string; // New prop to allow external styling
+}
+
+const FinancialDisplay: React.FC<FinancialDisplayProps> = React.memo(({ className }) => {
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [recentRecords, setRecentRecords] = useState<FinancialRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,7 +93,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
+      <div className={cn("bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col", className)}>
         <p className="text-sm">Memuat informasi keuangan...</p>
       </div>
     );
@@ -96,7 +101,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col">
+      <div className={cn("bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col", className)}>
         <p className="text-sm font-bold">Error:</p>
         <p className="text-xs">{error}</p>
       </div>
@@ -104,7 +109,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col">
+    <div className={cn("bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col", className)}>
       <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-0.5 text-yellow-300">
         Informasi Keuangan Masjid
       </h3>
@@ -121,7 +126,7 @@ const FinancialDisplay: React.FC = React.memo(() => {
       {recentRecords.length === 0 ? (
         <p className="text-sm md:text-base text-gray-400">Belum ada transaksi yang tercatat.</p>
       ) : (
-        <AutoScrollingFinancialRecords heightClass="max-h-48 lg:max-h-64" viewportRef={viewportRef}>
+        <AutoScrollingFinancialRecords className="flex-grow" viewportRef={viewportRef}>
           <div className="space-y-1">
             {recentRecords.map((record) => (
               <div key={record.id} className="flex flex-col items-start bg-gray-700 p-1 rounded-md shadow-sm text-left">

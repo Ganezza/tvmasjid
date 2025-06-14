@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { RealtimeChannel } from "@supabase/supabase-js";
 import { PlayCircle, PauseCircle } from "lucide-react"; // Import icons
 import { Button } from "@/components/ui/button"; // Import Button component
+import { cn } from "@/lib/utils"; // Import cn utility
 
 interface MediaFile {
   id: string;
@@ -15,9 +15,11 @@ interface MediaFile {
 
 interface MediaPlayerDisplayProps {
   isOverlayActive: boolean; // Prop to indicate if an overlay is active (including murottal playing)
+  onIsVideoActiveChange: (isVideo: boolean) => void; // New prop to notify parent if active media is video
+  className?: string; // Allow passing additional classes
 }
 
-const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOverlayActive }) => {
+const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOverlayActive, onIsVideoActiveChange, className }) => {
   const [activeMedia, setActiveMedia] = useState<MediaFile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +121,14 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
       }
     };
   }, [fetchActiveMedia]); // Only fetchActiveMedia (stable useCallback) as dependency
+
+  // Effect to notify parent about video status
+  useEffect(() => {
+    const isVideo = activeMedia && (activeMedia.file_type === "video" || activeMedia.source_type === "youtube");
+    onIsVideoActiveChange(isVideo);
+    console.log("MediaPlayerDisplay: Notifying parent - isVideoActive:", isVideo);
+  }, [activeMedia, onIsVideoActiveChange]);
+
 
   // Effect to handle playback based on isPlaying and isOverlayActive
   useEffect(() => {
@@ -304,7 +314,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+      <div className={cn("bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center", className)}>
         <p className="text-sm">Memuat media player...</p>
       </div>
     );
@@ -312,7 +322,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
   if (error) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+      <div className={cn("bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center", className)}>
         <p className="text-sm font-bold">Error Media:</p>
         <p className="text-xs">{error}</p>
         <p className="text-xs mt-0.5">Silakan periksa pengaturan di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
@@ -322,7 +332,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
   if (!activeMedia) {
     return (
-      <div className="bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+      <div className={cn("bg-gray-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center", className)}>
         <p className="text-sm text-gray-400">Tidak ada media yang dipilih untuk diputar.</p>
         <p className="text-xs text-gray-400 mt-0.5">Pilih media di <a href="/admin" className="underline text-blue-300">Admin Panel</a>.</p>
       </div>
@@ -340,7 +350,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
 
   if (!mediaSourceUrl) {
     return (
-      <div className="bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center">
+      <div className={cn("bg-red-800 bg-opacity-70 p-2 rounded-xl shadow-2xl w-full text-center text-white flex-grow flex flex-col items-center justify-center", className)}>
         <p className="text-sm font-bold">Error:</p>
         <p className="text-xs">URL media tidak valid atau tidak dapat diakses.</p>
       </div>
@@ -348,7 +358,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
   }
 
   return (
-    <div className="bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden">
+    <div className={cn("bg-gray-800 bg-opacity-70 p-1 rounded-xl shadow-2xl w-full text-center flex-grow flex flex-col items-center justify-center overflow-hidden", className)}>
       <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-0.5 text-yellow-300">
         {activeMedia.title || (activeMedia.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
       </h3>
