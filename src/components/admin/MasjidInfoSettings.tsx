@@ -69,6 +69,7 @@ const MasjidInfoSettings: React.FC = () => {
           upsert: false,
           onUploadProgress: (event: ProgressEvent) => {
             const percent = Math.round((event.loaded * 100) / event.total);
+            console.log(`Upload progress for logo: ${percent}%`); // ADDED LOG
             toast.loading(`Mengunggah logo masjid: ${percent}%`, { id: uploadToastId });
           },
         });
@@ -84,6 +85,8 @@ const MasjidInfoSettings: React.FC = () => {
       if (publicUrlData?.publicUrl) {
         setValue("masjidLogoUrl", publicUrlData.publicUrl);
         setCurrentLogoUrl(publicUrlData.publicUrl);
+        // Explicitly update to 100% before success
+        toast.loading("Mengunggah logo masjid: 100%", { id: uploadToastId });
         toast.success("Logo masjid berhasil diunggah!", { id: uploadToastId });
         toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file gambar dioptimalkan (misal: format WebP, resolusi sesuai kebutuhan).");
 
@@ -91,7 +94,8 @@ const MasjidInfoSettings: React.FC = () => {
         if (oldLogoUrl && oldLogoUrl !== publicUrlData.publicUrl) {
           try {
             const oldUrlParts = oldLogoUrl.split('/');
-            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('images') + 1).join('/');
+            const publicIndex = oldUrlParts.indexOf('public');
+            const oldFileNameWithFolder = oldUrlParts.slice(publicIndex + 2).join('/');
             const { error: deleteError } = await supabase.storage
               .from('images')
               .remove([oldFileNameWithFolder]);

@@ -140,7 +140,8 @@ const InfoSlideSettings: React.FC = () => {
       if (slideToDelete?.content) {
         try {
           const urlParts = slideToDelete.content.split('/');
-          const fileNameWithFolder = urlParts.slice(urlParts.indexOf('images') + 1).join('/');
+          const publicIndex = urlParts.indexOf('public');
+          const fileNameWithFolder = urlParts.slice(publicIndex + 2).join('/');
           const { error: deleteFileError } = await supabase.storage
             .from('images')
             .remove([fileNameWithFolder]);
@@ -164,7 +165,7 @@ const InfoSlideSettings: React.FC = () => {
     const fileName = `${uuidv4()}.${fileExtension}`;
     const filePath = `slides/${fileName}`; // Path inside the bucket
 
-    const uploadToastId = toast.loading("Mengunggah gambar slide...");
+    const uploadToastId = toast.loading("Mengunggah gambar slide: 0%");
 
     // Capture the old image URL if editing
     const oldImageUrl = editingSlide?.content || null;
@@ -175,6 +176,11 @@ const InfoSlideSettings: React.FC = () => {
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
+          onUploadProgress: (event: ProgressEvent) => {
+            const percent = Math.round((event.loaded * 100) / event.total);
+            console.log(`Upload progress for info slide: ${percent}%`); // ADDED LOG
+            toast.loading(`Mengunggah gambar slide: ${percent}%`, { id: uploadToastId });
+          },
         });
 
       if (error) {
@@ -188,6 +194,8 @@ const InfoSlideSettings: React.FC = () => {
       if (publicUrlData?.publicUrl) {
         setValue("content", publicUrlData.publicUrl);
         setPreviewImageUrl(publicUrlData.publicUrl); // Set preview
+        // Explicitly update to 100% before success
+        toast.loading("Mengunggah gambar slide: 100%", { id: uploadToastId });
         toast.success("Gambar slide berhasil diunggah!", { id: uploadToastId });
         toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file gambar dioptimalkan (misal: format WebP, resolusi sesuai kebutuhan).");
 
@@ -195,7 +203,8 @@ const InfoSlideSettings: React.FC = () => {
         if (oldImageUrl && oldImageUrl !== publicUrlData.publicUrl) {
           try {
             const oldUrlParts = oldImageUrl.split('/');
-            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('images') + 1).join('/');
+            const publicIndex = oldUrlParts.indexOf('public');
+            const oldFileNameWithFolder = oldUrlParts.slice(publicIndex + 2).join('/');
             const { error: deleteFileError } = await supabase.storage
               .from('images')
               .remove([oldFileNameWithFolder]);
