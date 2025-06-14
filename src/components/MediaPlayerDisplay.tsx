@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { PlayCircle, PauseCircle } from "lucide-react"; // Import icons
-import { Button } from "@/components/ui/button"; // Import Button component
+import { Button } "@/components/ui/button"; // Import Button component
 import { cn } from "@/lib/utils"; // Import cn utility
 import { RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
 
@@ -303,6 +303,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
       console.log("MediaPlayerDisplay: getMediaSourceUrl - activeMedia is null, returning empty string.");
       return "";
     }
+    console.log(`MediaPlayerDisplay: getMediaSourceUrl - activeMedia type: ${activeMedia.file_type}, source: ${activeMedia.source_type}, path: ${activeMedia.file_path}`); // NEW LOG
     let url = "";
     if (activeMedia.source_type === "upload") {
       url = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl || "";
@@ -355,6 +356,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
         {activeMedia?.title || (activeMedia?.file_type === "audio" ? "Audio Diputar" : "Video Diputar")}
       </h3>
       <div className="relative w-full flex-grow flex items-center justify-center">
+        {console.log(`MediaPlayerDisplay: Attempting to render. Type: ${activeMedia.file_type}, Source: ${activeMedia.source_type}, URL: ${mediaSourceUrl}`)} {/* NEW LOG */}
         {activeMedia?.source_type === "upload" && activeMedia.file_type === "audio" ? (
           <audio
             ref={audioRef}
