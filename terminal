@@ -1,7 +1,0 @@
-git commit -m "Update favicon link"
-    </sdyad-write>
-
-4.  **Unggah commit Anda ke GitHub:**
-    Perintah ini akan mengirimkan commit dari repositori lokal Anda ke cabang `main` di repositori GitHub Anda.
-    <dyad-write path="terminal" description="Mengunggah commit ke GitHub.">
-    git push origin main
