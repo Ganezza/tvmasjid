@@ -67,6 +67,7 @@ const DisplaySettings: React.FC = () => {
           upsert: false, // Do not upsert, create new file
           onUploadProgress: (event: ProgressEvent) => {
             const percent = Math.round((event.loaded * 100) / event.total);
+            console.log(`Upload progress for background: ${percent}%`); // ADDED LOG
             toast.loading(`Mengunggah gambar latar belakang: ${percent}%`, { id: uploadToastId });
           },
         });
@@ -91,7 +92,8 @@ const DisplaySettings: React.FC = () => {
         if (oldImageUrl && oldImageUrl !== publicUrlData.publicUrl) {
           try {
             const oldUrlParts = oldImageUrl.split('/');
-            const oldFileNameWithFolder = oldUrlParts.slice(oldUrlParts.indexOf('images') + 1).join('/');
+            const publicIndex = oldUrlParts.indexOf('public');
+            const oldFileNameWithFolder = oldUrlParts.slice(publicIndex + 2).join('/');
             const { error: deleteError } = await supabase.storage
               .from('images')
               .remove([oldFileNameWithFolder]);
