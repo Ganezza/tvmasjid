@@ -21,7 +21,6 @@ interface MediaFile {
   file_path: string;
   file_type: "audio" | "video";
   source_type: "upload" | "youtube";
-  display_order: number;
 }
 
 const getYouTubeVideoId = (url: string): string | null => {
@@ -279,6 +278,7 @@ const MediaPlayerSettings: React.FC = () => {
             upsert: false,
             onUploadProgress: (event: ProgressEvent) => {
               const percent = Math.round((event.loaded * 100) / event.total);
+              console.log(`Upload progress for media player: ${percent}%`); // ADDED LOG
               toast.loading(`Mengunggah file media: ${percent}%`, { id: uploadToastId });
             },
           });
