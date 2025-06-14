@@ -6,8 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { SessionProvider } from "./components/SessionProvider";
-import React from "react"; // Import React
-import { AppSettingsProvider } from "./contexts/AppSettingsContext"; // Import AppSettingsProvider
+import React from "react";
+import { AppSettingsProvider } from "./contexts/AppSettingsContext";
 
 // Menggunakan React.lazy untuk memuat komponen secara dinamis
 const AdminPanel = React.lazy(() => import("./pages/AdminPanel"));
@@ -20,12 +20,12 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename="/tvmasjid/">
+      <BrowserRouter basename="/tvmasjid/" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <SessionProvider>
-          <AppSettingsProvider> {/* Wrap with AppSettingsProvider */}
+          <AppSettingsProvider>
             {/* Wrapper untuk skala global */}
             <div style={{ 
-              transform: 'scale(0.61875)', // Skala diperbesar 10% dari 0.5625
+              transform: 'scale(0.61875)',
               transformOrigin: 'top left', 
               width: 'calc(100% / 0.61875)', 
               height: 'calc(100% / 0.61875)' 
