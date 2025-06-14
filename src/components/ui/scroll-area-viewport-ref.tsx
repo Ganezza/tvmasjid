@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Corrected import path
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Import shadcn/ui ScrollArea and ScrollBar
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"; // Import Radix UI primitives
 import { cn } from "@/lib/utils";
 
 interface ScrollAreaWithViewportRefProps extends React.ComponentPropsWithoutRef<typeof ScrollArea> {
@@ -9,20 +10,20 @@ interface ScrollAreaWithViewportRefProps extends React.ComponentPropsWithoutRef<
 }
 
 const ScrollAreaWithViewportRef = React.forwardRef<
-  React.ElementRef<typeof ScrollArea>,
+  React.ElementRef<typeof ScrollAreaPrimitive.Root>, // Use ScrollAreaPrimitive.Root for ref type
   ScrollAreaWithViewportRefProps
 >(({ className, children, viewportRef, ...props }, ref) => (
-  <ScrollArea
+  <ScrollAreaPrimitive.Root // Use ScrollAreaPrimitive.Root here
     ref={ref}
     className={cn("relative overflow-hidden", className)}
     {...props}
   >
-    <ScrollArea.Viewport ref={viewportRef} className="h-full w-full rounded-[inherit]">
+    <ScrollAreaPrimitive.Viewport ref={viewportRef} className="h-full w-full rounded-[inherit]">
       {children}
-    </ScrollArea.Viewport>
+    </ScrollAreaPrimitive.Viewport>
     <ScrollBar orientation="vertical" />
-    <ScrollArea.Corner />
-  </ScrollArea>
+    <ScrollAreaPrimitive.Corner />
+  </ScrollAreaPrimitive.Root>
 ));
 ScrollAreaWithViewportRef.displayName = "ScrollAreaWithViewportRef";
 
