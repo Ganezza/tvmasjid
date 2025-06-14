@@ -171,7 +171,7 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
     }
   }, [isPlaying, isOverlayActive, activeMedia]);
 
-  // Effect to set media source when activeMedia changes
+  // Effect to clear media source when activeMedia changes (to prevent old media from playing)
   useEffect(() => {
     const audioEl = audioRef.current;
     const videoEl = videoRef.current;
@@ -190,32 +190,8 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
       youtubeIframeEl.src = ""; // Clear YouTube iframe src
     }
     setIsPlaying(false); // Reset playing state when media changes
-
-    if (activeMedia) {
-      if (activeMedia.source_type === "upload") {
-        const publicUrl = supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl;
-        console.log("MediaPlayerDisplay: Active media changed (Upload). Public URL:", publicUrl);
-        if (!publicUrl) {
-          setError("URL media tidak ditemukan.");
-          return;
-        }
-
-        if (activeMedia.file_type === "audio" && audioEl) {
-          audioEl.src = publicUrl;
-          audioEl.load();
-        } else if (activeMedia.file_type === "video" && videoEl) {
-          videoEl.src = publicUrl;
-          videoEl.load();
-        }
-      } else if (activeMedia.source_type === "youtube" && youtubeIframeEl) {
-        // For YouTube, file_path already contains the embed URL
-        const youtubeEmbedUrl = activeMedia.file_path;
-        console.log("MediaPlayerDisplay: Active media changed (YouTube). Embed URL:", youtubeEmbedUrl);
-        // Add enablejsapi=1 to allow programmatic control
-        youtubeIframeEl.src = `${youtubeEmbedUrl}?autoplay=0&controls=1&modestbranding=1&rel=0&enablejsapi=1&loop=1&playlist=${youtubeEmbedUrl.split('/').pop()}`;
-      }
-    }
   }, [activeMedia]);
+
 
   // Effect to report video playing status to parent
   useEffect(() => {
@@ -309,6 +285,20 @@ const MediaPlayerDisplay: React.FC<MediaPlayerDisplayProps> = React.memo(({ isOv
       }
     }
   };
+
+  // Determine the source URL for the media player
+  const getMediaSourceUrl = useCallback(() => {
+    if (!activeMedia) return "";
+    if (activeMedia.source_type === "upload") {
+      return supabase.storage.from('audio').getPublicUrl(activeMedia.file_path).data?.publicUrl || "";
+    } else if (activeMedia.source_type === "youtube") {
+      // For YouTube, file_path already contains the embed URL
+      return activeMedia.file_path;
+    }
+    return "";
+  }, [activeMedia]);
+
+  const mediaSourceUrl = getMediaSourceUrl();
 
   // Determine if the current active media is a video
   const isCurrentMediaVideo = activeMedia?.file_type === "video";
