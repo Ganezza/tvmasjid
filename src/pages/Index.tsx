@@ -26,6 +26,7 @@ import * as Adhan from "adhan";
 import { Settings, RefreshCw } from "lucide-react"; // Import RefreshCw icon
 import { Button } from "@/components/ui/button";
 import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
+import { cn } from "@/lib/utils"; // Import cn utility
 
 dayjs.extend(duration);
 dayjs.extend(isBetween);
@@ -59,6 +60,7 @@ const Index = () => {
   const [isScreenDarkened, setIsScreenDarkened] = useState(false);
   // const [isScreensaverActive, setIsScreensaverActive] = useState(false); // Dihapus
   const [isMurottalPlaying, setIsMurottalPlaying] = useState(false); // State for MurottalPlayer status
+  const [isMediaPlayerVideoActive, setIsMediaPlayerVideoActive] = useState(false); // New state for video player status
 
   const [jumuahDhuhrTime, setJumuahDhuhrTime] = useState<dayjs.Dayjs | null>(null);
   const [imsakTime, setImsakTime] = useState<dayjs.Dayjs | null>(null);
@@ -383,8 +385,14 @@ const Index = () => {
 
             {/* Kolom 3: Media Player, Informasi Keuangan Masjid */}
             <div className="col-span-1 flex flex-col gap-1 flex-grow min-h-0">
-              <MediaPlayerDisplay isOverlayActive={shouldMediaPlayerBePaused} />
-              <FinancialDisplay />
+              <MediaPlayerDisplay 
+                isOverlayActive={shouldMediaPlayerBePaused} 
+                onIsVideoActiveChange={setIsMediaPlayerVideoActive}
+                className={cn(isMediaPlayerVideoActive ? "flex-[3]" : "flex-[1]")} // Dynamic sizing
+              />
+              <FinancialDisplay 
+                className={cn(isMediaPlayerVideoActive ? "flex-[1]" : "flex-[2]")} // Dynamic sizing
+              />
             </div>
           </div>
 
