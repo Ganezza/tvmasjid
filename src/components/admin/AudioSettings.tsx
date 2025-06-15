@@ -1,71 +1,7 @@
-import React, { useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique file names
-import { useAppSettings } from "@/contexts/AppSettingsContext"; // Import useAppSettings
-
-const formSchema = z.object({
-  murottalActive: z.boolean().default(false),
-  tarhimActive: z.boolean().default(false),
-  iqomahCountdownDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(300), // in seconds
-  murottalPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(10), // in minutes
-  tarhimPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(300), // Changed default to 300 seconds (5 minutes)
-  murottalAudioUrlFajr: z.string().nullable().optional(),
-  murottalAudioUrlDhuhr: z.string().nullable().optional(),
-  murottalAudioUrlAsr: z.string().nullable().optional(),
-  murottalAudioUrlMaghrib: z.string().nullable().optional(),
-  murottalAudioUrlIsha: z.string().nullable().optional(),
-  murottalAudioUrlImsak: z.string().nullable().optional(),
-  tarhimAudioUrl: z.string().nullable().optional(),
-  khutbahDurationMinutes: z.coerce.number().int().min(1, "Durasi khutbah harus lebih dari 0 menit.").default(45),
-  isMasterAudioActive: z.boolean().default(true), // New field for master audio switch
-  adhanBeepAudioUrl: z.string().nullable().optional(), // New field for Adhan beep
-  iqomahBeepAudioUrl: z.string().nullable().optional(), // New field for Iqomah beep
-  imsakBeepAudioUrl: z.string().nullable().optional(), // NEW FIELD FOR IMSAK BEEP
-});
-
-type AudioSettingsFormValues = z.infer<typeof formSchema>;
-
-const PRAYER_AUDIO_FIELDS = [
-  { name: "murottalAudioUrlFajr", label: "Audio Murottal Subuh" },
-  { name: "murottalAudioUrlDhuhr", label: "Audio Murottal Dzuhur" },
-  { name: "murottalAudioUrlAsr", label: "Audio Murottal Ashar" },
-  { name: "murottalAudioUrlMaghrib", label: "Audio Murottal Maghrib" },
-  { name: "murottalAudioUrlIsha", label: "Audio Murottal Isya" },
-  { name: "murottalAudioUrlImsak", label: "Audio Murottal Imsak (Mode Ramadan)" },
-];
-
-// Mapping from camelCase form field names to snake_case database column names
-const fieldNameToDbColumnMap: Record<keyof AudioSettingsFormValues, string> = {
-  murottalActive: "murottal_active",
-  tarhimActive: "tarhim_active",
-  iqomahCountdownDuration: "iqomah_countdown_duration",
-  murottalPreAdhanDuration: "murottal_pre_adhan_duration",
-  tarhimPreAdhanDuration: "tarhim_pre_adhan_duration",
-  murottalAudioUrlFajr: "murottal_audio_url_fajr",
-  murottalAudioUrlDhuhr: "murottal_audio_url_dhuhr",
-  murottalAudioUrlAsr: "murottal_audio_url_asr",
-  murottalAudioUrlMaghrib: "murottal_audio_url_maghrib",
-  murottalAudioUrlIsha: "murottal_audio_url_isha",
-  murottalAudioUrlImsak: "murottal_audio_url_imsak",
-  tarhimAudioUrl: "tarhim_audio_url",
-  khutbahDurationMinutes: "khutbah_duration_minutes",
-  isMasterAudioActive: "is_master_audio_active",
-  adhanBeepAudioUrl: "adhan_beep_audio_url",
-  iqomahBeepAudioUrl: "iqomah_beep_audio_url",
-  imsakBeepAudioUrl: "imsak_beep_audio_url",
-};
-
 const AudioSettings: React.FC = () => {
-  const { settings, isLoadingSettings, refetchSettings } = useAppSettings(); // Use the new hook
+  const { settings, isLoadingSettings, refetchSettings } = useAppSettings();
+  const [availableAudioFiles, setAvailableAudioFiles] = useState<MediaFile[]>([]);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
   const form = useForm<AudioSettingsFormValues>({
     resolver: zodResolver(formSchema),
@@ -83,16 +19,48 @@ const AudioSettings: React.FC = () => {
       murottalAudioUrlImsak: null,
       tarhimAudioUrl: null,
       khutbahDurationMinutes: 45,
-      isMasterAudioActive: true, // Default to true
-      adhanBeepAudioUrl: null, // Default for new field
-      iqomahBeepAudioUrl: null, // Default for new field
-      imsakBeepAudioUrl: null, // Default for new field
+      isMasterAudioActive: true,
+      adhanBeepAudioUrl: null,
+      iqomahBeepAudioUrl: null,
+      imsakBeepAudioUrl: null,
+    },
+  });
+
+  const uploadForm = useForm<UploadAudioFormValues>({
+    resolver: zodResolver(uploadAudioFormSchema),
+    defaultValues: {
+      title: "",
+      file: undefined,
     },
   });
 
   const { handleSubmit, register, setValue, formState: { isSubmitting, errors } } = form;
+  const { handleSubmit: handleUploadSubmit, register: registerUpload, reset: resetUploadForm, formState: { isSubmitting: isUploading, errors: uploadErrors } } = uploadForm;
+
+  const fetchAvailableAudioFiles = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("media_files")
+        .select("id, title, file_path, file_type, source_type")
+        .eq("file_type", "audio")
+        .eq("source_type", "upload")
+        .order("title", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching available audio files:", error);
+        toast.error("Gagal memuat daftar audio.");
+      } else {
+        setAvailableAudioFiles(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching available audio files:", err);
+      toast.error("Terjadi kesalahan saat memuat daftar audio.");
+    }
+  }, []);
 
   useEffect(() => {
+    fetchAvailableAudioFiles(); // Initial fetch of available audio files
+
     if (!isLoadingSettings && settings) {
       setValue("murottalActive", settings.murottal_active);
       setValue("tarhimActive", settings.tarhim_active);
@@ -107,36 +75,30 @@ const AudioSettings: React.FC = () => {
       setValue("murottalAudioUrlImsak", settings.murottal_audio_url_imsak);
       setValue("tarhimAudioUrl", settings.tarhim_audio_url);
       setValue("khutbahDurationMinutes", settings.khutbah_duration_minutes || 45);
-      setValue("isMasterAudioActive", settings.is_master_audio_active ?? true); // Set new field, default to true if null
-      setValue("adhanBeepAudioUrl", settings.adhan_beep_audio_url); // Set new field
-      setValue("iqomahBeepAudioUrl", settings.iqomah_beep_audio_url); // Set new field
-      setValue("imsakBeepAudioUrl", settings.imsak_beep_audio_url); // SET NEW FIELD
+      setValue("isMasterAudioActive", settings.is_master_audio_active ?? true);
+      setValue("adhanBeepAudioUrl", settings.adhan_beep_audio_url);
+      setValue("iqomahBeepAudioUrl", settings.iqomah_beep_audio_url);
+      setValue("imsakBeepAudioUrl", settings.imsak_beep_audio_url);
     }
-  }, [settings, isLoadingSettings, setValue]);
+  }, [settings, isLoadingSettings, setValue, fetchAvailableAudioFiles]);
 
-  const handleAudioUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: keyof AudioSettingsFormValues) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
+  const handleUploadNewAudio = async (values: UploadAudioFormValues) => {
+    const file = values.file[0];
     const fileExtension = file.name.split('.').pop();
     const fileName = `${uuidv4()}.${fileExtension}`;
-    const filePath = `audio/${fileName}`; // Path inside the 'audio' bucket
+    const filePath = `audio/${fileName}`;
 
-    const uploadToastId = toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim').replace('adhanBeepAudioUrl', 'Adzan Beep').replace('iqomahBeepAudioUrl', 'Iqomah Beep').replace('imsakBeepAudioUrl', 'Imsak Beep')}: 0%`);
-    const oldAudioUrl = form.getValues(fieldName); // Capture current URL before upload
+    const uploadToastId = toast.loading(`Mengunggah audio: 0%`);
 
     try {
       const { data, error } = await supabase.storage
-        .from('audio') // Use 'audio' bucket
+        .from('audio')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
           onUploadProgress: (event: ProgressEvent) => {
             const percent = Math.round((event.loaded * 100) / event.total);
-            console.log(`Upload progress for ${fieldName}: ${percent}%`); // ADDED LOG
-            toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim').replace('adhanBeepAudioUrl', 'Adzan Beep').replace('iqomahBeepAudioUrl', 'Iqomah Beep').replace('imsakBeepAudioUrl', 'Imsak Beep')}: ${percent}%`, { id: uploadToastId });
+            toast.loading(`Mengunggah audio: ${percent}%`, { id: uploadToastId });
           },
         });
 
@@ -149,34 +111,30 @@ const AudioSettings: React.FC = () => {
         .getPublicUrl(filePath);
 
       if (publicUrlData?.publicUrl) {
-        setValue(fieldName, publicUrlData.publicUrl as any); // Cast to any because fieldName is dynamic
-        // Explicitly update to 100% before success
-        toast.loading(`Mengunggah audio untuk ${fieldName.replace('murottalAudioUrl', '').replace('tarhimAudioUrl', 'Tarhim').replace('adhanBeepAudioUrl', 'Adzan Beep').replace('iqomahBeepAudioUrl', 'Iqomah Beep').replace('imsakBeepAudioUrl', 'Imsak Beep')}: 100%`, { id: uploadToastId });
-        toast.success("Audio berhasil diunggah!", { id: uploadToastId });
-        toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file audio dioptimalkan (misal: format MP3, bitrate rendah).");
+        // Insert into media_files table
+        const { error: insertError } = await supabase
+          .from('media_files')
+          .insert({
+            title: values.title || file.name,
+            file_path: filePath, // Store the internal path
+            file_type: 'audio',
+            source_type: 'upload',
+            display_order: 0, // Default, can be changed later in MediaPlayerSettings
+          });
 
-        // Attempt to delete the old audio if it exists and is different
-        if (oldAudioUrl && oldAudioUrl !== publicUrlData.publicUrl) {
-          try {
-            const oldUrlParts = (oldAudioUrl as string).split('/');
-            // Correctly extract the path within the bucket
-            const publicIndex = oldUrlParts.indexOf('public');
-            const oldFileNameWithFolder = oldUrlParts.slice(publicIndex + 2).join('/');
-            
-            const { error: deleteError } = await supabase.storage
-              .from('audio')
-              .remove([oldFileNameWithFolder]);
-            if (deleteError) {
-              console.warn("Gagal menghapus audio lama dari storage:", deleteError);
-              toast.warning("Gagal menghapus audio lama.");
-            } else {
-              console.log("Audio lama berhasil dihapus.");
-            }
-          } catch (e) {
-            console.warn("Error parsing old audio path for deletion:", e);
-          }
+        if (insertError) {
+          // If DB insert fails, try to remove the uploaded file from storage
+          await supabase.storage.from('audio').remove([filePath]);
+          throw insertError;
         }
 
+        toast.loading("Mengunggah audio: 100%", { id: uploadToastId });
+        toast.success("Audio berhasil diunggah dan ditambahkan ke daftar!", { id: uploadToastId });
+        toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file audio dioptimalkan (misal: format MP3, bitrate rendah).");
+        
+        setIsUploadDialogOpen(false);
+        resetUploadForm();
+        fetchAvailableAudioFiles(); // Refresh the list of available audio files
       } else {
         throw new Error("Gagal mendapatkan URL publik audio.");
       }
@@ -185,341 +143,3 @@ const AudioSettings: React.FC = () => {
       toast.error(`Gagal mengunggah audio: ${error.message}`, { id: uploadToastId });
     }
   };
-
-  const handleRemoveAudio = async (fieldName: keyof AudioSettingsFormValues) => {
-    const currentUrl = form.getValues(fieldName);
-    if (!currentUrl) return;
-
-    if (!window.confirm("Apakah Anda yakin ingin menghapus audio ini?")) {
-      return;
-    }
-
-    const deleteToastId = toast.loading("Menghapus audio...");
-
-    try {
-      // 1. Extract file path from public URL
-      const urlParts = (currentUrl as string).split('/');
-      const publicIndex = urlParts.indexOf('public');
-      if (publicIndex === -1 || publicIndex + 2 >= urlParts.length) {
-        throw new Error("Invalid URL format for deletion.");
-      }
-      const bucketName = urlParts[publicIndex + 1]; // Should be 'audio'
-      const filePathInStorage = urlParts.slice(publicIndex + 2).join('/'); // Path within the bucket
-
-      // 2. Delete file from Supabase Storage
-      console.log(`Attempting to delete file from storage: bucket=${bucketName}, path=${filePathInStorage}`);
-      const { error: storageError } = await supabase.storage
-        .from(bucketName)
-        .remove([filePathInStorage]);
-
-      if (storageError) {
-        console.warn("Error deleting file from storage (continuing to update DB):", storageError);
-        toast.warning(`Gagal menghapus file dari penyimpanan: ${storageError.message}`, { id: deleteToastId });
-      } else {
-        console.log("File successfully deleted from storage.");
-      }
-
-      // 3. Update the app_settings table to clear the audio URL
-      const payload: Partial<AudioSettingsFormValues> & { id: number } = { id: 1 };
-      const dbColumnName = fieldNameToDbColumnMap[fieldName]; // Use the mapping here
-      if (!dbColumnName) {
-        throw new Error(`Unknown field name: ${fieldName}`);
-      }
-      (payload as any)[dbColumnName] = null; // Set the specific audio URL field to null using mapped name
-
-      console.log("Attempting to update app_settings to clear audio URL:", payload);
-      const { error: dbError } = await supabase
-        .from("app_settings")
-        .upsert(payload, { onConflict: "id" });
-
-      if (dbError) {
-        throw dbError;
-      }
-
-      // 4. Update form state and refetch global settings
-      setValue(fieldName, null as any); // Clear the URL in the form
-      toast.success("Audio berhasil dihapus!", { id: deleteToastId });
-      refetchSettings(); // This will trigger a re-render of components using app settings
-      console.log("Audio URL cleared in DB and settings refetched.");
-
-    } catch (error: any) {
-      console.error("Caught error during audio removal process:", error);
-      toast.error(`Gagal menghapus audio: ${error.message}`, { id: deleteToastId });
-    }
-  };
-
-  const onSubmit = async (values: AudioSettingsFormValues) => {
-    const { data, error } = await supabase
-      .from("app_settings")
-      .upsert(
-        {
-          id: 1,
-          murottal_active: values.murottalActive,
-          tarhim_active: values.tarhimActive,
-          iqomah_countdown_duration: values.iqomahCountdownDuration,
-          murottal_pre_adhan_duration: values.murottalPreAdhanDuration,
-          tarhim_pre_adhan_duration: values.tarhimPreAdhanDuration,
-          murottal_audio_url_fajr: values.murottalAudioUrlFajr,
-          murottal_audio_url_dhuhr: values.murottalAudioUrlDhuhr,
-          murottal_audio_url_asr: values.murottalAudioUrlAsr,
-          murottal_audio_url_maghrib: values.murottalAudioUrlMaghrib,
-          murottal_audio_url_isha: values.murottalAudioUrlIsha,
-          murottal_audio_url_imsak: values.murottalAudioUrlImsak,
-          tarhim_audio_url: values.tarhimAudioUrl,
-          khutbah_duration_minutes: values.khutbahDurationMinutes,
-          is_master_audio_active: values.isMasterAudioActive, // Save new field
-          adhan_beep_audio_url: values.adhanBeepAudioUrl, // Save new field
-          iqomah_beep_audio_url: values.iqomahBeepAudioUrl, // Save new field
-          imsak_beep_audio_url: values.imsakBeepAudioUrl, // SAVE NEW FIELD
-        },
-        { onConflict: "id" }
-      );
-
-    if (error) {
-      console.error("Error saving audio settings:", error);
-      toast.error("Gagal menyimpan pengaturan audio.");
-    } else {
-      toast.success("Pengaturan audio berhasil disimpan!");
-      console.log("Audio settings saved:", data);
-      refetchSettings(); // Manually refetch to ensure context is updated immediately
-    }
-  };
-
-  return (
-    <Card className="bg-gray-800 text-white border-gray-700">
-      <CardHeader>
-        <CardTitle className="text-2xl font-semibold text-blue-300">Pengaturan Audio & Iqomah</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-gray-400 mb-4">Atur status audio, durasi hitung mundur Iqomah, dan audio murottal per waktu sholat.</p>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Master Audio Switch */}
-          <div className="flex items-center justify-between space-x-2 border-b border-gray-700 pb-6 mb-6">
-            <Label htmlFor="master-audio-active" className="text-gray-300 text-lg font-bold">Aktifkan Semua Audio (Master Switch)</Label>
-            <Switch
-              id="master-audio-active"
-              checked={form.watch("isMasterAudioActive")}
-              onCheckedChange={(checked) => setValue("isMasterAudioActive", checked)}
-              className="data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-gray-600"
-            />
-          </div>
-
-          <div className="flex items-center justify-between space-x-2">
-            <Label htmlFor="murottal-active" className="text-gray-300 text-lg">Aktifkan Murottal Otomatis</Label>
-            <Switch
-              id="murottal-active"
-              checked={form.watch("murottalActive")}
-              onCheckedChange={(checked) => setValue("murottalActive", checked)}
-              className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-600"
-            />
-          </div>
-          <div className="flex items-center justify-between space-x-2">
-            <Label htmlFor="tarhim-active" className="text-gray-300 text-lg">Aktifkan Tarhim</Label>
-            <Switch
-              id="tarhim-active"
-              checked={form.watch("tarhimActive")}
-              onCheckedChange={(checked) => setValue("tarhimActive", checked)}
-              className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-600"
-            />
-          </div>
-          <div>
-            <Label htmlFor="iqomahCountdownDuration" className="text-gray-300">Durasi Hitung Mundur Iqomah (detik)</Label>
-            <Input
-              id="iqomahCountdownDuration"
-              type="number"
-              {...register("iqomahCountdownDuration")}
-              className="bg-gray-700 border-gray-600 text-white mt-1"
-              placeholder="Contoh: 300 (untuk 5 menit)"
-            />
-            {errors.iqomahCountdownDuration && <p className="text-red-400 text-sm mt-1">{errors.iqomahCountdownDuration.message}</p>}
-          </div>
-          
-          <div className="border-t border-gray-700 pt-6">
-            <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Murottal Otomatis</h3>
-            <div>
-              <Label htmlFor="murottalPreAdhanDuration" className="text-gray-300">Putar Murottal Sebelum Adzan (menit)</Label>
-              <Input
-                id="murottalPreAdhanDuration"
-                type="number"
-                {...register("murottalPreAdhanDuration")}
-                className="bg-gray-700 border-gray-600 text-white mt-1"
-                placeholder="Contoh: 10 (untuk 10 menit sebelum adzan)"
-              />
-              {errors.murottalPreAdhanDuration && <p className="text-red-400 text-sm mt-1">{errors.murottalPreAdhanDuration.message}</p>}
-            </div>
-
-            <div className="space-y-4 mt-4">
-              {PRAYER_AUDIO_FIELDS.map((field) => (
-                <div key={field.name}>
-                  <Label htmlFor={field.name} className="text-gray-300">{field.label}</Label>
-                  <Input
-                    id={field.name}
-                    type="file"
-                    accept="audio/*"
-                    onChange={(e) => handleAudioUpload(e, field.name as keyof AudioSettingsFormValues)}
-                    className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
-                  />
-                  {form.watch(field.name as keyof AudioSettingsFormValues) && (
-                    <div className="mt-2 flex items-center space-x-2">
-                      <audio controls src={form.watch(field.name as keyof AudioSettingsFormValues) as string} className="w-full max-w-xs" />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveAudio(field.name as keyof AudioSettingsFormValues)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
-                      >
-                        Hapus
-                      </Button>
-                    </div>
-                  )}
-                  {errors[field.name as keyof AudioSettingsFormValues] && <p className="text-red-400 text-sm mt-1">{(errors[field.name as keyof AudioSettingsFormValues] as any).message}</p>}
-                </div>
-              ))}
-
-              {/* Tarhim Audio Upload Field */}
-              <div>
-                <Label htmlFor="tarhimAudioUrl" className="text-gray-300">Audio Tarhim (Opsional)</Label>
-                <Input
-                  id="tarhimAudioUrl"
-                  type="file"
-                  accept="audio/*"
-                  onChange={(e) => handleAudioUpload(e, "tarhimAudioUrl")}
-                  className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
-                />
-                {form.watch("tarhimAudioUrl") && (
-                  <div className="mt-2 flex items-center space-x-2">
-                    <audio controls src={form.watch("tarhimAudioUrl") as string} className="w-full max-w-xs" />
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleRemoveAudio("tarhimAudioUrl")}
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      Hapus
-                    </Button>
-                  </div>
-                )}
-                {errors.tarhimAudioUrl && <p className="text-red-400 text-sm mt-1">{errors.tarhimAudioUrl.message}</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* New Tarhim Duration Setting */}
-          <div className="border-t border-gray-700 pt-6">
-            <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Tarhim</h3>
-            <div>
-              <Label htmlFor="tarhimPreAdhanDuration" className="text-gray-300">Putar Tarhim Sebelum Adzan (detik)</Label>
-              <Input
-                id="tarhimPreAdhanDuration"
-                type="number"
-                {...register("tarhimPreAdhanDuration")}
-                className="bg-gray-700 border-gray-600 text-white mt-1"
-                placeholder="Contoh: 314 (untuk 5 menit 14 detik)"
-              />
-              {errors.tarhimPreAdhanDuration && <p className="text-red-400 text-sm mt-1">{errors.tarhimPreAdhanDuration.message}</p>}
-            </div>
-          </div>
-
-          {/* Khutbah Duration Setting */}
-          <div className="border-t border-gray-700 pt-6">
-            <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Khutbah Jumat</h3>
-            <div>
-              <Label htmlFor="khutbahDurationMinutes" className="text-gray-300">Durasi Khutbah Jumat (menit)</Label>
-              <Input
-                id="khutbahDurationMinutes"
-                type="number"
-                {...register("khutbahDurationMinutes")}
-                className="bg-gray-700 border-gray-600 text-white mt-1"
-                placeholder="Contoh: 45"
-              />
-              {errors.khutbahDurationMinutes && <p className="text-red-400 text-sm mt-1">{errors.khutbahDurationMinutes.message}</p>}
-            </div>
-          </div>
-
-          {/* New Beep Audio Settings */}
-          <div className="border-t border-gray-700 pt-6">
-            <h3 className="text-xl font-semibold text-blue-300 mb-4">Pengaturan Audio Beep</h3>
-            <div>
-              <Label htmlFor="imsakBeepAudioUrl" className="text-gray-300">Audio Beep Imsak (Opsional)</Label>
-              <Input
-                id="imsakBeepAudioUrl"
-                type="file"
-                accept="audio/*"
-                onChange={(e) => handleAudioUpload(e, "imsakBeepAudioUrl")}
-                className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
-              />
-              {form.watch("imsakBeepAudioUrl") && (
-                <div className="mt-2 flex items-center space-x-2">
-                  <audio controls src={form.watch("imsakBeepAudioUrl") as string} className="w-full max-w-xs" />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleRemoveAudio("imsakBeepAudioUrl")}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Hapus
-                  </Button>
-                </div>
-              )}
-              {errors.imsakBeepAudioUrl && <p className="text-red-400 text-sm mt-1">{errors.imsakBeepAudioUrl.message}</p>}
-            </div>
-            <div className="mt-4">
-              <Label htmlFor="adhanBeepAudioUrl" className="text-gray-300">Audio Beep Adzan (Opsional)</Label>
-              <Input
-                id="adhanBeepAudioUrl"
-                type="file"
-                accept="audio/*"
-                onChange={(e) => handleAudioUpload(e, "adhanBeepAudioUrl")}
-                className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
-              />
-              {form.watch("adhanBeepAudioUrl") && (
-                <div className="mt-2 flex items-center space-x-2">
-                  <audio controls src={form.watch("adhanBeepAudioUrl") as string} className="w-full max-w-xs" />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleRemoveAudio("adhanBeepAudioUrl")}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Hapus
-                  </Button>
-                </div>
-              )}
-              {errors.adhanBeepAudioUrl && <p className="text-red-400 text-sm mt-1">{errors.adhanBeepAudioUrl.message}</p>}
-            </div>
-            <div className="mt-4">
-              <Label htmlFor="iqomahBeepAudioUrl" className="text-gray-300">Audio Beep Iqomah (Opsional)</Label>
-              <Input
-                id="iqomahBeepAudioUrl"
-                type="file"
-                accept="audio/*"
-                onChange={(e) => handleAudioUpload(e, "iqomahBeepAudioUrl")}
-                className="bg-gray-700 border-gray-600 text-white mt-1 file:text-white file:bg-blue-600 file:hover:bg-blue-700 file:border-none file:rounded-md file:px-3 file:py-1"
-              />
-              {form.watch("iqomahBeepAudioUrl") && (
-                <div className="mt-2 flex items-center space-x-2">
-                  <audio controls src={form.watch("iqomahBeepAudioUrl") as string} className="w-full max-w-xs" />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleRemoveAudio("iqomahBeepAudioUrl")}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Hapus
-                  </Button>
-                </div>
-              )}
-              {errors.iqomahBeepAudioUrl && <p className="text-red-400 text-sm mt-1">{errors.iqomahBeepAudioUrl.message}</p>}
-            </div>
-          </div>
-
-          <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-            {isSubmitting ? "Menyimpan..." : "Simpan Pengaturan Audio"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default AudioSettings;
