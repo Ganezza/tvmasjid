@@ -1,4 +1,231 @@
-const handleRemoveAudioLink = async (fieldName: keyof AudioSettingsFormValues) => {
+import React, { useEffect, useState, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { v4 as uuidv4 } from 'uuid';
+import { useAppSettings } from "@/contexts/AppSettingsContext";
+import { Upload } from "lucide-react";
+
+interface MediaFile {
+  id: string;
+  title: string | null;
+  file_path: string; // This is the path in the bucket, not the public URL
+  file_type: "audio" | "video";
+  source_type: "upload" | "youtube";
+}
+
+const formSchema = z.object({
+  murottalActive: z.boolean().default(false),
+  tarhimActive: z.boolean().default(false),
+  iqomahCountdownDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(300), // in seconds
+  murottalPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(10), // in minutes
+  tarhimPreAdhanDuration: z.coerce.number().int().min(0, "Durasi harus non-negatif.").default(300), // Changed default to 300 seconds (5 minutes)
+  murottalAudioUrlFajr: z.string().nullable().optional(),
+  murottalAudioUrlDhuhr: z.string().nullable().optional(),
+  murottalAudioUrlAsr: z.string().nullable().optional(),
+  murottalAudioUrlMaghrib: z.string().nullable().optional(),
+  murottalAudioUrlIsha: z.string().nullable().optional(),
+  murottalAudioUrlImsak: z.string().nullable().optional(),
+  tarhimAudioUrl: z.string().nullable().optional(),
+  khutbahDurationMinutes: z.coerce.number().int().min(1, "Durasi khutbah harus lebih dari 0 menit.").default(45),
+  isMasterAudioActive: z.boolean().default(true),
+  adhanBeepAudioUrl: z.string().nullable().optional(),
+  iqomahBeepAudioUrl: z.string().nullable().optional(),
+  imsakBeepAudioUrl: z.string().nullable().optional(),
+});
+
+type AudioSettingsFormValues = z.infer<typeof formSchema>;
+
+const uploadAudioFormSchema = z.object({
+  title: z.string().max(100, "Judul terlalu panjang.").nullable().optional(),
+  file: z.instanceof(FileList).refine(file => file.length > 0, "File audio harus diunggah."),
+});
+
+type UploadAudioFormValues = z.infer<typeof uploadAudioFormSchema>;
+
+const PRAYER_AUDIO_FIELDS = [
+  { name: "murottalAudioUrlFajr", label: "Audio Murottal Subuh" },
+  { name: "murottalAudioUrlDhuhr", label: "Audio Murottal Dzuhur" },
+  { name: "murottalAudioUrlAsr", label: "Audio Murottal Ashar" },
+  { name: "murottalAudioUrlMaghrib", label: "Audio Murottal Maghrib" },
+  { name: "murottalAudioUrlIsha", label: "Audio Murottal Isya" },
+  { name: "murottalAudioUrlImsak", label: "Audio Murottal Imsak (Mode Ramadan)" },
+];
+
+const fieldNameToDbColumnMap: Record<keyof AudioSettingsFormValues, string> = {
+  murottalActive: "murottal_active",
+  tarhimActive: "tarhim_active",
+  iqomahCountdownDuration: "iqomah_countdown_duration",
+  murottalPreAdhanDuration: "murottal_pre_adhan_duration",
+  tarhimPreAdhanDuration: "tarhim_pre_adhan_duration",
+  murottalAudioUrlFajr: "murottal_audio_url_fajr",
+  murottalAudioUrlDhuhr: "murottal_audio_url_dhuhr",
+  murottalAudioUrlAsr: "murottal_audio_url_asr",
+  murottalAudioUrlMaghrib: "murottal_audio_url_maghrib",
+  murottalAudioUrlIsha: "murottal_audio_url_isha",
+  murottalAudioUrlImsak: "murottal_audio_url_imsak",
+  tarhimAudioUrl: "tarhim_audio_url",
+  khutbahDurationMinutes: "khutbah_duration_minutes",
+  isMasterAudioActive: "is_master_audio_active",
+  adhanBeepAudioUrl: "adhan_beep_audio_url",
+  iqomahBeepAudioUrl: "iqomah_beep_audio_url",
+  imsakBeepAudioUrl: "imsak_beep_audio_url",
+};
+const AudioSettings: React.FC = () => {
+  const { settings, isLoadingSettings, refetchSettings } = useAppSettings();
+  const [availableAudioFiles, setAvailableAudioFiles] = useState<MediaFile[]>([]);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+
+  const form = useForm<AudioSettingsFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      murottalActive: false,
+      tarhimActive: false,
+      iqomahCountdownDuration: 300,
+      murottalPreAdhanDuration: 10,
+      tarhimPreAdhanDuration: 300,
+      murottalAudioUrlFajr: null,
+      murottalAudioUrlDhuhr: null,
+      murottalAudioUrlAsr: null,
+      murottalAudioUrlMaghrib: null,
+      murottalAudioUrlIsha: null,
+      murottalAudioUrlImsak: null,
+      tarhimAudioUrl: null,
+      khutbahDurationMinutes: 45,
+      isMasterAudioActive: true,
+      adhanBeepAudioUrl: null,
+      iqomahBeepAudioUrl: null,
+      imsakBeepAudioUrl: null,
+    },
+  });
+
+  const uploadForm = useForm<UploadAudioFormValues>({
+    resolver: zodResolver(uploadAudioFormSchema),
+    defaultValues: {
+      title: "",
+      file: undefined,
+    },
+  });
+
+  const { handleSubmit, register, setValue, formState: { isSubmitting, errors } } = form;
+  const { handleSubmit: handleUploadSubmit, register: registerUpload, reset: resetUploadForm, formState: { isSubmitting: isUploading, errors: uploadErrors } } = uploadForm;
+
+  const fetchAvailableAudioFiles = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("media_files")
+        .select("id, title, file_path, file_type, source_type")
+        .eq("file_type", "audio")
+        .eq("source_type", "upload")
+        .order("title", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching available audio files:", error);
+        toast.error("Gagal memuat daftar audio.");
+      } else {
+        setAvailableAudioFiles(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching available audio files:", err);
+      toast.error("Terjadi kesalahan saat memuat daftar audio.");
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAvailableAudioFiles(); // Initial fetch of available audio files
+
+    if (!isLoadingSettings && settings) {
+      setValue("murottalActive", settings.murottal_active);
+      setValue("tarhimActive", settings.tarhim_active);
+      setValue("iqomahCountdownDuration", settings.iqomah_countdown_duration);
+      setValue("murottalPreAdhanDuration", settings.murottal_pre_adhan_duration || 10);
+      setValue("tarhimPreAdhanDuration", settings.tarhim_pre_adhan_duration || 300);
+      setValue("murottalAudioUrlFajr", settings.murottal_audio_url_fajr);
+      setValue("murottalAudioUrlDhuhr", settings.murottal_audio_url_dhuhr);
+      setValue("murottalAudioUrlAsr", settings.murottal_audio_url_asr);
+      setValue("murottalAudioUrlMaghrib", settings.murottal_audio_url_maghrib);
+      setValue("murottalAudioUrlIsha", settings.murottal_audio_url_isha);
+      setValue("murottalAudioUrlImsak", settings.murottal_audio_url_imsak);
+      setValue("tarhimAudioUrl", settings.tarhim_audio_url);
+      setValue("khutbahDurationMinutes", settings.khutbah_duration_minutes || 45);
+      setValue("isMasterAudioActive", settings.is_master_audio_active ?? true);
+      setValue("adhanBeepAudioUrl", settings.adhan_beep_audio_url);
+      setValue("iqomahBeepAudioUrl", settings.iqomah_beep_audio_url);
+      setValue("imsakBeepAudioUrl", settings.imsak_beep_audio_url);
+    }
+  }, [settings, isLoadingSettings, setValue, fetchAvailableAudioFiles]);
+
+  const handleUploadNewAudio = async (values: UploadAudioFormValues) => {
+    const file = values.file[0];
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExtension}`;
+    const filePath = `audio/${fileName}`;
+
+    const uploadToastId = toast.loading(`Mengunggah audio: 0%`);
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('audio')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          onUploadProgress: (event: ProgressEvent) => {
+            const percent = Math.round((event.loaded * 100) / event.total);
+            toast.loading(`Mengunggah audio: ${percent}%`, { id: uploadToastId });
+          },
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('audio')
+        .getPublicUrl(filePath);
+
+      if (publicUrlData?.publicUrl) {
+        // Insert into media_files table
+        const { error: insertError } = await supabase
+          .from('media_files')
+          .insert({
+            title: values.title || file.name,
+            file_path: filePath, // Store the internal path
+            file_type: 'audio',
+            source_type: 'upload',
+            display_order: 0, // Default, can be changed later in MediaPlayerSettings
+          });
+
+        if (insertError) {
+          // If DB insert fails, try to remove the uploaded file from storage
+          await supabase.storage.from('audio').remove([filePath]);
+          throw insertError;
+        }
+
+        toast.loading("Mengunggah audio: 100%", { id: uploadToastId });
+        toast.success("Audio berhasil diunggah dan ditambahkan ke daftar!", { id: uploadToastId });
+        toast.info("Untuk performa terbaik di perangkat rendah, pastikan ukuran file audio dioptimalkan (misal: format MP3, bitrate rendah).");
+        
+        setIsUploadDialogOpen(false);
+        resetUploadForm();
+        fetchAvailableAudioFiles(); // Refresh the list of available audio files
+      } else {
+        throw new Error("Gagal mendapatkan URL publik audio.");
+      }
+    } catch (error: any) {
+      console.error("Error uploading audio:", error);
+      toast.error(`Gagal mengunggah audio: ${error.message}`, { id: uploadToastId });
+    }
+  };
+  const handleRemoveAudioLink = async (fieldName: keyof AudioSettingsFormValues) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus tautan audio ini dari pengaturan? File audio tidak akan dihapus dari penyimpanan.")) {
       return;
     }
